@@ -40,7 +40,9 @@ function renderPublicUserPage(stored, todayRecords, tasks, records) {
       ${dayRecords.map((record) => {
         const rating = scoreCloudSchulte(record, stored.birthDate);
         const label = trainingLabel(record);
+        const rt = formatRecordTime(record.date);
         return `<article class="record">
+          <time>${rt || '--:--'}</time>
           <strong>${escapeHtml(label)}</strong>
           <span>${formatSeconds(record.timeMs)}s · 练习 ${escapeHtml(formatPracticeMs(record.practiceMs || record.timeMs))} · 错 ${record.errors} · 正确率 ${record.accuracy}%${escapeHtml(memoryReplaySuffix(record).replace(/^，/, " · "))}${rating ? ` · 评分：${escapeHtml(rating)}` : ""}</span>
         </article>`;
@@ -64,8 +66,9 @@ function renderPublicUserPage(stored, todayRecords, tasks, records) {
     .progress{height:12px;overflow:hidden;border-radius:999px;background:#e6e1d6;margin:12px 0 14px}.progress span{display:block;height:100%;border-radius:inherit;background:#177e89}
     .practice-total{color:#677176;margin:0 0 12px}
     .task-list{display:grid;gap:8px}.task{display:flex;justify-content:space-between;gap:12px;padding:10px;border:1px solid #e6e1d6;border-radius:8px;background:#fbf7ee}.task strong{color:#bf3f34}.task.done strong{color:#2f855a}
-    .record{display:grid;gap:4px;padding:10px;border:1px solid #e6e1d6;border-radius:8px;background:#fbf7ee;margin:8px 0}
-    .record span,.empty{color:#677176}.empty{text-align:center;padding:28px}
+    .record{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;padding:10px;border:1px solid #e6e1d6;border-radius:8px;background:#fbf7ee;margin:8px 0;align-items:baseline}
+    .record time{color:#677176;font-size:0.9rem;white-space:nowrap}
+    .record span{grid-column:1/-1;color:#677176}.empty{text-align:center;padding:28px}
     @media (max-width: 560px){header,.task{display:grid}.task{justify-content:stretch}}
   </style>
 </head>
@@ -125,6 +128,11 @@ function memoryReplaySuffix(record) {
 function recordDateKey(record) {
   const date = String(record && record.date || '').slice(0, 10);
   return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : '';
+}
+
+function formatRecordTime(iso) {
+  const m = String(iso || '').match(/^(\d{4}-\d{2}-\d{2})T?(\d{2}:\d{2})/);
+  return m ? m[2] : '';
 }
 
 function cloudTaskText(task) {
