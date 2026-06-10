@@ -1545,14 +1545,14 @@
           <div class="dialog-actions"><button class="tool-button" type="button" id="logoutUserButton">登出</button><button class="tool-button primary" type="button" id="saveUserButton">保存用户</button></div>
         </div>
         <div class="user-grid">
-          <label class="form-field">用户名?input id="usernameInput" type="text" maxlength="24" autocomplete="name"></label>
-          <label class="form-field">识别码?input id="identifierInput" type="text" maxlength="32" autocomplete="off" inputmode="latin" pattern="[A-Za-z0-9]+"></label>
+          <label class="form-field">用户名：<input id="usernameInput" type="text" maxlength="24" autocomplete="name"></label>
+          <label class="form-field">识别码：<input id="identifierInput" type="text" maxlength="32" autocomplete="off" inputmode="latin" pattern="[A-Za-z0-9]+"></label>
           <label class="form-field">出生日期<input id="birthDateInput" type="date"></label>
-          <label class="form-field">授权码?input id="authCodeInput" type="password" autocomplete="one-time-code"></label>
+          <label class="form-field">授权码：<input id="authCodeInput" type="password" autocomplete="one-time-code"></label>
           <label class="form-field">注册/改密密码<input id="userPasswordInput" type="password" autocomplete="new-password"></label>
         </div>
         <div class="load-user-row">
-          <label class="form-field">通过识别码加载同步数据?input id="loadIdentifierInput" type="text" maxlength="32" autocomplete="off" inputmode="latin" pattern="[A-Za-z0-9]+"></label>
+          <label class="form-field">通过识别码加载同步数据：<input id="loadIdentifierInput" type="text" maxlength="32" autocomplete="off" inputmode="latin" pattern="[A-Za-z0-9]+"></label>
           <label class="form-field">登录密码<input id="loginPasswordInput" type="password" autocomplete="current-password"></label>
           <button class="tool-button" type="button" id="loadUserButton">加载同步数据</button>
           <button class="tool-button primary" type="button" id="loginUserButton">密码登录</button>
@@ -1662,7 +1662,7 @@
           <label class="form-field">用户<select id="adminIdentifierInput"><option value="">正在加载用户...</option></select></label>
           <div class="dialog-actions">
             <button class="tool-button" type="button" id="adminLookupButton">查询用户</button>
-            <label class="form-field">新密码?input id="adminNewPasswordInput" type="password" autocomplete="new-password"></label>
+            <label class="form-field">新密码：<input id="adminNewPasswordInput" type="password" autocomplete="new-password"></label>
             <button class="tool-button" type="button" id="adminResetPasswordButton">重置密码</button>
             <button class="tool-button primary" type="button" id="adminDeleteButton">删除用户数据</button>
           </div>
@@ -1798,227 +1798,227 @@
       const memoryTotalRounds = 10;
       const memoryPreviewMs = 3000;
       const fallbackPoemSource = `村居
-?高鼎
+清 高鼎
 草长莺飞二月天，
 拂堤杨柳醉春烟。\n儿童散学归来早，
 忙趁东风放纸鸢。\n###***
 咏柳
-?贺知章\n碧玉妆成一树高，\n万条垂下绿丝绦。\n不知细叶谁裁出，
+唐 贺知章\n碧玉妆成一树高，\n万条垂下绿丝绦。\n不知细叶谁裁出，
 二月春风似剪刀。\n###***
-赠汪伦\n?李白
+赠汪伦\n唐 李白
 李白乘舟将欲行，
 忽闻岸上踏歌声。\n桃花潭水深千尺，
 不及汪伦送我情。\n###***
 小池
-?杨万里\n泉眼无声惜细流，
+宋 杨万里\n泉眼无声惜细流，
 树阴照水爱晴柔。\n小荷才露尖尖角，
 早有蜻蜓立上头。\n###***
 山行
-?杜牧
+唐 杜牧
 远上寒山石径斜，
 白云生处有人家。\n停车坐爱枫林晚，
 霜叶红于二月花。\n###***
 赠刘景文
-?苏轼
+宋 苏轼
 荷尽已无擎雨盖，
 菊残犹有傲霜枝。\n一年好景君须记，\n正是橙黄橘绿时。\n###***
-夜书所见\n?叶绍翁\n萧萧梧叶送寒声，
+夜书所见\n宋 叶绍翁\n萧萧梧叶送寒声，
 江上秋风动客情。\n知有儿童挑促织，
 夜深篱落一灯明。\n###***
 望庐山瀑布
-?李白
+唐 李白
 日照香炉生紫烟，
 遥看瀑布挂前川。\n飞流直下三千尺，
 疑是银河落九天。\n###***
 晓出净慈寺送林子方
-?杨万里\n毕竟西湖六月中，
+宋 杨万里\n毕竟西湖六月中，
 风光不与四时同。\n接天莲叶无穷碧，
 映日荷花别样红。\n###***
-绝句（两个黄鹂鸣翠柳）\n?杜甫
+绝句（两个黄鹂鸣翠柳）\n唐 杜甫
 两个黄鹂鸣翠柳，
 一行白鹭上青天。\n窗含西岭千秋雪，
 门泊东吴万里船。\n###***
-绝句（迟日江山丽）\n?杜甫
+绝句（迟日江山丽）\n唐 杜甫
 迟日江山丽，
 春风花草香。\n泥融飞燕子，
 沙暖睡鸳鸯。\n###***
-绝句（江碧鸟逾白）\n?杜甫
+绝句（江碧鸟逾白）\n唐 杜甫
 江碧鸟逾白，\n山青花欲燃。\n今春看又过，
 何日是归年。\n###***
 春夜喜雨
-?杜甫
+唐 杜甫
 好雨知时节，
 当春乃发生。\n随风潜入夜，
 润物细无声。\n野径云俱黑，
 江船火独明。\n晓看红湿处，
 花重锦官城。\n###***
-望洞庭\n?刘禹锡\n湖光秋月两相和，
+望洞庭\n唐 刘禹锡\n湖光秋月两相和，
 潭面无风镜未磨。\n遥望洞庭山水翠，
 白银盘里一青螺。\n###***
 元日
-?王安石\n爆竹声中一岁除，\n春风送暖入屠苏。\n千门万户曈曈日，
+宋 王安石\n爆竹声中一岁除，\n春风送暖入屠苏。\n千门万户曈曈日，
 总把新桃换旧符。\n###***
 清明
-?杜牧
+唐 杜牧
 清明时节雨纷纷，
 路上行人欲断魂。\n借问酒家何处有，
 牧童遥指杏花村。\n###***
 寒食
-?韩翃
+唐 韩翃
 春城无处不飞花，
 寒食东风御柳斜。\n日暮汉宫传蜡烛，
 轻烟散入五侯家。\n###***
 泊船瓜洲
-?王安石\n京口瓜洲一水间，\n钟山只隔数重山。\n春风又绿江南岸，
+宋 王安石\n京口瓜洲一水间，\n钟山只隔数重山。\n春风又绿江南岸，
 明月何时照我还。\n###***
-秋思\n?张籍
+秋思\n唐 张籍
 洛阳城里见秋风，
 欲作家书意万重。\n复恐匆匆说不尽，
 行人临发又开封。\n###***
 示儿
-?陆游
+宋 陆游
 死去元知万事空，
 但悲不见九州同。\n王师北定中原日，
 家祭无忘告乃翁。\n###***
 夏日绝句
-?李清照\n生当作人杰，
+宋 李清照\n生当作人杰，
 死亦为鬼雄。\n至今思项羽，
 不肯过江东。\n###***
-泊秦淮\n?杜牧
+泊秦淮\n唐 杜牧
 烟笼寒水月笼沙，
 夜泊秦淮近酒家。\n商女不知亡国恨，
 隔江犹唱后庭花。\n###***
 赤壁
-?杜牧
+唐 杜牧
 折戟沉沙铁未销，\n自将磨洗认前朝。\n东风不与周郎便，
 铜雀春深锁二乔。\n###***
 题乌衣巷
-?刘禹锡\n朱雀桥边野草花，
+唐 刘禹锡\n朱雀桥边野草花，
 乌衣巷口夕阳斜。\n旧时王谢堂前燕，
 飞入寻常百姓家。\n###***
-金陵图\n?韦庄
+金陵图\n唐 韦庄
 江雨霏霏江草齐，
 六朝如梦鸟空啼。\n无情最是台城柳，\n依旧烟笼十里堤。\n###***
-春宫曲\n?王昌龄\n昨夜风开露井桃，
+春宫曲\n唐 王昌龄\n昨夜风开露井桃，
 未央前殿月轮高。\n平阳歌舞新承宠，
 帘外春寒赐锦袍。\n###***
-不第后赋菊\n?黄巢
+不第后赋菊\n唐 黄巢
 待到秋来九月八，
 我花开后百花杀。\n冲天香阵透长安，
 满城尽带黄金甲。\n###***
-题菊花\n?黄巢
+题菊花\n唐 黄巢
 飒飒西风满院栽，
 蕊寒香冷蝶难来。\n他年我若为青帝，
 报与桃花一处开。\n###***
 过华清宫绝句
-?杜牧
+唐 杜牧
 长安回望绣成堆，
 山顶千门次第开。\n一骑红尘妃子笑，\n无人知是荔枝来。\n###***
 江南逢李龟年
-?杜甫
+唐 杜甫
 岐王宅里寻常见，
 崔九堂前几度闻。\n正是江南好风景，
 落花时节又逢君。\n###***
 夜雨寄北
-?李商隐\n君问归期未有期，
+唐 李商隐\n君问归期未有期，
 巴山夜雨涨秋池。\n何当共剪西窗烛，
 却话巴山夜雨时。\n###***
 秋夕
-?杜牧
+唐 杜牧
 银烛秋光冷画屏，
 轻罗小扇扑流萤。\n天阶夜色凉如水，
 坐看牵牛织女星。\n###***
-题都城南庄\n?崔护
+题都城南庄\n唐 崔护
 去年今日此门中，
 人面桃花相映红。\n人面不知何处去，
 桃花依旧笑春风。\n###***
-寄扬州韩绰判官\n?杜牧
+寄扬州韩绰判官\n唐 杜牧
 青山隐隐水迢迢，
 秋尽江南草未凋。\n二十四桥明月夜，
 玉人何处教吹箫。\n###***
 题金陵渡
-?张祜
+唐 张祜
 金陵津渡小山楼，
 一宿行人自可愁。\n潮落夜江斜月里，
 两三星火是瓜州。\n###***
 山亭夏日
-?高骈
+唐 高骈
 绿树阴浓夏日长，
 楼台倒影入池塘。\n水晶帘动微风起，
 满架蔷薇一院香。\n###***
 从军行（青海长云暗雪山）
-?王昌龄\n青海长云暗雪山，
+唐 王昌龄\n青海长云暗雪山，
 孤城遥望玉门关。\n黄沙百战穿金甲，
 不破楼兰终不还。\n###***
 从军行（琵琶起舞换新声）
-?王昌龄\n琵琶起舞换新声，
+唐 王昌龄\n琵琶起舞换新声，
 总是关山旧别情。\n撩乱边愁听不尽，
 高高秋月照长城。\n###***
 凉州词（葡萄美酒夜光杯）
-?王翰
+唐 王翰
 葡萄美酒夜光杯，
 欲饮琵琶马上催。\n醉卧沙场君莫笑，
 古来征战几人回。\n###***
 闻官军收河南河北
-?杜甫
+唐 杜甫
 剑外忽传收蓟北，
 初闻涕泪满衣裳。\n却看妻子愁何在，
 漫卷诗书喜欲狂。\n白日放歌须纵酒，
 青春作伴好还乡。\n即从巴峡穿巫峡，
 便下襄阳向洛阳。\n###***
 春望
-?杜甫
+唐 杜甫
 国破山河在，
 城春草木深。\n感时花溅泪，
 恨别鸟惊心。\n烽火连三月，
 家书抵万金。\n白头搔更短，
 浑欲不胜簪。\n###***
 登高
-?杜甫
+唐 杜甫
 风急天高猿啸哀，\n渚清沙白鸟飞回。\n无边落木萧萧下，
 不尽长江滚滚来。\n万里悲秋常作客，
 百年多病独登台。\n艰难苦恨繁霜鬓，
 潦倒新停浊酒杯。\n###***
 客至
-?杜甫
+唐 杜甫
 舍南舍北皆春水，
 但见群鸥日日来。\n花径不曾缘客扫，
 蓬门今始为君开。\n盘飧市远无兼味，
 樽酒家贫只旧醅。\n肯与邻翁相对饮，
 隔篱呼取尽余杯。\n###***
 旅夜书怀
-?杜甫
+唐 杜甫
 细草微风岸，
 危樯独夜舟。\n星垂平野阔，
 月涌大江流。\n名岂文章著，
 官应老病休。\n飘飘何所似，
 天地一沙鸥。\n###***
-送友人\n?李白
+送友人\n唐 李白
 青山横北郭，
 白水绕东城。\n此地一为别，\n孤蓬万里征。\n浮云游子意，
 落日故人情。\n挥手自兹去，
 萧萧班马鸣。\n###***
-黄鹤楼\n?崔颢
+黄鹤楼\n唐 崔颢
 昔人已乘黄鹤去，
 此地空余黄鹤楼。\n黄鹤一去不复返，\n白云千载空悠悠。\n晴川历历汉阳树，
 芳草萋萋鹦鹉洲。\n日暮乡关何处是，
 烟波江上使人愁。\n###***
-送杜少府之任蜀州\n?王勃
+送杜少府之任蜀州\n唐 王勃
 城阙辅三秦，
 风烟望五津。\n与君离别意，
 同是宦游人。\n海内存知己，
 天涯若比邻。\n无为在歧路，
 儿女共沾巾。\n###***
 送元二使安西
-?王维
+唐 王维
 渭城朝雨浥轻尘，
 客舍青青柳色新。\n劝君更尽一杯酒，\n西出阳关无故人。\n###***
 逢入京使
-?岑参
+唐 岑参
 故园东望路漫漫，
 双袖龙钟泪不干。\n马上相逢无纸笔，\n凭君传语报平安。\n###***
 闻王昌龄左迁龙标遥有此寄
-?李白
+唐 李白
 杨花落尽子规啼，
 闻道龙标过五溪。\n我寄愁心与明月，
 随君直到夜郎西。`;
@@ -2285,9 +2285,9 @@
         if (!identifier) {
           userStatusText.textContent = "未创建用户时，网页训练与本地成绩仍可正常使用。";
         } else if (canWriteActiveUser()) {
-          userStatusText.textContent = `已登录用${age !== null ? `，当前年龄?${age} 岁` : ""}${path ? `，成绩查询路径?${path}` : ""}`;
+          userStatusText.textContent = `已登录用${age !== null ? `，当前年龄：${age} 岁` : ""}${path ? `，成绩查询路径：${path}` : ""}`;
         } else {
-          userStatusText.textContent = `已加载识别码 ${identifier}${path ? `，成绩查询路?${path}` : ""}；当前浏览器未保存该用户写入权限`;
+          userStatusText.textContent = `已加载识别码 ${identifier}${path ? `，成绩查询路径${path}` : ""}；当前浏览器未保存该用户写入权限`;
         }
       }
 
@@ -2449,10 +2449,10 @@
         const button = document.createElement("button");
         button.className = "title-task-item";
         button.type = "button";
-        button.title = "?" + (nextIndex + 1) + " 项：" + taskModuleLabel(task.module) + " · " + describeTask(task) + "：" + progress.count + "/" + progress.target;
+        button.title = "第" + (nextIndex + 1) + " 项：" + taskModuleLabel(task.module) + " · " + describeTask(task) + "：" + progress.count + "/" + progress.target;
         const main = document.createElement("span");
         main.className = "title-task-main";
-        main.textContent = "?" + (nextIndex + 1) + " ?· " + taskModuleLabel(task.module) + " · " + describeTask(task);
+        main.textContent = "第" + (nextIndex + 1) + "项 · " + taskModuleLabel(task.module) + " · " + describeTask(task);
         const count = document.createElement("span");
         count.className = "title-task-count";
         count.textContent = progress.count + "/" + progress.target;
@@ -2511,7 +2511,7 @@
         scoreDateInput.value = date;
         const dayRecords = recordsForDate(date);
         if (!dayRecords.length) {
-          dailyScoreList.innerHTML = `<p class="empty">该日期暂无成绩记?/p>`;
+          dailyScoreList.innerHTML = `<p class="empty">该日期暂无成绩记录</p>`;
           return;
         }
         const practiceSummary = document.createElement("div");
@@ -2596,10 +2596,10 @@
           setNotice(
             userCenterNotice,
             loginPassword
-              ? "密码登录成功，新?" + added + " 条成绩记录"
+              ? "密码登录成功，新增" + added + " 条成绩记录"
               : isBoundUser
                 ? "同步数据已加载，新增 " + added + " 条成绩记录"
-                : "已按识别码加载资料、任务与成绩，新?" + added + " 条本地记录"
+                : "已按识别码加载资料、任务与成绩，新增" + added + " 条本地记录"
           );
         } catch (error) {
           setNotice(userCenterNotice, error.message, true);
@@ -2749,7 +2749,7 @@
           const payload = await apiJson("/api/admin/users", { headers: adminAuthHeaders() });
           renderAdminUsers(payload.users || []);
           adminUserPreview.innerHTML = "";
-          setNotice(adminPanelNotice, payload.users && payload.users.length ? `已加?${payload.users.length} 个用户` : "暂无可管理用户");
+          setNotice(adminPanelNotice, payload.users && payload.users.length ? `已加载${payload.users.length} 个用户` : "暂无可管理用户");
           if (payload.users && payload.users.length) await adminLookup();
         } catch (error) {
           adminIdentifierInput.replaceChildren(new Option("用户加载失败", ""));
@@ -2769,7 +2769,7 @@
           adminUserPreview.innerHTML = `
             <article class="record">
               <div class="mode">${user.username || "未命名"}</div>
-              <div><strong>${user.identifier}</strong><time>出生日期${user.birthDate || "未填写"} · 记录 ${payload.recordCount || 0} ?· 任务 ${payload.taskKeyCount || 0} ?/time></div>
+              <div><strong>${user.identifier}</strong><time>出生日期${user.birthDate || "未填写"} · 记录 ${payload.recordCount || 0} 条· 任务 ${payload.taskKeyCount || 0} </time></div>
               <div class="score">KV</div>
             </article>
           `;
@@ -2810,7 +2810,7 @@
           setNotice(adminPanelNotice, "请输入合法识别码", true);
           return;
         }
-        if (!window.confirm(`确定永久删除 ${identifier} ?KV 用户数据吗？`)) return;
+        if (!window.confirm(`确定永久删除 ${identifier} 的KV 用户数据吗？`)) return;
         try {
           await apiJson(`/api/admin/users/${encodeURIComponent(identifier)}`, {
             method: "DELETE",
@@ -2846,7 +2846,7 @@
         if (totalSeconds < 60) return `${totalSeconds} 秒`;
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
-        return seconds ? `${minutes} ?${seconds} 秒` : `${minutes} 分钟`;
+        return seconds ? `${minutes} 分${seconds} 秒` : `${minutes} 分钟`;
       }
 
       function dailyPracticeMs(date) {
@@ -3857,16 +3857,16 @@
         const type = record.type || "schulte";
         const label = type === "stroop" ? "斯特鲁普" : type === "decode" ? "\u8bd1\u7801\u8bad\u7ec3" : type === "idiom" ? `4×${record.cols}` : type === "poem" ? "古诗训练" : type === "memory" ? "记忆训练" : `${record.size}×${record.size}${record.reverse ? " 倒序" : ""}`;
         const detail = type === "stroop"
-          ? `${record.trials || stroopTotal}?· ?${record.errors}`
+          ? `${record.trials || stroopTotal}题· 错${record.errors}`
           : type === "decode"
             ? `${record.trials || decodeTotal}\u9898 \u00b7 \u9519 ${record.errors}`
           : type === "idiom"
-            ? `${record.idioms?.length || record.cols || 1}个成?· ?${record.errors}`
+            ? `${record.idioms?.length || record.cols || 1}个成绩· 错${record.errors}`
             : type === "poem"
-              ? `${record.title || "古诗"} · ${record.chars || 0}?· ?${record.errors}`
+              ? `${record.title || "古诗"} · ${record.chars || 0}字· 错${record.errors}`
               : type === "memory"
-                ? `${record.rounds || memoryTotalRounds}?· ?${record.errors}${Number(record.replays || 0) > 0 ? ` · 复现 ${Number(record.replays || 0)} 次` : ""}`
-                : `?${record.errors}`;
+                ? `${record.rounds || memoryTotalRounds}轮· 错${record.errors}${Number(record.replays || 0) > 0 ? ` · 复现 ${Number(record.replays || 0)} 次` : ""}`
+                : `错${record.errors}`;
         node.innerHTML = `
           <div class="mode">${label}</div>
           <div>
@@ -3890,7 +3890,7 @@
       function showResult(record, isBest) {
         const type = record.type || "schulte";
         const label = type === "stroop" ? "斯特鲁普" : type === "decode" ? "\u8bd1\u7801\u8bad\u7ec3" : type === "idiom" ? `成语训练` : type === "poem" ? "古诗训练" : type === "memory" ? "记忆训练" : `${record.size}×${record.size}${record.reverse ? " 倒序" : ""}`;
-        const unit = type === "decode" ? `${record.trials || decodeTotal}\u9898` : type === "stroop" ? `${record.trials || stroopTotal}题` : type === "idiom" ? `${record.idioms?.length || record.cols || 1}个成?· 4×${record.cols}` : type === "poem" ? `${record.title || "古诗"} · ${record.chars || 0}字` : type === "memory" ? `${record.rounds || memoryTotalRounds}?· ${record.grid || "5×5"}` : record.reverse ? "倒序方格" : "方格";
+        const unit = type === "decode" ? `${record.trials || decodeTotal}\u9898` : type === "stroop" ? `${record.trials || stroopTotal}题` : type === "idiom" ? `${record.idioms?.length || record.cols || 1}个成绩· 4×${record.cols}` : type === "poem" ? `${record.title || "古诗"} · ${record.chars || 0}字` : type === "memory" ? `${record.rounds || memoryTotalRounds}轮· ${record.grid || "5×5"}` : record.reverse ? "倒序方格" : "方格";
         resultSummary.innerHTML = `
           <div class="summary-item"><span>模式</span><strong>${label}</strong></div>
           <div class="summary-item"><span>内容</span><strong>${unit}</strong></div>
