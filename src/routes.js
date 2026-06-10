@@ -18,9 +18,7 @@ const {
   verifyPassword,
   sessionTokenHash,
   randomToken,
-  normalizeTelegramToken,
-  telegramErrorHint,
-  buildDailyReport,
+
   formatPracticeMs,
   totalPracticeMs,
   trainingLabel,
@@ -269,68 +267,6 @@ router.delete('/admin/users/:identifier', (req, res) => {
 
   db.deleteUser(identifier);
   res.json({ ok: true });
-});
-
-// Send daily report via Telegram
-router.post('/send-daily-report', async (req, res) => {
-  const telegramToken = normalizeTelegramToken(process.env.TELEGRAM_BOT_TOKEN);
-  if (!telegramToken) return res.status(500).json({ ok: false, error: '缺少环境变量：TELEGRAM_BOT_TOKEN' });
-
-  const body = req.body;
-  if (!body) return res.status(400).json({ ok: false, error: '请求体不是有效 JSON' });
-
-  const userId = String(body.userId || '').trim();
-  const date = body.date;
-  if (!userId) return res.status(400).json({ ok: false, error: '缺少 userId' });
-  if (!isDateKey(date)) return res.status(400).json({ ok: false, error: '日期格式应为 YYYY-MM-DD' });
-
-  const stored = db.getUser(userId);
-  if (!stored) return res.status(404).json({ ok: false, error: '用户不存在' });
-
-  const profile = {
-    nickname: stored.username || '',
-    age: stored.birthDate ? require('./utils').calculateAge(stored.birthDate) : '',
-    telegramChatId: ''
-  };
-
-  if (!profile.telegramChatId) return res.status(400).json({ ok: false, error: '请先在用户中心填写 Telegram Chat ID' });
-
-  const trainingRecords = Array.isArray(body.trainingRecords) ? body.trainingRecords.slice(0, 30) : [];
-  let tasks = db.getTasks(userId, date) || [];
-  tasks = normalizeCloudTasks(tasks);
-  tasks = applyCloudTrainingCompletionToTasks(tasks, trainingRecords);
-
-  if (!tasks.length) return res.status(400).json({ ok: false, error: '今日任务单为空，不能发送简报' });
-  if (!tasks.every((task) => task.completed)) return res.status(400).json({ ok: false, error: '今日任务尚未全部完成' });
-
-  const text = buildDailyReport(profile, tasks, date, trainingRecords).slice(0, 3900);
-
-  let telegramResponse;
-  try {
-    telegramResponse = await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: profile.telegramChatId,
-        text,
-        disable_web_page_preview: true
-      })
-    });
-  } catch (error) {
-    return res.status(502).json({ ok: false, error: `Telegram 网络请求失败：${error.message || '无法连接 Telegram API'}` });
-  }
-
-  const telegramPayload = await telegramResponse.json().catch(() => ({}));
-  if (!telegramResponse.ok || telegramPayload.ok === false) {
-    return res.status(502).json({
-      ok: false,
-      error: telegramErrorHint(telegramPayload.description),
-      telegramStatus: telegramResponse.status,
-      telegramDescription: telegramPayload.description || ''
-    });
-  }
-
-  res.json({ ok: true, message: '今日简报已发送', text });
 });
 
 module.exports = router;

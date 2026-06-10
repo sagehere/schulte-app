@@ -322,52 +322,6 @@ function publicCloudUserSummary(stored) {
   };
 }
 
-function normalizeTelegramToken(value) {
-  return String(value || '').trim().replace(/^bot/i, '');
-}
-
-function telegramErrorHint(description) {
-  const text = String(description || '');
-  if (/chat not found/i.test(text)) return 'Telegram 发送失败：找不到 Chat ID。请先给机器人发一条消息，再确认用户中心里的 Chat ID。';
-  if (/bot was blocked/i.test(text)) return 'Telegram 发送失败：机器人被该会话屏蔽了。请在 Telegram 中解除屏蔽后重试。';
-  if (/unauthorized/i.test(text)) return 'Telegram 发送失败：BOT token 无效。请检查环境变量 TELEGRAM_BOT_TOKEN。';
-  if (/message is too long/i.test(text)) return 'Telegram 发送失败：简报内容过长。';
-  return text || 'Telegram 发送失败';
-}
-
-function buildDailyReport(profile, tasks, date, trainingRecords) {
-  const completed = tasks.filter((task) => task.completed).length;
-  const taskLines = tasks.length
-    ? tasks.map((task, index) => `${task.completed ? '✓' : '□'} ${index + 1}. ${cloudTaskText(task)}`)
-    : ['暂无任务'];
-  const trainingLines = trainingRecords.length
-    ? trainingRecords.slice(0, 10).map((record) => {
-      const rating = scoreSchulteRecord(record, profile.age);
-      return `${trainingLabel(record)}：${formatSeconds(record.timeMs)}s，错 ${record.errors}，正确率 ${record.accuracy}%${memoryReplaySuffix(record)}，评分 ${rating}`;
-    })
-    : ['今日暂无训练成绩'];
-  const bestSchulte = trainingRecords
-    .filter((record) => (record.type || 'schulte') === 'schulte')
-    .sort((a, b) => a.timeMs - b.timeMs)[0];
-  const bestLine = bestSchulte
-    ? `最佳舒尔特：${trainingLabel(bestSchulte)} ${formatSeconds(bestSchulte.timeMs)}s，${scoreSchulteRecord(bestSchulte, profile.age)}`
-    : '最佳舒尔特：暂无';
-
-  return [
-    '每日任务完成简报',
-    `日期：${date}`,
-    `用户：${profile.nickname || '未填写'}${profile.age ? `（${profile.age}岁）` : ''}`,
-    '',
-    `任务完成：${completed}/${tasks.length}`,
-    ...taskLines,
-    '',
-    `累计练习时长：${formatPracticeMs(totalPracticeMs(trainingRecords))}`,
-    `训练摘要：${trainingRecords.length} 次`,
-    bestLine,
-    ...trainingLines
-  ].join('\n');
-}
-
 module.exports = {
   SCORE_RULES,
   ageBucket,
@@ -401,8 +355,5 @@ module.exports = {
   sessionTokenHash,
   randomToken,
   publicCloudUser,
-  publicCloudUserSummary,
-  normalizeTelegramToken,
-  telegramErrorHint,
-  buildDailyReport
+  publicCloudUserSummary
 };
