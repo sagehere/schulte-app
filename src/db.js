@@ -88,8 +88,32 @@ function initTables() {
     )
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT DEFAULT ''
+    )
+  `);
+
   db.run('CREATE INDEX IF NOT EXISTS idx_records_user_date ON records(user_id, date)');
   db.run('CREATE INDEX IF NOT EXISTS idx_records_user_created ON records(user_id, created_at)');
+}
+
+function getSetting(key) {
+  const stmt = db.prepare('SELECT value FROM settings WHERE key = ?');
+  stmt.bind([key]);
+  if (stmt.step()) {
+    const value = stmt.get()[0];
+    stmt.free();
+    return value;
+  }
+  stmt.free();
+  return null;
+}
+
+function setSetting(key, value) {
+  db.run('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', [key, String(value)]);
+  saveDb();
 }
 
 function rowToObject(columns, values) {
@@ -306,5 +330,7 @@ module.exports = {
   getRecords,
   getRecordsByDate,
   putRecord,
-  deleteRecords
+  deleteRecords,
+  getSetting,
+  setSetting
 };

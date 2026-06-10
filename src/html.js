@@ -12,7 +12,7 @@ function getIndexHtml() {
   return indexHtml;
 }
 
-function renderPublicUserPage(stored, todayRecords, tasks, records) {
+function renderPublicUserPage(stored, todayRecords, tasks, records, timeZone) {
   const completedTasks = tasks.filter((task) => task.completed).length;
   const progressPercent = tasks.length ? Math.round((completedTasks / tasks.length) * 100) : 0;
   const todayPracticeMs = totalPracticeMs(todayRecords);
@@ -40,7 +40,7 @@ function renderPublicUserPage(stored, todayRecords, tasks, records) {
       ${dayRecords.map((record) => {
         const rating = scoreCloudSchulte(record, stored.birthDate);
         const label = trainingLabel(record);
-        const rt = formatRecordTime(record.date);
+        const rt = formatRecordTime(record.date, timeZone);
         return `<article class="record">
           <time>${rt || '--:--'}</time>
           <strong>${escapeHtml(label)}</strong>
@@ -130,9 +130,14 @@ function recordDateKey(record) {
   return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : '';
 }
 
-function formatRecordTime(iso) {
-  const m = String(iso || '').match(/^(\d{4}-\d{2}-\d{2})T?(\d{2}:\d{2})/);
-  return m ? m[2] : '';
+function formatRecordTime(iso, timeZone) {
+  if (!iso) return '--:--';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '--:--';
+  const tz = timeZone || 'Asia/Shanghai';
+  const parts = new Intl.DateTimeFormat('zh-CN', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(date);
+  const value = Object.fromEntries(parts.map((p) => [p.type, p.value]));
+  return `${value.hour}:${value.minute}`;
 }
 
 function cloudTaskText(task) {

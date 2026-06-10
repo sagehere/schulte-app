@@ -26,8 +26,14 @@ const {
   scoreCloudSchulte,
   scoreSchulteRecord,
   memoryReplaySuffix,
-  escapeHtml
+  escapeHtml,
+  formatLocalTime
 } = require('./utils');
+
+function getTZ() {
+  try { return db.getSetting('timezone') || 'Asia/Shanghai'; }
+  catch { return 'Asia/Shanghai'; }
+}
 
 const router = express.Router();
 
@@ -82,7 +88,7 @@ router.post('/users', async (req, res) => {
 
   const session = await issueSession(identifier, db.getUser(identifier));
   const tasks = normalizeCloudTasks(body.tasks);
-  db.putTasks(identifier, todayDateKey(), tasks);
+  db.putTasks(identifier, todayDateKey(getTZ()), tasks);
 
   res.json({ ok: true, user, sessionToken: session.sessionToken, tasks });
 });
@@ -95,7 +101,7 @@ router.get('/users/:identifier', (req, res) => {
   const stored = db.getUser(identifier);
   if (!stored) return res.status(404).json({ ok: false, error: '用户不存在' });
 
-  const date = isDateKey(req.query.date) ? req.query.date : todayDateKey();
+  const date = isDateKey(req.query.date) ? req.query.date : todayDateKey(getTZ());
   let tasks = db.getTasks(identifier, date);
   if (!tasks) tasks = [];
   tasks = normalizeCloudTasks(tasks);
@@ -128,7 +134,7 @@ router.put('/users/:identifier', async (req, res) => {
     db.renameUserIdentifier(identifier, nextIdentifier);
   }
 
-  const date = isDateKey(body.date) ? body.date : todayDateKey();
+  const date = isDateKey(body.date) ? body.date : todayDateKey(getTZ());
   const tasks = normalizeCloudTasks(body.tasks);
   db.putTasks(nextIdentifier, date, tasks);
 
@@ -175,7 +181,7 @@ router.post('/users/:identifier/login', async (req, res) => {
   }
 
   const session = await issueSession(identifier, nextStored);
-  const date = isDateKey(body.date) ? body.date : todayDateKey();
+  const date = isDateKey(body.date) ? body.date : todayDateKey(getTZ());
   let tasks = db.getTasks(identifier, date);
   if (!tasks) tasks = [];
   tasks = normalizeCloudTasks(tasks);
@@ -210,6 +216,24 @@ router.get('/users/:identifier/public', (req, res) => {
 
   const records = db.getRecords(identifier);
   res.json({ ok: true, user: publicCloudUserSummary(stored), records });
+});
+
+// Settings
+router.get('/settings', (req, res) => {
+  res.json({ ok: true, timezone: getTZ() });
+});
+
+router.put('/admin/settings', (req, res) => {
+  if (!hasAdminAccess(req)) return res.status(403).json({ ok: false, error: '管理密码不正确' });
+
+  const body = req.body;
+  if (!body) return res.status(400).json({ ok: false, error: '请求体不是有效 JSON' });
+
+  if (body.timezone) {
+    db.setSetting('timezone', String(body.timezone).trim());
+  }
+
+  res.json({ ok: true, timezone: getTZ() });
 });
 
 // Admin: list users

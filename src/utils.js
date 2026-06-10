@@ -221,19 +221,35 @@ function isDateKey(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ''));
 }
 
-function todayDateKey() {
-  return localDateKey();
+function todayDateKey(timeZone) {
+  return localDateKey(new Date(), timeZone);
 }
 
-function localDateKey(date = new Date(), timeZone = 'Asia/Shanghai') {
+function localDateKey(date = new Date(), timeZone) {
+  const tz = timeZone || 'Asia/Shanghai';
   const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone,
+    timeZone: tz,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit'
   }).formatToParts(date);
   const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
   return `${value.year}-${value.month}-${value.day}`;
+}
+
+function formatLocalTime(iso, timeZone) {
+  if (!iso) return '';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  const tz = timeZone || 'Asia/Shanghai';
+  const parts = new Intl.DateTimeFormat('zh-CN', {
+    timeZone: tz,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  }).formatToParts(date);
+  const value = Object.fromEntries(parts.map((p) => [p.type, p.value]));
+  return `${value.hour}:${value.minute}`;
 }
 
 function recordDateKey(record) {
@@ -343,6 +359,7 @@ module.exports = {
   isDateKey,
   todayDateKey,
   localDateKey,
+  formatLocalTime,
   recordDateKey,
   validIdentifier,
   cleanIdentifier,

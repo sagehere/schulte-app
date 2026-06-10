@@ -52,7 +52,8 @@ app.get('/u/:identifier', (req, res) => {
     return res.status(404).send('<!doctype html><meta charset="utf-8"><title>用户不存在</title><p>用户不存在。</p>');
   }
 
-  const today = todayDateKey();
+  const timeZone = loadTimeZone();
+  const today = todayDateKey(timeZone);
   const records = db.getRecords(identifier);
   let tasks = db.getTasks(identifier, today) || [];
   tasks = normalizeCloudTasks(tasks);
@@ -64,7 +65,7 @@ app.get('/u/:identifier', (req, res) => {
 
   res.setHeader('content-type', 'text/html; charset=UTF-8');
   res.setHeader('cache-control', 'no-store');
-  res.send(renderPublicUserPage(stored, todayRecords, tasks, records));
+  res.send(renderPublicUserPage(stored, todayRecords, tasks, records, timeZone));
 });
 
 // Poem text file
@@ -84,9 +85,17 @@ app.use((req, res) => {
   res.status(404).send('Not Found');
 });
 
+function loadTimeZone() {
+  try { return db.getSetting('timezone') || 'Asia/Shanghai'; }
+  catch { return 'Asia/Shanghai'; }
+}
+
 // Initialize database and start server
 async function start() {
   await db.initDb();
+  if (!db.getSetting('timezone')) {
+    db.setSetting('timezone', 'Asia/Shanghai');
+  }
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
   });
