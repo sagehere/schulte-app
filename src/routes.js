@@ -1,4 +1,6 @@
 const express = require('express');
+const crypto = require('crypto');
+const rateLimit = require('express-rate-limit');
 const db = require('./db');
 const {
   normalizeCloudUser,
@@ -35,7 +37,40 @@ function getTZ() {
   catch { return 'Asia/Shanghai'; }
 }
 
+function safeEqual(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const bufA = Buffer.from(a, 'utf8');
+  const bufB = Buffer.from(b, 'utf8');
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
+function isValidTimeZone(tz) {
+  try {
+    new Intl.DateTimeFormat(undefined, { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const router = express.Router();
+
+const loginLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { ok: false, error: '请求过于频繁，请稍后再试' }
+});
+
+const createLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { ok: false, error: '请求过于频繁，请稍后再试' }
+});
 
 function hasAdminAccess(req) {
   const auth = req.headers.authorization || '';
@@ -48,7 +83,10 @@ async function requireSession(identifier, sessionToken) {
   const stored = db.getUser(identifier);
   if (!stored) return { error: { ok: false, error: '用户不存在', status: 404 } };
   if (!stored.passwordHash) return { error: { ok: false, error: '该用户尚未设置密码，请联系管理员重置密码', status: 403 } };
-  if (sessionToken && stored.sessionTokenHash && await sessionTokenHash(sessionToken) === stored.sessionTokenHash) return { stored };
+  if (sessionToken && stored.sessionTokenHash) {
+    const computedHash = await sessionTokenHash(sessionToken);
+    if (safeEqual(computedHash, stored.sessionTokenHash)) return { stored };
+  }
   return { error: { ok: false, error: '没有写入权限', status: 403 } };
 }
 
@@ -62,7 +100,7 @@ async function issueSession(identifier, stored) {
 }
 
 // Create user
-router.post('/users', async (req, res) => {
+router.post('/users', createLimiter, async (req, res) => {
   const body = req.body;
   if (!body) return res.status(400).json({ ok: false, error: '请求体不是有效 JSON' });
 
@@ -158,7 +196,7 @@ router.delete('/users/:identifier', async (req, res) => {
 });
 
 // Login
-router.post('/users/:identifier/login', async (req, res) => {
+router.post('/users/:identifier/login', loginLimiter, async (req, res) => {
   const { identifier } = req.params;
   if (!validIdentifier(identifier)) return res.status(400).json({ ok: false, error: '识别码仅可输入数字与字母' });
 
@@ -214,7 +252,7 @@ router.get('/users/:identifier/public', (req, res) => {
   const stored = db.getUser(identifier);
   if (!stored) return res.status(404).json({ ok: false, error: '用户不存在' });
 
-  const records = db.getRecords(identifier);
+  const records = db.getRecords(identifier, 100);
   res.json({ ok: true, user: publicCloudUserSummary(stored), records });
 });
 
@@ -230,7 +268,11 @@ router.put('/admin/settings', (req, res) => {
   if (!body) return res.status(400).json({ ok: false, error: '请求体不是有效 JSON' });
 
   if (body.timezone) {
-    db.setSetting('timezone', String(body.timezone).trim());
+    const tz = String(body.timezone).trim();
+    if (!isValidTimeZone(tz)) {
+      return res.status(400).json({ ok: false, error: '无效的时区值' });
+    }
+    db.setSetting('timezone', tz);
   }
 
   res.json({ ok: true, timezone: getTZ() });

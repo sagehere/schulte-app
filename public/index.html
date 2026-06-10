@@ -2878,12 +2878,20 @@
         try {
           const payload = await apiJson(`/api/admin/users/${encodeURIComponent(identifier)}`, { headers: adminAuthHeaders() });
           const user = payload.user;
-          adminUserPreview.innerHTML = `
-            <article class="record">
-              <div class="mode">${user.username || "未命名"}</div>
-              <div><strong>${user.identifier}</strong><time>出生日期${user.birthDate || "未填写"} · 记录 ${payload.recordCount || 0} 条· 任务 ${payload.taskKeyCount || 0} </time></div>
-            </article>
-          `;
+          adminUserPreview.replaceChildren();
+          const article = document.createElement("article");
+          article.className = "record";
+          const modeDiv = document.createElement("div");
+          modeDiv.className = "mode";
+          modeDiv.textContent = user.username || "未命名";
+          const infoDiv = document.createElement("div");
+          const strong = document.createElement("strong");
+          strong.textContent = user.identifier;
+          const time = document.createElement("time");
+          time.textContent = `出生日期${user.birthDate || "未填写"} · 记录 ${payload.recordCount || 0} 条· 任务 ${payload.taskKeyCount || 0} `;
+          infoDiv.append(strong, time);
+          article.append(modeDiv, infoDiv);
+          adminUserPreview.append(article);
           setNotice(adminPanelNotice, "已查询到用户");
         } catch (error) {
           adminUserPreview.innerHTML = "";
@@ -4017,14 +4025,24 @@
               : type === "memory"
                 ? `${record.rounds || memoryTotalRounds}轮· 错${record.errors}${Number(record.replays || 0) > 0 ? ` · 复现 ${Number(record.replays || 0)} 次` : ""}`
                 : `错${record.errors}`;
-        node.innerHTML = `
-          <div class="mode">${label}</div>
-          <div>
-            <strong>${record.accuracy}%</strong>
-            <time datetime="${record.date}">${formatShortDate(record.date)} · ${detail}</time>
-          </div>
-          <div class="score">${formatSeconds(record.timeMs)}s</div>
-        `;
+
+        const modeDiv = document.createElement("div");
+        modeDiv.className = "mode";
+        modeDiv.textContent = label;
+
+        const infoDiv = document.createElement("div");
+        const strong = document.createElement("strong");
+        strong.textContent = `${record.accuracy}%`;
+        const time = document.createElement("time");
+        time.setAttribute("datetime", record.date || "");
+        time.textContent = `${formatShortDate(record.date)} · ${detail}`;
+        infoDiv.append(strong, time);
+
+        const scoreDiv = document.createElement("div");
+        scoreDiv.className = "score";
+        scoreDiv.textContent = `${formatSeconds(record.timeMs)}s`;
+
+        node.append(modeDiv, infoDiv, scoreDiv);
         return node;
       }
 
@@ -4041,15 +4059,30 @@
         const type = record.type || "schulte";
         const label = type === "stroop" ? "斯特鲁普" : type === "decode" ? "\u8bd1\u7801\u8bad\u7ec3" : type === "idiom" ? `成语训练` : type === "poem" ? "古诗训练" : type === "memory" ? "记忆训练" : `${record.size}×${record.size}${record.reverse ? " 倒序" : ""}`;
         const unit = type === "decode" ? `${record.trials || decodeTotal}\u9898` : type === "stroop" ? `${record.trials || stroopTotal}题` : type === "idiom" ? `${record.idioms?.length || record.cols || 1}个成绩· 4×${record.cols}` : type === "poem" ? `${record.title || "古诗"} · ${record.chars || 0}字` : type === "memory" ? `${record.rounds || memoryTotalRounds}轮· ${record.grid || "5×5"}` : record.reverse ? "倒序方格" : "方格";
-        resultSummary.innerHTML = `
-          <div class="summary-item"><span>模式</span><strong>${label}</strong></div>
-          <div class="summary-item"><span>内容</span><strong>${unit}</strong></div>
-          <div class="summary-item"><span>用时</span><strong>${formatSeconds(record.timeMs)}s</strong></div>
-          <div class="summary-item"><span>错误</span><strong>${record.errors}</strong></div>
-          <div class="summary-item"><span>正确</span><strong>${record.accuracy}%</strong></div>
-          <div class="summary-item"><span>日期</span><strong>${formatShortDate(record.date)}</strong></div>
-          ${type === "memory" && Number(record.replays || 0) > 0 ? `<div class="summary-item"><span>复现</span><strong>${Number(record.replays || 0)}</strong></div>` : ""}
-        `;
+
+        resultSummary.replaceChildren();
+        const items = [
+          ["模式", label],
+          ["内容", unit],
+          ["用时", `${formatSeconds(record.timeMs)}s`],
+          ["错误", String(record.errors)],
+          ["正确", `${record.accuracy}%`],
+          ["日期", formatShortDate(record.date)]
+        ];
+        if (type === "memory" && Number(record.replays || 0) > 0) {
+          items.push(["复现", String(Number(record.replays || 0))]);
+        }
+        items.forEach(([spanText, strongText]) => {
+          const div = document.createElement("div");
+          div.className = "summary-item";
+          const span = document.createElement("span");
+          span.textContent = spanText;
+          const strong = document.createElement("strong");
+          strong.textContent = strongText;
+          div.append(span, strong);
+          resultSummary.append(div);
+        });
+
         notice.textContent = isBest ? "刷新最快成绩" : "";
         if (typeof resultDialog.showModal === "function") resultDialog.showModal();
       }

@@ -6,6 +6,8 @@ const DB_PATH = process.env.DB_PATH || path.join(__dirname, '..', 'data', 'schul
 
 let db;
 let dbReady;
+let saveTimer = null;
+let savePending = false;
 
 function getDb() {
   if (!db) {
@@ -20,13 +22,11 @@ async function initDb() {
   dbReady = (async () => {
     const SQL = await initSqlJs();
 
-    // Ensure data directory exists
     const dataDir = path.dirname(DB_PATH);
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
 
-    // Load or create database
     if (fs.existsSync(DB_PATH)) {
       const buffer = fs.readFileSync(DB_PATH);
       db = new SQL.Database(buffer);
@@ -35,18 +35,33 @@ async function initDb() {
     }
 
     initTables();
-    saveDb();
+    saveDbImmediate();
     return db;
   })();
 
   return dbReady;
 }
 
-function saveDb() {
+function saveDbImmediate() {
   if (!db) return;
   const data = db.export();
   const buffer = Buffer.from(data);
-  fs.writeFileSync(DB_PATH, buffer);
+  fs.writeFile(DB_PATH, buffer, (err) => {
+    if (err) console.error('Failed to save database:', err);
+  });
+}
+
+function saveDb() {
+  if (!db) return;
+  savePending = true;
+  if (saveTimer) return;
+  saveTimer = setTimeout(() => {
+    saveTimer = null;
+    if (savePending) {
+      savePending = false;
+      saveDbImmediate();
+    }
+  }, 100);
 }
 
 function initTables() {
@@ -175,9 +190,16 @@ function updateUser(identifier, data) {
 }
 
 function deleteUser(identifier) {
-  db.run('DELETE FROM users WHERE identifier = ?', [identifier]);
-  db.run('DELETE FROM tasks WHERE user_id = ?', [identifier]);
-  db.run('DELETE FROM records WHERE user_id = ?', [identifier]);
+  db.run('BEGIN');
+  try {
+    db.run('DELETE FROM users WHERE identifier = ?', [identifier]);
+    db.run('DELETE FROM tasks WHERE user_id = ?', [identifier]);
+    db.run('DELETE FROM records WHERE user_id = ?', [identifier]);
+    db.run('COMMIT');
+  } catch (e) {
+    db.run('ROLLBACK');
+    throw e;
+  }
   saveDb();
 }
 
@@ -196,9 +218,16 @@ function renameUserIdentifier(oldId, newId) {
   const user = getUser(oldId);
   if (!user) throw new Error('User not found');
 
-  db.run('UPDATE users SET identifier = ? WHERE identifier = ?', [newId, oldId]);
-  db.run('UPDATE tasks SET user_id = ? WHERE user_id = ?', [newId, oldId]);
-  db.run('UPDATE records SET user_id = ? WHERE user_id = ?', [newId, oldId]);
+  db.run('BEGIN');
+  try {
+    db.run('UPDATE users SET identifier = ? WHERE identifier = ?', [newId, oldId]);
+    db.run('UPDATE tasks SET user_id = ? WHERE user_id = ?', [newId, oldId]);
+    db.run('UPDATE records SET user_id = ? WHERE user_id = ?', [newId, oldId]);
+    db.run('COMMIT');
+  } catch (e) {
+    db.run('ROLLBACK');
+    throw e;
+  }
   saveDb();
 }
 
@@ -235,12 +264,7 @@ function getTasks(userId, date) {
 }
 
 function putTasks(userId, date, tasks) {
-  const existing = getTasks(userId, date);
-  if (existing !== null) {
-    db.run('UPDATE tasks SET tasks_json = ? WHERE user_id = ? AND date = ?', [JSON.stringify(tasks), userId, date]);
-  } else {
-    db.run('INSERT INTO tasks (user_id, date, tasks_json) VALUES (?, ?, ?)', [userId, date, JSON.stringify(tasks)]);
-  }
+  db.run('INSERT OR REPLACE INTO tasks (user_id, date, tasks_json) VALUES (?, ?, ?)', [userId, date, JSON.stringify(tasks)]);
   saveDb();
 }
 
@@ -298,7 +322,6 @@ function putRecord(userId, record) {
       [id, userId, date, JSON.stringify({ ...record, id }), now]);
   }
 
-  pruneOldRecords(userId);
   saveDb();
 }
 
@@ -311,6 +334,14 @@ function pruneOldRecords(userId, days = 90) {
 
 function deleteRecords(userId) {
   db.run('DELETE FROM records WHERE user_id = ?', [userId]);
+  saveDb();
+}
+
+function pruneAllOldRecords(days = 90) {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  db.run("DELETE FROM records WHERE date < ? AND date != ''", [cutoffStr]);
   saveDb();
 }
 
@@ -331,6 +362,7 @@ module.exports = {
   getRecordsByDate,
   putRecord,
   deleteRecords,
+  pruneAllOldRecords,
   getSetting,
   setSetting
 };

@@ -1,5 +1,16 @@
 const fs = require('fs');
 const path = require('path');
+const {
+  escapeHtml,
+  formatPracticeMs,
+  totalPracticeMs,
+  formatSeconds,
+  trainingLabel,
+  memoryReplaySuffix,
+  recordDateKey,
+  cloudTaskText,
+  scoreCloudSchulte
+} = require('./utils');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'public', 'index.html');
 
@@ -85,51 +96,6 @@ function renderPublicUserPage(stored, todayRecords, tasks, records, timeZone) {
 </html>`;
 }
 
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-function formatPracticeMs(ms) {
-  const totalSeconds = Math.round(Number(ms || 0) / 1000);
-  if (totalSeconds < 60) return `${totalSeconds} 秒`;
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return seconds ? `${minutes} 分 ${seconds} 秒` : `${minutes} 分钟`;
-}
-
-function totalPracticeMs(records) {
-  return records.reduce((sum, record) => sum + Math.max(0, Math.round(Number(record && (record.practiceMs || record.timeMs) || 0))), 0);
-}
-
-function formatSeconds(ms) {
-  return (Number(ms || 0) / 1000).toFixed(2);
-}
-
-function trainingLabel(record) {
-  const type = record.type || 'schulte';
-  if (type === 'stroop') return '斯特鲁普';
-  if (type === 'idiom') return '成语训练';
-  if (type === 'poem') return '古诗训练';
-  if (type === 'memory') return '记忆训练';
-  if (type === 'decode') return '译码训练';
-  const size = Number(record.size || 5);
-  return `${size}×${size}${record.reverse ? ' 倒序' : ''}`;
-}
-
-function memoryReplaySuffix(record) {
-  const replays = Math.max(0, Math.round(Number(record && record.replays || 0)));
-  return (record && record.type) === 'memory' && replays > 0 ? `，复现 ${replays} 次` : '';
-}
-
-function recordDateKey(record) {
-  const date = String(record && record.date || '').slice(0, 10);
-  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : '';
-}
-
 function formatRecordTime(iso, timeZone) {
   if (!iso) return '--:--';
   const date = new Date(iso);
@@ -138,26 +104,6 @@ function formatRecordTime(iso, timeZone) {
   const parts = new Intl.DateTimeFormat('zh-CN', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(date);
   const value = Object.fromEntries(parts.map((p) => [p.type, p.value]));
   return `${value.hour}:${value.minute}`;
-}
-
-function cloudTaskText(task) {
-  const mode = task && task.mode || {};
-  return trainingLabel({
-    type: mode.type || task.module,
-    size: mode.size,
-    reverse: mode.reverse,
-    colorInterference: mode.colorInterference,
-    textAnswer: mode.textAnswer,
-    cols: mode.cols
-  });
-}
-
-function scoreCloudSchulte(record, birthDate) {
-  if ((record.type || 'schulte') !== 'schulte') return '';
-  const { calculateAge, scoreSchulteRecord } = require('./utils');
-  const age = calculateAge(birthDate, record.date ? new Date(record.date) : new Date());
-  if (age === null) return '需填写出生日期';
-  return scoreSchulteRecord(record, age);
 }
 
 module.exports = {
