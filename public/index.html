@@ -60,10 +60,9 @@
 
     .title-row {
       display: grid;
-      grid-template-columns: auto auto auto;
+      grid-template-columns: auto minmax(220px, 1fr) auto;
       align-items: center;
       gap: 16px;
-      justify-content: start;
     }
 
     .title-task-strip {
@@ -1347,6 +1346,19 @@
 
       .dialog-actions .tool-button {
         width: 100%;
+      }
+
+      .admin-grid .dialog-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .training-switch {
+        grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+      }
+
+      .user-grid .form-field,
+      .admin-grid .form-field {
+        grid-template-columns: 1fr;
       }
 
       .user-grid,
@@ -2771,7 +2783,6 @@
             <article class="record">
               <div class="mode">${user.username || "未命名"}</div>
               <div><strong>${user.identifier}</strong><time>出生日期${user.birthDate || "未填写"} · 记录 ${payload.recordCount || 0} 条· 任务 ${payload.taskKeyCount || 0} </time></div>
-              <div class="score">KV</div>
             </article>
           `;
           setNotice(adminPanelNotice, "已查询到用户");
@@ -2857,6 +2868,7 @@
       function formatShortDate(iso) {
         const date = new Date(iso);
         return date.toLocaleString("zh-CN", {
+          year: "numeric",
           month: "2-digit",
           day: "2-digit",
           hour: "2-digit",
@@ -3898,6 +3910,7 @@
           <div class="summary-item"><span>用时</span><strong>${formatSeconds(record.timeMs)}s</strong></div>
           <div class="summary-item"><span>错误</span><strong>${record.errors}</strong></div>
           <div class="summary-item"><span>正确</span><strong>${record.accuracy}%</strong></div>
+          <div class="summary-item"><span>日期</span><strong>${formatShortDate(record.date)}</strong></div>
           ${type === "memory" && Number(record.replays || 0) > 0 ? `<div class="summary-item"><span>复现</span><strong>${Number(record.replays || 0)}</strong></div>` : ""}
         `;
         notice.textContent = isBest ? "刷新最快成绩" : "";
