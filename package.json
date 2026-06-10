@@ -1,0 +1,16 @@
+{
+  "name": "schulte-app",
+  "version": "1.0.0",
+  "description": "舒尔特方格专注力训练应用",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "sql.js": "^1.11.0"
+  }
+}

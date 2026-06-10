@@ -1,0 +1,4114 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>专注力训�?/title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f2ea;
+      --paper: #fffdf8;
+      --ink: #1f2a2e;
+      --muted: #677176;
+      --line: #cfd6d2;
+      --soft-line: #e6e1d6;
+      --accent: #177e89;
+      --accent-dark: #0f5c65;
+      --accent-soft: #d9f0f2;
+      --mark: #db6c43;
+      --good: #2f855a;
+      --bad: #bf3f34;
+      --shadow: 0 18px 50px rgba(55, 48, 37, 0.12);
+      --radius: 8px;
+      --cell-gap: clamp(4px, 0.7vw, 7px);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--bg);
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", Arial, sans-serif;
+      letter-spacing: 0;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .app {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 32px;
+    }
+
+    .topbar {
+      display: grid;
+      gap: 14px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--soft-line);
+    }
+
+    .title-row {
+      display: grid;
+      grid-template-columns: auto minmax(220px, 1fr) auto;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .title-task-strip {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .title-task-item {
+      max-width: min(360px, 100%);
+      min-height: 38px;
+      display: inline-grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border: 1px solid rgba(219, 108, 67, 0.55);
+      border-radius: var(--radius);
+      background: #fff4df;
+      color: #753512;
+      box-shadow: 0 8px 20px rgba(219, 108, 67, 0.18);
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+      text-align: left;
+      transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+    }
+
+    .title-task-item:hover {
+      transform: translateY(-1px);
+      border-color: var(--mark);
+      box-shadow: 0 10px 24px rgba(219, 108, 67, 0.26);
+    }
+
+    .title-task-item.done {
+      border-color: rgba(47, 133, 90, 0.55);
+      background: #e7f7e9;
+      color: #1b5d3b;
+      box-shadow: 0 8px 20px rgba(47, 133, 90, 0.16);
+    }
+
+    .title-task-item.notice {
+      grid-template-columns: 1fr;
+      background: var(--mark);
+      border-color: var(--mark);
+      color: #ffffff;
+      cursor: default;
+      box-shadow: 0 10px 28px rgba(219, 108, 67, 0.28);
+    }
+
+    .title-task-item.notice.done {
+      background: var(--good);
+      border-color: var(--good);
+      color: #ffffff;
+      box-shadow: 0 10px 28px rgba(47, 133, 90, 0.24);
+    }
+
+    button.title-task-item.notice {
+      cursor: pointer;
+    }
+
+    .title-task-main,
+    .title-task-count {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      line-height: 1.2;
+    }
+
+    .title-task-main {
+      font-size: 0.88rem;
+    }
+
+    .title-task-count {
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.68);
+      color: inherit;
+      font-size: 0.78rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.5rem, 3vw, 2.25rem);
+      line-height: 1.15;
+      font-weight: 750;
+    }
+
+    .training-menu {
+      display: grid;
+      gap: 10px;
+    }
+
+    .menu-row {
+      display: grid;
+      grid-template-columns: 88px minmax(0, 1fr);
+      align-items: center;
+      gap: 10px;
+    }
+
+    .mode-row:not(:has(.mode-switch:not(.is-hidden))) {
+      display: none;
+    }
+
+    .menu-label {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .training-switch {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
+      padding: 4px;
+      border: 1px solid var(--soft-line);
+      border-radius: var(--radius);
+      background: #fbf7ee;
+    }
+
+    .mode-switch {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+    }
+
+    .training-button,
+    .mode-button,
+    .tool-button,
+    .icon-button {
+      border: 1px solid var(--line);
+      background: var(--paper);
+      color: var(--ink);
+      cursor: pointer;
+      transition: transform 0.14s ease, background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+    }
+
+    .training-button,
+    .mode-button {
+      min-width: 48px;
+      height: 40px;
+      padding: 0 12px;
+      border-radius: var(--radius);
+      font-weight: 700;
+    }
+
+    .training-button {
+      width: 100%;
+    }
+
+    .training-button:hover,
+    .mode-button:hover,
+    .tool-button:hover,
+    .icon-button:hover {
+      transform: translateY(-1px);
+      border-color: var(--accent);
+    }
+
+    .training-button.active,
+    .mode-button.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 28px;
+      align-items: start;
+      padding-top: 24px;
+    }
+
+    .practice {
+      min-width: 0;
+      display: grid;
+      gap: 18px;
+      justify-items: center;
+    }
+
+    .status-strip {
+      width: min(100%, 430px);
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .metric {
+      min-height: 74px;
+      padding: 12px 12px 10px;
+      background: var(--paper);
+      border: 1px solid var(--soft-line);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 24px rgba(55, 48, 37, 0.05);
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 6px;
+      font-size: clamp(1.25rem, 2.7vw, 1.72rem);
+      line-height: 1.05;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .metric.target strong {
+      color: var(--mark);
+    }
+
+    .metric.time strong {
+      color: var(--accent-dark);
+    }
+
+    .board-shell {
+      --board-max: 346px;
+      --shell-pad: clamp(8px, 2vw, 16px);
+      width: min(100%, calc(100vw - 20px), var(--board-max));
+      max-width: 100%;
+      padding: var(--shell-pad);
+      background: var(--paper);
+      border: 1px solid var(--soft-line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .board-shell[data-size="3"] {
+      --board-max: 246px;
+    }
+
+    .board-shell[data-size="4"] {
+      --board-max: 296px;
+    }
+
+    .board-shell[data-size="5"] {
+      --board-max: 346px;
+    }
+
+    .board-shell[data-size="6"] {
+      --board-max: 396px;
+    }
+
+    .board-shell[data-size="7"] {
+      --board-max: 446px;
+    }
+
+    .board-shell[data-training="stroop"] {
+      --board-max: 520px;
+    }
+
+    .board-shell[data-training="poem"] {
+      --board-max: min(620px, calc(100vw - 20px));
+    }
+
+    .board-shell[data-training="decode"] {
+      --board-max: 346px;
+    }
+
+    .board {
+      display: grid;
+      width: 100%;
+      aspect-ratio: 1;
+      gap: var(--cell-gap);
+    }
+
+    .cell {
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      place-items: center;
+      border: 2px solid #2f393c;
+      border-radius: 4px;
+      background: #fffaf0;
+      color: var(--digit-color, #101719);
+      font-weight: 800;
+      font-size: clamp(1.05rem, 6vmin, 2.35rem);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      user-select: none;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+    }
+
+    .board[data-size="6"] .cell,
+    .board[data-size="7"] .cell {
+      font-size: clamp(0.9rem, 5vmin, 1.95rem);
+    }
+
+    .board[data-training="poem"] .cell {
+      font-size: clamp(1rem, 4.6vmin, 1.9rem);
+    }
+
+    .idiom-target {
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      border: 1px solid var(--soft-line);
+      border-radius: var(--radius);
+      background: #fbf7ee;
+      text-align: center;
+    }
+
+    .idiom-target span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.2;
+    }
+
+    .idiom-target strong {
+      display: block;
+      margin-top: 4px;
+      font-size: clamp(1.45rem, 5vw, 2.2rem);
+      line-height: 1.15;
+      letter-spacing: 0.08em;
+    }
+
+    .poem-meta {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.35;
+    }
+
+    .poem-full {
+      margin-top: 14px;
+      padding: 14px;
+      border: 1px solid var(--soft-line);
+      border-radius: var(--radius);
+      background: #fbf7ee;
+      color: var(--ink);
+      font-size: clamp(1rem, 3vw, 1.18rem);
+      line-height: 1.9;
+      text-align: center;
+      white-space: pre-line;
+    }
+
+    .cell:hover {
+      background: #eef7f8;
+      border-color: var(--accent);
+    }
+
+    .cell:active {
+      transform: scale(0.97);
+    }
+
+    .cell.found {
+      color: rgba(31, 42, 46, 0.28);
+      background: #eef1ec;
+      border-color: #b9c4bd;
+      cursor: default;
+    }
+
+    .board[data-training="schulte"] .cell.found,
+    .board[data-training="idiom"] .cell.found,
+    .board[data-training="poem"] .cell.found {
+      color: var(--digit-color, #101719);
+      background: #fffaf0;
+      border-color: #2f393c;
+      cursor: pointer;
+    }
+
+    .cell.hidden-content {
+      background: var(--soft-line);
+      color: transparent;
+      cursor: default;
+    }
+
+    .cell.first-target {
+      background: var(--accent-soft);
+      border: 2px solid var(--accent);
+      font-weight: bold;
+    }
+
+    .cell.wrong {
+      animation: wrongTap 0.3s ease;
+      border-color: var(--bad);
+      background: #fce7e2;
+    }
+
+    .cell.next {
+      outline: 3px solid rgba(219, 108, 67, 0.32);
+      outline-offset: -6px;
+    }
+
+    .cell.memory-correct {
+      background: #d8f3df;
+      border-color: var(--good);
+    }
+
+    .cell.memory-wrong {
+      background: #fce7e2;
+      border-color: var(--bad);
+    }
+
+    .cell.memory-lit {
+      background: #2563eb;
+      border-color: #1d4ed8;
+      box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.2);
+    }
+
+    @keyframes wrongTap {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      50% { transform: translateX(4px); }
+      75% { transform: translateX(-2px); }
+    }
+
+    .stroop-panel {
+      width: 100%;
+      min-height: 380px;
+      display: grid;
+      grid-template-rows: auto auto auto;
+      gap: clamp(28px, 6vw, 54px);
+      align-items: center;
+      justify-items: center;
+    }
+
+    .stroop-progress {
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stroop-word {
+      min-height: 150px;
+      display: grid;
+      place-items: center;
+      font-size: clamp(5rem, 24vw, 9rem);
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    .color-choices {
+      width: min(100%, 560px);
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .color-choice {
+      min-width: 0;
+      height: clamp(58px, 11vw, 78px);
+      border: 2px solid rgba(31, 42, 46, 0.35);
+      border-radius: var(--radius);
+      cursor: pointer;
+      box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.28);
+      transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+    }
+
+    .color-choice:hover {
+      transform: translateY(-2px);
+      border-color: var(--ink);
+    }
+
+    .color-choice:active {
+      transform: scale(0.97);
+    }
+
+    .color-choice.wrong {
+      animation: wrongTap 0.3s ease;
+      box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.28), 0 0 0 3px rgba(191, 63, 52, 0.42);
+    }
+
+    .color-choice.correct {
+      box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.28), 0 0 0 3px rgba(47, 133, 90, 0.38);
+    }
+
+    .decode-panel {
+      width: 100%;
+      display: grid;
+      gap: 18px;
+    }
+
+    .decode-key,
+    .decode-questions,
+    .decode-answer-row {
+      display: grid;
+      gap: 8px;
+    }
+
+    .decode-key {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .decode-key-item,
+    .decode-question {
+      min-width: 0;
+      border: 1px solid var(--soft-line);
+      border-radius: var(--radius);
+      background: #fbf7ee;
+    }
+
+    .decode-key-item {
+      display: grid;
+      gap: 4px;
+      justify-items: center;
+      padding: 8px 4px;
+    }
+
+    .decode-symbol {
+      color: var(--ink);
+      font-size: clamp(1.45rem, 8vw, 2.25rem);
+      line-height: 1;
+      font-weight: 850;
+    }
+
+    .decode-letter {
+      color: var(--accent-dark);
+      font-size: 1rem;
+      line-height: 1;
+      font-weight: 850;
+    }
+
+    .decode-questions {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .decode-question {
+      min-height: 50px;
+      display: grid;
+      place-items: center;
+      padding: 6px;
+      cursor: default;
+    }
+
+    .decode-question.current {
+      outline: 3px solid rgba(47, 133, 90, 0.42);
+      outline-offset: -5px;
+      background: #d8f3df;
+    }
+
+    .decode-question.answered {
+      background: #eef1ec;
+    }
+
+    .decode-question.answered .decode-symbol {
+      color: rgba(31, 42, 46, 0.28);
+    }
+
+    .decode-answer-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .decode-choice {
+      min-width: 0;
+      height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: var(--paper);
+      color: var(--ink);
+      cursor: pointer;
+      font-weight: 800;
+      transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease, color 0.12s ease;
+    }
+
+    .decode-choice:hover {
+      transform: translateY(-1px);
+      border-color: var(--accent);
+    }
+
+    .decode-choice.correct {
+      background: #d8f3df;
+      border-color: var(--good);
+      color: #1b5d3b;
+    }
+
+    .decode-choice.wrong {
+      animation: wrongTap 0.3s ease;
+      background: #fce7e2;
+      border-color: var(--bad);
+      color: var(--bad);
+    }
+
+    .is-hidden {
+      display: none !important;
+    }
+
+    .toolbar {
+      width: min(100%, 680px);
+      display: grid;
+      grid-template-columns: 1fr;
+      align-items: stretch;
+      gap: 12px;
+    }
+
+    .tool-group {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, max-content));
+      align-items: center;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .switch-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+      justify-content: stretch;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tool-button {
+      min-height: 42px;
+      padding: 0 16px;
+      border-radius: var(--radius);
+      font-weight: 700;
+    }
+
+    .tool-button.primary {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: #ffffff;
+    }
+
+    .global-timer {
+      display: grid;
+      grid-template-columns: auto minmax(92px, auto) auto auto;
+      align-items: center;
+      gap: 8px;
+      min-height: 48px;
+      padding: 4px;
+      border: 1px solid var(--soft-line);
+      border-radius: var(--radius);
+      background: #fbf7ee;
+    }
+
+    .global-timer span {
+      padding-left: 8px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+
+    .global-timer strong {
+      min-width: 92px;
+      color: var(--accent-dark);
+      font-size: 1.26rem;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .global-timer .tool-button {
+      min-height: 34px;
+      padding: 0 10px;
+      font-size: 0.9rem;
+    }
+
+    .global-timer .tool-button:first-of-type {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: #ffffff;
+    }
+
+    .switch-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 10px;
+      border: 1px solid var(--soft-line);
+      border-radius: var(--radius);
+      background: #fbf7ee;
+      color: var(--muted);
+      font-size: 0.93rem;
+      white-space: nowrap;
+    }
+
+    .switch-label input {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+    }
+
+    .score-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 16px;
+    }
+
+    .panel {
+      min-width: 0;
+      padding: 18px;
+      background: var(--paper);
+      border: 1px solid var(--soft-line);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 30px rgba(55, 48, 37, 0.06);
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 1.05rem;
+      line-height: 1.2;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .summary-item {
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid var(--soft-line);
+      border-radius: var(--radius);
+      background: #fbf7ee;
+    }
+
+    .summary-item span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+
+    .summary-item strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 1.15rem;
+      font-variant-numeric: tabular-nums;
+      overflow-wrap: anywhere;
+    }
+
+    .record {
+      display: grid;
+      grid-template-columns: 58px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid var(--soft-line);
+      border-radius: var(--radius);
+      background: #fbf7ee;
+    }
+
+    .record .mode {
+      min-width: 0;
+      color: var(--accent-dark);
+      font-weight: 800;
+    }
+
+    .record time {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 0.75rem;
+      overflow-wrap: anywhere;
+    }
+
+    .record .score {
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .empty {
+      margin: 0;
+      padding: 20px 0;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .icon-button {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius);
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .dialog {
+      width: min(820px, calc(100% - 24px));
+      max-height: min(820px, calc(100vh - 32px));
+      padding: 0;
+      border: 1px solid var(--soft-line);
+      border-radius: var(--radius);
+      background: var(--paper);
+      color: var(--ink);
+      box-shadow: var(--shadow);
+    }
+
+    #recordsDialog {
+      overflow: hidden;
+    }
+
+    .dialog::backdrop {
+      background: rgba(31, 42, 46, 0.42);
+    }
+
+    .dialog-inner {
+      max-height: calc(100vh - 32px);
+      padding: 20px;
+    }
+
+    #recordsDialog .dialog-inner {
+      display: flex;
+      flex-direction: column;
+      max-height: min(820px, calc(100vh - 32px));
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    #userCenterDialog {
+      overflow: hidden;
+    }
+
+    #userCenterDialog .dialog-inner {
+      display: flex;
+      flex-direction: column;
+      max-height: min(820px, calc(100vh - 32px));
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    #userCenterDialog .dialog-inner > .panel-header:first-child {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      margin: 0;
+      padding: 0 0 12px;
+      background: var(--paper);
+      border-bottom: 1px solid var(--soft-line);
+    }
+
+    .dialog-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .subsection-header {
+      margin-top: 18px;
+    }
+
+    .full-records {
+      display: grid;
+      align-content: start;
+      gap: 8px;
+      min-height: 0;
+      flex: 1 1 auto;
+      max-height: clamp(160px, 34vh, 420px);
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 4px;
+      scrollbar-gutter: stable;
+    }
+
+    .full-records::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .full-records::-webkit-scrollbar-track {
+      background: #f0eadf;
+      border-radius: 999px;
+    }
+
+    .full-records::-webkit-scrollbar-thumb {
+      background: #b9c4bd;
+      border-radius: 999px;
+    }
+
+    .full-records::-webkit-scrollbar-thumb:hover {
+      background: var(--accent);
+    }
+
+    .notice {
+      min-height: 26px;
+      color: var(--good);
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .notice.error {
+      color: var(--bad);
+    }
+
+    .user-grid,
+    .admin-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .load-user-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+      gap: 12px;
+    }
+
+    .form-field {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .form-field input,
+    .form-field select,
+    .task-input {
+      width: 100%;
+      min-width: 0;
+      min-height: 42px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fffaf0;
+      color: var(--ink);
+      font: inherit;
+    }
+
+    .profile-meta {
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    .task-panel {
+      display: grid;
+      gap: 10px;
+    }
+
+    .task-config-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(82px, 1fr));
+      gap: 10px;
+      align-items: end;
+      padding: 10px;
+      border: 1px solid var(--soft-line);
+      border-radius: var(--radius);
+      background: #fbf7ee;
+    }
+
+    .daily-task-row {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1.25fr) minmax(78px, 0.35fr) auto;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid var(--soft-line);
+      border-radius: var(--radius);
+      background: #fbf7ee;
+    }
+
+    .daily-task-row input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--accent);
+    }
+
+    .daily-task-row.done .task-input {
+      color: var(--muted);
+      text-decoration: line-through;
+    }
+
+    .daily-score-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .daily-score-list {
+      display: grid;
+      gap: 8px;
+      max-height: 260px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .score-rating {
+      color: var(--mark);
+      font-weight: 800;
+    }
+
+    .admin-trigger-title {
+      cursor: default;
+      user-select: none;
+    }
+
+    @media (max-width: 920px) {
+      .title-row {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+      }
+
+      .title-task-strip {
+        width: 100%;
+      }
+
+      .global-timer {
+        width: 100%;
+        grid-template-columns: auto minmax(92px, 1fr) auto auto;
+      }
+
+      .workspace {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .score-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .dialog {
+        width: min(760px, calc(100% - 20px));
+      }
+    }
+
+    @media (max-width: 680px) {
+      .app {
+        width: min(100% - 16px, 1180px);
+        padding-top: 14px;
+      }
+
+      .topbar {
+        gap: 12px;
+      }
+
+      .training-switch,
+      .global-timer {
+        width: 100%;
+      }
+
+      .menu-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+
+      .menu-label {
+        padding-left: 2px;
+      }
+
+      .training-switch {
+        grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+      }
+
+      .training-button {
+        width: 100%;
+      }
+
+      .mode-switch {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(58px, 1fr));
+        justify-content: flex-start;
+        gap: 6px;
+      }
+
+      .mode-button {
+        min-width: 0;
+        width: 100%;
+        height: 38px;
+        padding: 0 4px;
+        font-size: 0.92rem;
+      }
+
+      .metric {
+        min-height: 66px;
+        padding: 10px;
+      }
+
+      .status-strip {
+        width: min(100%, 390px);
+        gap: 8px;
+      }
+
+      .practice {
+        gap: 14px;
+      }
+
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .tool-group,
+      .switch-group,
+      .tool-button {
+        width: 100%;
+      }
+
+      .tool-group {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .switch-group {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        justify-content: stretch;
+        gap: 8px;
+      }
+
+      .global-timer {
+        display: grid;
+        grid-template-columns: minmax(72px, 1fr) auto auto auto;
+      }
+
+      .global-timer .tool-button {
+        width: auto;
+      }
+
+      .switch-label {
+        justify-content: center;
+      }
+
+      .record {
+        grid-template-columns: 54px minmax(0, 1fr);
+      }
+
+      .record .score {
+        grid-column: 2;
+      }
+
+      .dialog {
+        width: calc(100% - 16px);
+        max-height: calc(100dvh - 16px);
+      }
+
+      .dialog-inner {
+        max-height: calc(100dvh - 16px);
+        padding: 14px;
+      }
+
+      #recordsDialog .dialog-inner {
+        max-height: calc(100dvh - 16px);
+      }
+
+      .panel {
+        padding: 14px;
+      }
+
+      .full-records {
+        max-height: clamp(140px, 30dvh, 300px);
+      }
+
+      .decode-key {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .decode-questions {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .dialog-actions .tool-button {
+        width: auto;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .app {
+        width: min(100% - 12px, 1180px);
+      }
+
+      .workspace {
+        padding-top: 16px;
+      }
+
+      .board-shell {
+        width: min(100%, calc(100vw - 12px), var(--board-max));
+      }
+
+      .status-strip {
+        gap: 6px;
+      }
+
+      .metric strong {
+        font-size: 1.18rem;
+      }
+
+      .metric span {
+        font-size: 0.72rem;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .tool-group {
+        grid-template-columns: 1fr;
+      }
+
+      .switch-group {
+        grid-template-columns: 1fr;
+      }
+
+      .global-timer {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .global-timer span,
+      .global-timer strong {
+        grid-column: 1 / -1;
+      }
+
+      .global-timer .tool-button {
+        width: 100%;
+      }
+
+      .decode-key,
+      .decode-questions,
+      .decode-answer-row {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .dialog {
+        width: calc(100% - 10px);
+        max-height: calc(100dvh - 10px);
+      }
+
+      .dialog-inner {
+        max-height: calc(100dvh - 10px);
+        padding: 10px;
+      }
+
+      #recordsDialog .dialog-inner {
+        max-height: calc(100dvh - 10px);
+      }
+
+      .panel-header {
+        align-items: flex-start;
+      }
+
+      .record {
+        grid-template-columns: minmax(0, 1fr) auto;
+      }
+
+      .record .mode,
+      .record .score {
+        grid-column: auto;
+      }
+
+      .record > div:nth-child(2) {
+        grid-column: 1 / -1;
+      }
+
+      .record time {
+        font-size: 0.72rem;
+      }
+
+      .dialog-actions {
+        justify-content: stretch;
+      }
+
+      .dialog-actions .tool-button {
+        width: 100%;
+      }
+
+      .user-grid,
+      .admin-grid,
+      .load-user-row,
+      .task-config-grid,
+      .daily-task-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="title-row">
+        <h1 id="appTitle" class="admin-trigger-title">专注力训�?/h1>
+        <div class="title-task-strip" id="titleTaskStrip" aria-live="polite"></div>
+        <div class="global-timer" aria-label="训练计时">
+          <span>训练时长</span>
+          <strong id="sessionTimeText">00:00:00</strong>
+          <button class="tool-button" type="button" id="sessionStartButton">开始计�?/button>
+          <button class="tool-button" type="button" id="sessionStopButton" disabled>结束计时</button>
+        </div>
+      </div>
+      <div class="training-menu" aria-label="训练菜单">
+        <div class="menu-row">
+          <span class="menu-label">训练模块</span>
+          <nav class="training-switch" aria-label="训练模式">
+            <button class="training-button active" type="button" data-training="schulte">舒尔特方�?/button>
+            <button class="training-button" type="button" data-training="stroop">斯特鲁普</button>
+            <button class="training-button" type="button" data-training="idiom">成语训练</button>
+            <button class="training-button" type="button" data-training="poem">古诗训练</button>
+            <button class="training-button" type="button" data-training="memory">记忆训练</button>
+            <button class="training-button" type="button" data-training="decode">译码训练</button>
+          </nav>
+        </div>
+        <div class="menu-row mode-row">
+          <span class="menu-label">从属模式</span>
+          <nav class="mode-switch" id="sizeSwitch" aria-label="方格模式">
+            <button class="mode-button" type="button" data-size="3">3×3</button>
+            <button class="mode-button" type="button" data-size="4">4×4</button>
+            <button class="mode-button active" type="button" data-size="5">5×5</button>
+            <button class="mode-button" type="button" data-size="6">6×6</button>
+            <button class="mode-button" type="button" data-size="7">7×7</button>
+          </nav>
+          <nav class="mode-switch is-hidden" id="idiomSizeSwitch" aria-label="成语方格模式">
+            <button class="mode-button active" type="button" data-idiom-cols="4">4×4</button>
+            <button class="mode-button" type="button" data-idiom-cols="5">4×5</button>
+            <button class="mode-button" type="button" data-idiom-cols="6">4×6</button>
+            <button class="mode-button" type="button" data-idiom-cols="7">4×7</button>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <section class="workspace" aria-label="训练工作区\">
+      <div class="practice">
+        <section class="status-strip" aria-label="当前训练状态\">
+          <div class="metric time">
+            <span>用时</span>
+            <strong id="timeText">0.00</strong>
+          </div>
+          <div class="metric target">
+            <span id="targetLabel">下一个数�?/span>
+            <strong id="targetText">1</strong>
+          </div>
+          <div class="metric">
+            <span>错误</span>
+            <strong id="errorText">0</strong>
+          </div>
+        </section>
+
+        <section class="board-shell" id="boardShell" data-size="5" aria-label="舒尔特方格\">
+          <div class="idiom-target is-hidden" id="idiomTarget">
+            <span>目标成语</span>
+            <strong id="idiomText">安居乐业</strong>
+            <small class="poem-meta is-hidden" id="poemMeta"></small>
+          </div>
+          <div class="board" id="board" data-size="5"></div>
+          <div class="poem-full is-hidden" id="poemFullText"></div>
+          <div class="stroop-panel is-hidden" id="stroopPanel" aria-label="斯特鲁普效应训练">
+            <div class="stroop-progress" id="stroopProgress">1 / 25</div>
+            <div class="stroop-word" id="stroopWord">�?/div>
+            <div class="color-choices" id="colorChoices"></div>
+          </div>
+          <div class="decode-panel is-hidden" id="decodePanel" aria-label="译码训练">
+            <div class="decode-key" id="decodeKey"></div>
+            <div class="decode-questions" id="decodeQuestions"></div>
+            <div class="decode-answer-row" id="decodeAnswerPad"></div>
+          </div>
+        </section>
+
+        <div class="toolbar">
+          <div class="tool-group">
+            <button class="tool-button primary" type="button" id="resetButton">重置方格</button>
+            <button class="tool-button primary is-hidden" type="button" id="memoryStartButton">开始记�?/button>
+            <button class="tool-button is-hidden" type="button" id="memoryReplayButton" disabled>复现</button>
+            <button class="tool-button is-hidden" type="button" id="poemToggleButton" aria-expanded="false">显示全诗</button>
+            <button class="tool-button" type="button" id="recordsButton">成绩面板</button>
+            <button class="tool-button" type="button" id="userCenterButton">用户中心</button>
+          </div>
+          <div class="switch-group" aria-label="训练开关\">
+            <label class="switch-label" id="hintWrap">
+              <input type="checkbox" id="hintToggle">
+              <span>高亮下一�?/span>
+            </label>
+            <label class="switch-label" id="reverseOrderWrap">
+              <input type="checkbox" id="reverseOrderToggle">
+              <span>倒序</span>
+            </label>
+            <label class="switch-label" id="colorInterferenceWrap">
+              <input type="checkbox" id="colorInterferenceToggle">
+              <span>颜色干扰</span>
+            </label>
+            <label class="switch-label is-hidden" id="decodeReverseWrap">
+              <input type="checkbox" id="decodeReverseToggle">
+              <span>&#20498;&#35793;</span>
+            </label>
+            <label class="switch-label is-hidden" id="stroopTextAnswerWrap">
+              <input type="checkbox" id="stroopTextAnswerToggle">
+              <span>&#31572;&#25991;&#23383;&#31034;&#24847;</span>
+            </label>
+          </div>
+        </div>
+        <div class="notice" id="notice" aria-live="polite"></div>
+      </div>
+    </section>
+  </main>
+
+  <dialog class="dialog" id="resultDialog">
+    <div class="dialog-inner">
+      <div class="panel-header">
+        <h2>完成本轮训练</h2>
+        <button class="icon-button" type="button" id="closeResultButton" aria-label="关闭">×</button>
+      </div>
+      <div class="summary-grid" id="resultSummary"></div>
+      <div class="dialog-actions">
+        <button class="tool-button primary" type="button" id="againButton">再练一�?/button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="dialog" id="recordsDialog">
+    <div class="dialog-inner">
+      <div class="panel-header">
+        <h2>成绩面板</h2>
+        <button class="icon-button" type="button" id="closeRecordsButton" aria-label="关闭">×</button>
+      </div>
+      <div class="score-panel">
+        <section class="panel">
+          <div class="panel-header">
+            <h2>成绩概览</h2>
+          </div>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <span>练习次数</span>
+              <strong id="countText">0</strong>
+            </div>
+            <div class="summary-item">
+              <span>平均用时</span>
+              <strong id="avgText">--</strong>
+            </div>
+            <div class="summary-item">
+              <span>最快用�?/span>
+              <strong id="fastText">--</strong>
+            </div>
+            <div class="summary-item">
+              <span>平均错误</span>
+              <strong id="avgErrorText">--</strong>
+            </div>
+          </div>
+        </section>
+
+      </div>
+      <div class="panel-header subsection-header">
+        <h2>全部成绩记录</h2>
+        <button class="icon-button" type="button" id="clearAllButton" aria-label="清空全部记录">×</button>
+      </div>
+      <div class="full-records" id="fullRecords"></div>
+      <div class="notice" id="recordsNotice" aria-live="polite"></div>
+      <div class="dialog-actions">
+        <button class="tool-button" type="button" id="closeRecordsBottomButton">关闭</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="dialog" id="userCenterDialog">
+    <div class="dialog-inner">
+      <div class="panel-header">
+        <h2>用户中心</h2>
+        <button class="icon-button" type="button" id="closeUserCenterButton" aria-label="关闭">×</button>
+      </div>
+      <section class="panel task-panel">
+        <div class="panel-header">
+          <h2>用户资料</h2>
+          <div class="dialog-actions"><button class="tool-button" type="button" id="logoutUserButton">登出</button><button class="tool-button primary" type="button" id="saveUserButton">保存用户</button></div>
+        </div>
+        <div class="user-grid">
+          <label class="form-field">用户�?input id="usernameInput" type="text" maxlength="24" autocomplete="name"></label>
+          <label class="form-field">识别�?input id="identifierInput" type="text" maxlength="32" autocomplete="off" inputmode="latin" pattern="[A-Za-z0-9]+"></label>
+          <label class="form-field">出生日期<input id="birthDateInput" type="date"></label>
+          <label class="form-field">授权�?input id="authCodeInput" type="password" autocomplete="one-time-code"></label>
+          <label class="form-field">注册/改密密码<input id="userPasswordInput" type="password" autocomplete="new-password"></label>
+        </div>
+        <div class="load-user-row">
+          <label class="form-field">通过识别码加载同步数�?input id="loadIdentifierInput" type="text" maxlength="32" autocomplete="off" inputmode="latin" pattern="[A-Za-z0-9]+"></label>
+          <label class="form-field">登录密码<input id="loginPasswordInput" type="password" autocomplete="current-password"></label>
+          <button class="tool-button" type="button" id="loadUserButton">加载同步数据</button>
+          <button class="tool-button primary" type="button" id="loginUserButton">密码登录</button>
+        </div>
+        <div class="profile-meta" id="userStatusText">未创建用户时，网页训练与本地成绩仍可正常使用�?/div>
+        <div class="notice" id="userCenterNotice" aria-live="polite"></div>
+      </section>
+      <section class="panel task-panel subsection-header">
+        <div class="panel-header">
+          <h2>每日任务设置</h2>
+          <span class="profile-meta" id="taskDateText"></span>
+        </div>
+        <div class="task-config-grid">
+          <label class="form-field">模块
+            <select id="taskModuleSelect">
+              <option value="schulte">舒尔特方�?/option>
+              <option value="stroop">斯特鲁普</option>
+              <option value="idiom">成语训练</option>
+              <option value="poem">古诗训练</option>
+              <option value="memory">记忆训练</option>
+              <option value="decode">译码训练</option>
+            </select>
+          </label>
+          <label class="form-field" id="taskSizeWrap">规格
+            <select id="taskSizeSelect">
+              <option value="3">3×3</option>
+              <option value="4">4×4</option>
+              <option value="5" selected>5×5</option>
+              <option value="6">6×6</option>
+              <option value="7">7×7</option>
+            </select>
+          </label>
+          <label class="form-field" id="taskReverseWrap">顺序
+            <select id="taskReverseSelect">
+              <option value="false">正序</option>
+              <option value="true">倒序</option>
+            </select>
+          </label>
+          <label class="form-field" id="taskColorWrap">颜色干扰
+            <select id="taskColorSelect">
+              <option value="false">�?/option>
+              <option value="true">�?/option>
+            </select>
+          </label>
+          <label class="form-field" id="taskIdiomWrap">成语数量
+            <select id="taskIdiomSelect">
+              <option value="4">4×4</option>
+              <option value="5">4×5</option>
+              <option value="6">4×6</option>
+              <option value="7">4×7</option>
+            </select>
+          </label>
+          <label class="form-field" id="taskStroopAnswerWrap">答题规则
+            <select id="taskStroopAnswerSelect">
+              <option value="false">按字色作�?/option>
+              <option value="true">按文字作�?/option>
+            </select>
+          </label>
+          <label class="form-field" id="taskDecodeReverseWrap">译码方向
+            <select id="taskDecodeReverseSelect">
+              <option value="false">符号 �?字母</option>
+              <option value="true">字母 �?符号</option>
+            </select>
+          </label>
+          <label class="form-field">次数<input id="taskCountInput" type="number" min="1" max="50" value="1" inputmode="numeric"></label>
+          <button class="tool-button primary" type="button" id="addTaskButton">添加任务</button>
+        </div>
+        <div class="full-records" id="dailyTaskList"></div>
+      </section>
+      <section class="panel task-panel subsection-header">
+        <div class="panel-header">
+          <h2>每日成绩</h2>
+          <div class="daily-score-toolbar">
+            <input class="task-input" id="scoreDateInput" type="date">
+            <button class="tool-button" type="button" id="refreshDailyScoresButton">查看</button>
+          </div>
+        </div>
+        <div class="daily-score-list" id="dailyScoreList"></div>
+      </section>
+    </div>
+  </dialog>
+
+  <dialog class="dialog" id="adminLoginDialog">
+    <div class="dialog-inner">
+      <div class="panel-header">
+        <h2>管理员入�?/h2>
+        <button class="icon-button" type="button" id="closeAdminLoginButton" aria-label="关闭">×</button>
+      </div>
+      <section class="panel task-panel">
+        <label class="form-field">管理密码<input id="adminPasswordInput" type="password" autocomplete="current-password"></label>
+        <div class="dialog-actions">
+          <button class="tool-button primary" type="button" id="adminLoginButton">进入管理界面</button>
+        </div>
+        <div class="notice" id="adminLoginNotice" aria-live="polite"></div>
+      </section>
+    </div>
+  </dialog>
+
+  <dialog class="dialog" id="adminPanelDialog">
+    <div class="dialog-inner">
+      <div class="panel-header">
+        <h2>管理界面</h2>
+        <button class="icon-button" type="button" id="closeAdminPanelButton" aria-label="关闭">×</button>
+      </div>
+      <section class="panel task-panel">
+        <div class="admin-grid">
+          <label class="form-field">用户<select id="adminIdentifierInput"><option value="">正在加载用户...</option></select></label>
+          <div class="dialog-actions">
+            <button class="tool-button" type="button" id="adminLookupButton">查询用户</button>
+            <label class="form-field">新密�?input id="adminNewPasswordInput" type="password" autocomplete="new-password"></label>
+            <button class="tool-button" type="button" id="adminResetPasswordButton">重置密码</button>
+            <button class="tool-button primary" type="button" id="adminDeleteButton">删除用户数据</button>
+          </div>
+        </div>
+        <div class="full-records" id="adminUserPreview"></div>
+        <div class="notice" id="adminPanelNotice" aria-live="polite"></div>
+      </section>
+    </div>
+  </dialog>
+
+  <script>
+    (() => {
+      const storageKey = "schulte.records.v1";
+      const cloudUserStorageKey = "schulte.cloudUser.v1";
+      const loadedUserStorageKey = "schulte.loadedUser.v1";
+      const board = document.getElementById("board");
+      const boardShell = document.getElementById("boardShell");
+      const stroopPanel = document.getElementById("stroopPanel");
+      const stroopProgress = document.getElementById("stroopProgress");
+      const stroopWord = document.getElementById("stroopWord");
+      const colorChoices = document.getElementById("colorChoices");
+      const decodePanel = document.getElementById("decodePanel");
+      const decodeKey = document.getElementById("decodeKey");
+      const decodeQuestions = document.getElementById("decodeQuestions");
+      const decodeAnswerPad = document.getElementById("decodeAnswerPad");
+      const timeText = document.getElementById("timeText");
+      const targetLabel = document.getElementById("targetLabel");
+      const targetText = document.getElementById("targetText");
+      const errorText = document.getElementById("errorText");
+      const countText = document.getElementById("countText");
+      const avgText = document.getElementById("avgText");
+      const fastText = document.getElementById("fastText");
+      const avgErrorText = document.getElementById("avgErrorText");
+      const fullRecords = document.getElementById("fullRecords");
+      const notice = document.getElementById("notice");
+      const recordsNotice = document.getElementById("recordsNotice");
+      const resultDialog = document.getElementById("resultDialog");
+      const recordsDialog = document.getElementById("recordsDialog");
+      const resultSummary = document.getElementById("resultSummary");
+      const hintToggle = document.getElementById("hintToggle");
+      const hintWrap = document.getElementById("hintWrap");
+      const colorInterferenceToggle = document.getElementById("colorInterferenceToggle");
+      const colorInterferenceWrap = document.getElementById("colorInterferenceWrap");
+      const decodeReverseToggle = document.getElementById("decodeReverseToggle");
+      const decodeReverseWrap = document.getElementById("decodeReverseWrap");
+      const stroopTextAnswerToggle = document.getElementById("stroopTextAnswerToggle");
+      const stroopTextAnswerWrap = document.getElementById("stroopTextAnswerWrap");
+      const reverseOrderToggle = document.getElementById("reverseOrderToggle");
+      const reverseOrderWrap = document.getElementById("reverseOrderWrap");
+      const sessionTimeText = document.getElementById("sessionTimeText");
+      const sessionStartButton = document.getElementById("sessionStartButton");
+      const sessionStopButton = document.getElementById("sessionStopButton");
+      const resetButton = document.getElementById("resetButton");
+      const memoryStartButton = document.getElementById("memoryStartButton");
+      const memoryReplayButton = document.getElementById("memoryReplayButton");
+      const poemToggleButton = document.getElementById("poemToggleButton");
+      const sizeSwitch = document.getElementById("sizeSwitch");
+      const idiomSizeSwitch = document.getElementById("idiomSizeSwitch");
+      const idiomTarget = document.getElementById("idiomTarget");
+      const idiomText = document.getElementById("idiomText");
+      const poemMeta = document.getElementById("poemMeta");
+      const poemFullText = document.getElementById("poemFullText");
+      const trainingButtons = [...document.querySelectorAll(".training-button")];
+      const modeButtons = [...document.querySelectorAll(".mode-button")];
+      const idiomModeButtons = [...document.querySelectorAll("[data-idiom-cols]")];
+      const appTitle = document.getElementById("appTitle");
+      const titleTaskStrip = document.getElementById("titleTaskStrip");
+      const userCenterButton = document.getElementById("userCenterButton");
+      const userCenterDialog = document.getElementById("userCenterDialog");
+      const closeUserCenterButton = document.getElementById("closeUserCenterButton");
+      const saveUserButton = document.getElementById("saveUserButton");
+      const logoutUserButton = document.getElementById("logoutUserButton");
+      const usernameInput = document.getElementById("usernameInput");
+      const identifierInput = document.getElementById("identifierInput");
+      const birthDateInput = document.getElementById("birthDateInput");
+      const authCodeInput = document.getElementById("authCodeInput");
+      const userPasswordInput = document.getElementById("userPasswordInput");
+      const loadIdentifierInput = document.getElementById("loadIdentifierInput");
+      const loadUserButton = document.getElementById("loadUserButton");
+      const loginPasswordInput = document.getElementById("loginPasswordInput");
+      const loginUserButton = document.getElementById("loginUserButton");
+      const userStatusText = document.getElementById("userStatusText");
+      const userCenterNotice = document.getElementById("userCenterNotice");
+      const taskDateText = document.getElementById("taskDateText");
+      const taskModuleSelect = document.getElementById("taskModuleSelect");
+      const taskSizeWrap = document.getElementById("taskSizeWrap");
+      const taskSizeSelect = document.getElementById("taskSizeSelect");
+      const taskReverseWrap = document.getElementById("taskReverseWrap");
+      const taskReverseSelect = document.getElementById("taskReverseSelect");
+      const taskColorWrap = document.getElementById("taskColorWrap");
+      const taskColorSelect = document.getElementById("taskColorSelect");
+      const taskIdiomWrap = document.getElementById("taskIdiomWrap");
+      const taskIdiomSelect = document.getElementById("taskIdiomSelect");
+      const taskStroopAnswerWrap = document.getElementById("taskStroopAnswerWrap");
+      const taskStroopAnswerSelect = document.getElementById("taskStroopAnswerSelect");
+      const taskDecodeReverseWrap = document.getElementById("taskDecodeReverseWrap");
+      const taskDecodeReverseSelect = document.getElementById("taskDecodeReverseSelect");
+      const taskCountInput = document.getElementById("taskCountInput");
+      const addTaskButton = document.getElementById("addTaskButton");
+      const dailyTaskList = document.getElementById("dailyTaskList");
+      const scoreDateInput = document.getElementById("scoreDateInput");
+      const refreshDailyScoresButton = document.getElementById("refreshDailyScoresButton");
+      const dailyScoreList = document.getElementById("dailyScoreList");
+      const adminLoginDialog = document.getElementById("adminLoginDialog");
+      const adminPanelDialog = document.getElementById("adminPanelDialog");
+      const closeAdminLoginButton = document.getElementById("closeAdminLoginButton");
+      const closeAdminPanelButton = document.getElementById("closeAdminPanelButton");
+      const adminPasswordInput = document.getElementById("adminPasswordInput");
+      const adminLoginButton = document.getElementById("adminLoginButton");
+      const adminLoginNotice = document.getElementById("adminLoginNotice");
+      const adminIdentifierInput = document.getElementById("adminIdentifierInput");
+      const adminLookupButton = document.getElementById("adminLookupButton");
+      const adminDeleteButton = document.getElementById("adminDeleteButton");
+      const adminNewPasswordInput = document.getElementById("adminNewPasswordInput");
+      const adminResetPasswordButton = document.getElementById("adminResetPasswordButton");
+      const adminUserPreview = document.getElementById("adminUserPreview");
+      const adminPanelNotice = document.getElementById("adminPanelNotice");
+      const schulteDigitColors = ["#101719", "#d83b31", "#d8a100", "#21865a", "#2563eb", "#7c3aed"];
+      const stroopColors = [
+        { key: "black", name: "黑\", value: "#101719" },
+        { key: "red", name: "红\", value: "#d83b31" },
+        { key: "green", name: "绿\", value: "#21865a" },
+        { key: "yellow", name: "黄\", value: "#d8a100" },
+        { key: "blue", name: "蓝\", value: "#2563eb" },
+        { key: "purple", name: "紫\", value: "#7c3aed" }
+      ];
+      const idiomList = "安居乐业|安分守己|按部就班|暗度陈仓|八面玲珑|八仙过海|白手起家|百发百中|百花齐放|百折不挠|百依百顺|半途而废|包罗万象|杯弓蛇影|背水一战|本末倒置|比比皆是|闭门思过|闭月羞花|变本加厉|标新立异|兵贵神速|兵荒马乱|兵强马壮|宾至如归|别出心裁|别具匠心|冰清玉洁|博大精深|博古通今|不耻下问|不辞而别|不动声色|不分彼此|不寒而栗|不慌不忙|不即不离|不计其数|不假思索|不进则退|不堪设想|不可思议|不劳而获|不露声色|不谋而合|不偏不倚|不屈不挠|不容置疑|不三不四|不声不响|不识抬举|不思进取|不痛不痒|不屑一顾|不言而喻|不遗余力|不约而同|不知不觉|不自量力|步步高升|步步为营|才高八斗|才华横溢|才疏学浅|残兵败将|沧海一粟|草木皆兵|插翅难飞|姹紫嫣红|长驱直入|畅所欲言|朝三暮四|车水马龙|乘风破浪|乘虚而入|称心如意|城门失火|承前启后|惩恶扬善|承上启下|趁火打劫|叱咤风云|迟疑不决|赤胆忠心|赤手空拳|出类拔萃|出其不意|出人头地|出神入化|处心积虑|触类旁通|川流不息|垂头丧气|春华秋实|唇枪舌剑|唇亡齿寒|从容不迫|粗枝大叶|错综复杂|大刀阔斧|大公无私|大惊失色|大快人心|大名鼎鼎|大器晚成|大同小异|大义灭亲|胆大包天|胆战心惊|当机立断|道听途说|得寸进尺|得过且过|登峰造极|等量齐观|滴水穿石|颠倒黑白|顶天立地|东山再起|斗志昂扬|独具匠心|独树一帜|独一无二|独占鳌头|短兵相接|对答如流|对牛弹琴|多此一举|多多益善|多管齐下|多姿多彩|额手称庆|耳濡目染|耳熟能详|翻山越岭|翻天覆地|返老还童|防微杜渐|飞黄腾达|飞沙走石|废寝忘食|分秒必争|奋不顾身|粉身碎骨|风吹草动|风和日丽|风平浪静|风起云涌|风轻云淡|风雨无阻|风雨同舟|锋芒毕露|峰回路转|否极泰来|付之一炬|付之一笑|改过自新|甘拜下风|感恩戴德|高瞻远瞩|高枕无忧|格格不入|各奔东西|各持己见|各抒己见|各有千秋|根深蒂固|功成名就|功德无量|功亏一篑|供不应求|孤军奋战|孤陋寡闻|古往今来|故步自封|固若金汤|顾此失彼|光彩夺目|光明磊落|光天化日|鬼斧神工|鬼哭狼嚎|国泰民安|海阔天空|海市蜃楼|含辛茹苦|含苞待放|汗流浃背|好高骛远|好景不长|好逸恶劳|和蔼可亲|和风细雨|鹤立鸡群|横冲直撞|横七竖八|横扫千军|轰轰烈烈|红红火火|后来居上|花好月圆|花团锦簇|话中有话|画龙点睛|画蛇添足|患得患失|欢天喜地|恍然大悟|挥金如土|挥洒自如|挥之不去|讳疾忌医|昏天黑地|浑然一体|豁然开朗|祸不单行|祸从口出|鸡飞蛋打|鸡毛蒜皮|鸡犬不宁|鸡犬升天|极目远眺|急功近利|急中生智|集思广益|假公济私|见多识广|见风使舵|见机行事|见义勇为|洁身自好|捷足先登|截然不同|竭尽全力|接二连三|接踵而至|金碧辉煌|金刚怒目|金科玉律|金枝玉叶|津津有味|筋疲力尽|锦上添花|谨小慎微|尽善尽美|尽心尽力|近水楼台|惊弓之鸟|惊涛骇浪|精兵简政|精神抖擞|精益求精|井然有序|迥然不同|久负盛名|久经考验|酒足饭饱|旧病复发|举世闻名|举一反三|居安思危|鞠躬尽瘁|据理力争|卷土重来|决一死战|绝处逢生|绝无仅有|君子好逑|开诚布公|开门见山|开天辟地|慷慨解囊|慷慨激昂|刻不容缓|刻舟求剑|空前绝后|空中楼阁|口碑载道|口干舌燥|口是心非|扣人心弦|夸夸其谈|快马加鞭|脍炙人口|溃不成军|困兽犹斗|滥竽充数|狼狈不堪|狼吞虎咽|劳苦功高|乐不可支|乐此不疲|乐不思蜀|冷若冰霜|理直气壮|里应外合|力不从心|力挽狂澜|历历在目|连绵不断|连篇累牍|两全其美|量力而行|了如指掌|聊胜于无|料事如神|临危不惧|淋漓尽致|琳琅满目|流连忘返|流芳百世|流言蜚语|龙飞凤舞|龙马精神|龙争虎斗|炉火纯青|路不拾遗|乱七八糟|洛阳纸贵|屡见不鲜|马到成功|马不停蹄|满城风雨|满腹经纶|满面春风|漫不经心|毛遂自荐|眉飞色舞|美不胜收|美轮美奂|门当户对|门庭若市|闷闷不乐|迷途知返|密不透风|名副其实|名列前茅|名正言顺|妙笔生花|妙手回春|明辨是非|明察秋毫|明目张胆|明争暗斗|摩拳擦掌|墨守成规|默默无闻|目不转睛|目瞪口呆|南辕北辙|难分难解|难能可贵|难舍难分|难言之隐|鸟语花香|宁缺毋滥|牛刀小试|牛头马面|呕心沥血|排山倒海|抛砖引玉|旁若无人|旁敲侧击|披荆斩棘|披星戴月|迫不及待|破釜沉舟|破镜重圆|破涕为笑|品学兼优|平步青云|平淡无奇|平心静气|平易近人|扑朔迷离|七嘴八舌|气喘吁吁|气急败坏|气势磅礴|气壮山河|千变万化|千差万别|千锤百炼|千方百计|千古绝唱|千军万马|千里迢迢|千载难逢|前车之鉴|前赴后继|前呼后拥|前所未有|潜移默化|强词夺理|强弩之末|锲而不舍|秦晋之好|青出于蓝|青黄不接|轻车熟路|轻而易举|轻歌曼舞|情不自禁|情同手足|情投意合|穷途末路|穷凶极恶|求同存异|取长补短|取而代之|曲高和寡|曲径通幽|全力以赴|全心全意|拳打脚踢|鹊巢鸠占|热火朝天|热泪盈眶|热血沸腾|人才辈出|人浮于事|人山人海|人声鼎沸|人心所向|忍气吞声|忍辱负重|任劳任怨|任重道远|如虎添翼|如履薄冰|如梦初醒|如日中天|如鱼得水|如坐针毡|若即若离|若无其事|塞翁失马|三长两短|三顾茅庐|三令五申|三思而行|三头六臂|三心二意|杀鸡儆猴|杀气腾腾|煞费苦心|山清水秀|山穷水尽|上行下效|舍己为人|舍近求远|深入浅出|身经百战|声东击西|生机勃勃|生龙活虎|生死攸关|生生不息|盛气凌人|失魂落魄|失之交臂|实事求是|拾金不昧|史无前例|始终如一|手到擒来|手忙脚乱|手无寸铁|手舞足蹈|守株待兔|首屈一指|首尾相连|鼠目寸光|数不胜数|水到渠成|水落石出|顺手牵羊|顺理成章|说三道四|说一不二|死里逃生|四面八方|随波逐流|随心所欲|随遇而安|所向披靡|索然无味|太平盛世|贪得无厌|贪生怕死|谈笑风生|谈天说地|滔滔不绝|桃李满门|挑肥拣瘦|铁石心肠|体贴入微|天长地久|天翻地覆|天寒地冻".split("|");
+      const stroopTotal = 25;
+      const decodeLetters = ["A", "B", "D", "E", "a", "b", "d", "e"];
+      const decodeSymbols = [..."₪௹▢▥▨▬▭▣▦▰▱◀▶◁▷▲△◆◇◈●◙▼▽○◍◓◚◉◎◒◛◖◗◤◥◐◑◣◢◕◔◧◨◲◱◳◰◭◮◩◪ↀↈↂ⨶⨷⨸⩚⩛⩤⩥⫏⫒⫓⫖⫔⫸⫷⿺⿹"];
+      const decodeTotal = 24;
+      const memorySize = 5;
+      const memoryTotalRounds = 10;
+      const memoryPreviewMs = 3000;
+      const fallbackPoemSource = `村居
+�?高鼎
+草长莺飞二月天，
+拂堤杨柳醉春烟。\n儿童散学归来早，
+忙趁东风放纸鸢。\n###***
+咏柳
+�?贺知章\n碧玉妆成一树高，\n万条垂下绿丝绦。\n不知细叶谁裁出，
+二月春风似剪刀。\n###***
+赠汪伦\n�?李白
+李白乘舟将欲行，
+忽闻岸上踏歌声。\n桃花潭水深千尺，
+不及汪伦送我情。\n###***
+小池
+�?杨万里\n泉眼无声惜细流，
+树阴照水爱晴柔。\n小荷才露尖尖角，
+早有蜻蜓立上头。\n###***
+山行
+�?杜牧
+远上寒山石径斜，
+白云生处有人家。\n停车坐爱枫林晚，
+霜叶红于二月花。\n###***
+赠刘景文
+�?苏轼
+荷尽已无擎雨盖，
+菊残犹有傲霜枝。\n一年好景君须记，\n正是橙黄橘绿时。\n###***
+夜书所见\n�?叶绍翁\n萧萧梧叶送寒声，
+江上秋风动客情。\n知有儿童挑促织，
+夜深篱落一灯明。\n###***
+望庐山瀑布
+�?李白
+日照香炉生紫烟，
+遥看瀑布挂前川。\n飞流直下三千尺，
+疑是银河落九天。\n###***
+晓出净慈寺送林子方
+�?杨万里\n毕竟西湖六月中，
+风光不与四时同。\n接天莲叶无穷碧，
+映日荷花别样红。\n###***
+绝句（两个黄鹂鸣翠柳）\n�?杜甫
+两个黄鹂鸣翠柳，
+一行白鹭上青天。\n窗含西岭千秋雪，
+门泊东吴万里船。\n###***
+绝句（迟日江山丽）\n�?杜甫
+迟日江山丽，
+春风花草香。\n泥融飞燕子，
+沙暖睡鸳鸯。\n###***
+绝句（江碧鸟逾白）\n�?杜甫
+江碧鸟逾白，\n山青花欲燃。\n今春看又过，
+何日是归年。\n###***
+春夜喜雨
+�?杜甫
+好雨知时节，
+当春乃发生。\n随风潜入夜，
+润物细无声。\n野径云俱黑，
+江船火独明。\n晓看红湿处，
+花重锦官城。\n###***
+望洞庭\n�?刘禹锡\n湖光秋月两相和，
+潭面无风镜未磨。\n遥望洞庭山水翠，
+白银盘里一青螺。\n###***
+元日
+�?王安石\n爆竹声中一岁除，\n春风送暖入屠苏。\n千门万户曈曈日，
+总把新桃换旧符。\n###***
+清明
+�?杜牧
+清明时节雨纷纷，
+路上行人欲断魂。\n借问酒家何处有，
+牧童遥指杏花村。\n###***
+寒食
+�?韩翃
+春城无处不飞花，
+寒食东风御柳斜。\n日暮汉宫传蜡烛，
+轻烟散入五侯家。\n###***
+泊船瓜洲
+�?王安石\n京口瓜洲一水间，\n钟山只隔数重山。\n春风又绿江南岸，
+明月何时照我还。\n###***
+秋思\n�?张籍
+洛阳城里见秋风，
+欲作家书意万重。\n复恐匆匆说不尽，
+行人临发又开封。\n###***
+示儿
+�?陆游
+死去元知万事空，
+但悲不见九州同。\n王师北定中原日，
+家祭无忘告乃翁。\n###***
+夏日绝句
+�?李清照\n生当作人杰，
+死亦为鬼雄。\n至今思项羽，
+不肯过江东。\n###***
+泊秦淮\n�?杜牧
+烟笼寒水月笼沙，
+夜泊秦淮近酒家。\n商女不知亡国恨，
+隔江犹唱后庭花。\n###***
+赤壁
+�?杜牧
+折戟沉沙铁未销，\n自将磨洗认前朝。\n东风不与周郎便，
+铜雀春深锁二乔。\n###***
+题乌衣巷
+�?刘禹锡\n朱雀桥边野草花，
+乌衣巷口夕阳斜。\n旧时王谢堂前燕，
+飞入寻常百姓家。\n###***
+金陵图\n�?韦庄
+江雨霏霏江草齐，
+六朝如梦鸟空啼。\n无情最是台城柳，\n依旧烟笼十里堤。\n###***
+春宫曲\n�?王昌龄\n昨夜风开露井桃，
+未央前殿月轮高。\n平阳歌舞新承宠，
+帘外春寒赐锦袍。\n###***
+不第后赋菊\n�?黄巢
+待到秋来九月八，
+我花开后百花杀。\n冲天香阵透长安，
+满城尽带黄金甲。\n###***
+题菊花\n�?黄巢
+飒飒西风满院栽，
+蕊寒香冷蝶难来。\n他年我若为青帝，
+报与桃花一处开。\n###***
+过华清宫绝句
+�?杜牧
+长安回望绣成堆，
+山顶千门次第开。\n一骑红尘妃子笑，\n无人知是荔枝来。\n###***
+江南逢李龟年
+�?杜甫
+岐王宅里寻常见，
+崔九堂前几度闻。\n正是江南好风景，
+落花时节又逢君。\n###***
+夜雨寄北
+�?李商隐\n君问归期未有期，
+巴山夜雨涨秋池。\n何当共剪西窗烛，
+却话巴山夜雨时。\n###***
+秋夕
+�?杜牧
+银烛秋光冷画屏，
+轻罗小扇扑流萤。\n天阶夜色凉如水，
+坐看牵牛织女星。\n###***
+题都城南庄\n�?崔护
+去年今日此门中，
+人面桃花相映红。\n人面不知何处去，
+桃花依旧笑春风。\n###***
+寄扬州韩绰判官\n�?杜牧
+青山隐隐水迢迢，
+秋尽江南草未凋。\n二十四桥明月夜，
+玉人何处教吹箫。\n###***
+题金陵渡
+�?张祜
+金陵津渡小山楼，
+一宿行人自可愁。\n潮落夜江斜月里，
+两三星火是瓜州。\n###***
+山亭夏日
+�?高骈
+绿树阴浓夏日长，
+楼台倒影入池塘。\n水晶帘动微风起，
+满架蔷薇一院香。\n###***
+从军行（青海长云暗雪山）
+�?王昌龄\n青海长云暗雪山，
+孤城遥望玉门关。\n黄沙百战穿金甲，
+不破楼兰终不还。\n###***
+从军行（琵琶起舞换新声）
+�?王昌龄\n琵琶起舞换新声，
+总是关山旧别情。\n撩乱边愁听不尽，
+高高秋月照长城。\n###***
+凉州词（葡萄美酒夜光杯）
+�?王翰
+葡萄美酒夜光杯，
+欲饮琵琶马上催。\n醉卧沙场君莫笑，
+古来征战几人回。\n###***
+闻官军收河南河北
+�?杜甫
+剑外忽传收蓟北，
+初闻涕泪满衣裳。\n却看妻子愁何在，
+漫卷诗书喜欲狂。\n白日放歌须纵酒，
+青春作伴好还乡。\n即从巴峡穿巫峡，
+便下襄阳向洛阳。\n###***
+春望
+�?杜甫
+国破山河在，
+城春草木深。\n感时花溅泪，
+恨别鸟惊心。\n烽火连三月，
+家书抵万金。\n白头搔更短，
+浑欲不胜簪。\n###***
+登高
+�?杜甫
+风急天高猿啸哀，\n渚清沙白鸟飞回。\n无边落木萧萧下，
+不尽长江滚滚来。\n万里悲秋常作客，
+百年多病独登台。\n艰难苦恨繁霜鬓，
+潦倒新停浊酒杯。\n###***
+客至
+�?杜甫
+舍南舍北皆春水，
+但见群鸥日日来。\n花径不曾缘客扫，
+蓬门今始为君开。\n盘飧市远无兼味，
+樽酒家贫只旧醅。\n肯与邻翁相对饮，
+隔篱呼取尽余杯。\n###***
+旅夜书怀
+�?杜甫
+细草微风岸，
+危樯独夜舟。\n星垂平野阔，
+月涌大江流。\n名岂文章著，
+官应老病休。\n飘飘何所似，
+天地一沙鸥。\n###***
+送友人\n�?李白
+青山横北郭，
+白水绕东城。\n此地一为别，\n孤蓬万里征。\n浮云游子意，
+落日故人情。\n挥手自兹去，
+萧萧班马鸣。\n###***
+黄鹤楼\n�?崔颢
+昔人已乘黄鹤去，
+此地空余黄鹤楼。\n黄鹤一去不复返，\n白云千载空悠悠。\n晴川历历汉阳树，
+芳草萋萋鹦鹉洲。\n日暮乡关何处是，
+烟波江上使人愁。\n###***
+送杜少府之任蜀州\n�?王勃
+城阙辅三秦，
+风烟望五津。\n与君离别意，
+同是宦游人。\n海内存知己，
+天涯若比邻。\n无为在歧路，
+儿女共沾巾。\n###***
+送元二使安西
+�?王维
+渭城朝雨浥轻尘，
+客舍青青柳色新。\n劝君更尽一杯酒，\n西出阳关无故人。\n###***
+逢入京使
+�?岑参
+故园东望路漫漫，
+双袖龙钟泪不干。\n马上相逢无纸笔，\n凭君传语报平安。\n###***
+闻王昌龄左迁龙标遥有此寄
+�?李白
+杨花落尽子规啼，
+闻道龙标过五溪。\n我寄愁心与明月，
+随君直到夜郎西。`;
+
+      let records = loadRecords();
+      let currentTraining = "schulte";
+      let size = 5;
+      let idiomCols = 4;
+      let next = 1;
+      let errors = 0;
+      let started = false;
+      let finished = false;
+      let startStamp = 0;
+      let elapsedMs = 0;
+      let timerId = 0;
+      let sessionStarted = false;
+      let sessionStartStamp = 0;
+      let sessionElapsedMs = 0;
+      let sessionTimerId = 0;
+      let hintOn = false;
+      let reverseOrderOn = false;
+      let colorInterferenceOn = false;
+      let stroopTrial = 1;
+      let currentStroopColor = null;
+      let currentStroopAnswerColor = null;
+      let previousStroopColorKey = "";
+      let decodePairs = [];
+      let decodeQuestionsData = [];
+      let decodeAnswerOptions = [];
+      let decodeAnswered = 0;
+      let decodeReverseOn = false;
+      let stroopTextAnswerOn = false;
+      let currentIdiom = "";
+      let currentIdioms = [];
+      let idiomNextIndex = 0;
+      let memoryRound = 1;
+      let memoryTargets = [];
+      let memoryRemaining = new Set();
+      let memoryActive = false;
+      let memoryPreviewing = false;
+      let memoryPreviewTimer = 0;
+      let memoryReplayCount = 0;
+      let poems = parsePoems(fallbackPoemSource);
+      let currentPoem = null;
+      let poemChars = [];
+      let poemNextIndex = 0;
+
+      function loadRecords() {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(storageKey) || "[]");
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function saveRecords() {
+        localStorage.setItem(storageKey, JSON.stringify(records.slice(0, 300)));
+      }
+
+      const scoreRules = {
+        3: {
+          child:      { excellent: 8,   good: 12,  middle: 16 },
+          olderChild: { excellent: 6,   good: 9,   middle: 13 },
+          preTeen:    { excellent: 5,   good: 7,   middle: 10 },
+          teen:       { excellent: 4,   good: 6,   middle: 8 },
+          adult:      { excellent: 3,   good: 5,   middle: 7 }
+        },
+        4: {
+          child:      { excellent: 18,  good: 25,  middle: 32 },
+          olderChild: { excellent: 14,  good: 20,  middle: 26 },
+          preTeen:    { excellent: 11,  good: 15,  middle: 20 },
+          teen:       { excellent: 8,   good: 12,  middle: 16 },
+          adult:      { excellent: 6,   good: 9,   middle: 13 }
+        },
+        5: {
+          child:      { excellent: 45,  good: 60,  middle: 75 },
+          olderChild: { excellent: 35,  good: 45,  middle: 55 },
+          preTeen:    { excellent: 28,  good: 35,  middle: 42 },
+          teen:       { excellent: 18,  good: 25,  middle: 32 },
+          adult:      { excellent: 12,  good: 18,  middle: 25 }
+        },
+        6: {
+          child:      { excellent: 70,  good: 90,  middle: 110 },
+          olderChild: { excellent: 55,  good: 70,  middle: 85 },
+          preTeen:    { excellent: 45,  good: 55,  middle: 68 },
+          teen:       { excellent: 30,  good: 40,  middle: 50 },
+          adult:      { excellent: 20,  good: 28,  middle: 38 }
+        },
+        7: {
+          child:      { excellent: 110, good: 140, middle: 170 },
+          olderChild: { excellent: 85,  good: 105, middle: 130 },
+          preTeen:    { excellent: 70,  good: 85,  middle: 100 },
+          teen:       { excellent: 50,  good: 65,  middle: 80 },
+          adult:      { excellent: 35,  good: 45,  middle: 60 }
+        }
+      };
+            let cloudUser = loadCloudUser();
+      let loadedUserIdentifier = loadLoadedUserIdentifier();
+      let dailyTasks = [];
+      let adminPassword = "";
+      let adminClickCount = 0;
+      let adminClickTimer = 0;
+
+      function loadCloudUser() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(cloudUserStorageKey) || "null");
+          return saved && saved.identifier && saved.sessionToken ? saved : null;
+        } catch {
+          return null;
+        }
+      }
+
+      function saveCloudUser() {
+        if (!cloudUser) {
+          localStorage.removeItem(cloudUserStorageKey);
+          return;
+        }
+        localStorage.setItem(cloudUserStorageKey, JSON.stringify(cloudUser));
+      }
+
+      function loadLoadedUserIdentifier() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(loadedUserStorageKey) || "null");
+          return saved && validIdentifier(saved.identifier) ? saved.identifier : "";
+        } catch {
+          return "";
+        }
+      }
+
+      function saveLoadedUserIdentifier() {
+        if (!loadedUserIdentifier || (cloudUser && loadedUserIdentifier === cloudUser.identifier)) {
+          localStorage.removeItem(loadedUserStorageKey);
+          return;
+        }
+        localStorage.setItem(loadedUserStorageKey, JSON.stringify({ identifier: loadedUserIdentifier }));
+      }
+
+      function activeUserIdentifier() {
+        return loadedUserIdentifier || cloudUser?.identifier || "";
+      }
+
+      function canWriteActiveUser() {
+        const identifier = activeUserIdentifier();
+        return Boolean(cloudUser && cloudUser.sessionToken && identifier && cloudUser.identifier === identifier);
+      }
+
+      function mergeSyncedRecords(nextRecords) {
+        if (!Array.isArray(nextRecords) || !nextRecords.length) return 0;
+        const recordKey = (record) => record.id || [record.type || "schulte", record.date, record.timeMs, record.errors].join(":");
+        const seen = new Set(records.map(recordKey));
+        let added = 0;
+        nextRecords.forEach((record) => {
+          const key = recordKey(record);
+          if (seen.has(key)) return;
+          seen.add(key);
+          records.push(record);
+          added += 1;
+        });
+        if (added) {
+          records.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+          saveRecords();
+          refreshScorePanel();
+        }
+        return added;
+      }
+
+      function todayKey() {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      }
+
+      function setNotice(target, message, isError = false) {
+        target.textContent = message || "";
+        target.classList.toggle("error", Boolean(isError));
+      }
+
+      function cleanIdentifier(value) {
+        return String(value || "").trim();
+      }
+
+      function validIdentifier(value) {
+        return /^[A-Za-z0-9]+$/.test(cleanIdentifier(value));
+      }
+
+      function calculateAge(birthDate, atDate = new Date()) {
+        if (!birthDate) return null;
+        const born = new Date(`${birthDate}T00:00:00`);
+        if (Number.isNaN(born.getTime()) || born > atDate) return null;
+        let age = atDate.getFullYear() - born.getFullYear();
+        const monthDelta = atDate.getMonth() - born.getMonth();
+        if (monthDelta < 0 || (monthDelta === 0 && atDate.getDate() < born.getDate())) age -= 1;
+        return age >= 0 ? age : null;
+      }
+
+      function ageBucket(age) {
+        const value = Number(age);
+        if (!value || value >= 17) return "adult";
+        if (value <= 6) return "child";
+        if (value <= 8) return "olderChild";
+        if (value <= 11) return "preTeen";
+        return "teen";
+      }
+
+      function scoreSchulteRecord(record, birthDate) {
+        if ((record.type || "schulte") !== "schulte") return "";
+        const age = calculateAge(birthDate, record.date ? new Date(record.date) : new Date());
+        if (age === null) return "需填写出生日期";
+        const sizeValue = Number(record.size || 0);
+        const rules = scoreRules[sizeValue];
+        if (!rules) return "暂无对应评分标准";
+        const seconds = Number(record.timeMs || 0) / 1000;
+        const rule = rules[ageBucket(age)] || rules.adult;
+        if (seconds < rule.excellent) return "优秀";
+        if (seconds < rule.good) return "良好";
+        if (seconds < rule.middle) return "中等";
+        return "需努力";
+      }
+
+      async function apiJson(path, options = {}) {
+        let response;
+        try {
+          response = await fetch(path, {
+            ...options,
+            headers: {
+              "content-type": "application/json",
+              ...(options.headers || {})
+            }
+          });
+        } catch (error) {
+          throw new Error(`网络请求失败�?{error.message || "无法连接 Worker API"}`);
+        }
+        const raw = await response.text();
+        let payload = {};
+        try {
+          payload = raw ? JSON.parse(raw) : {};
+        } catch {
+          payload = { error: raw.slice(0, 160) };
+        }
+        if (!response.ok || payload.ok === false) {
+          throw new Error(payload.error || `请求失败：HTTP ${response.status}`);
+        }
+        return payload;
+      }
+
+      function userPayloadFromForm() {
+        return {
+          username: usernameInput.value.trim(),
+          identifier: cleanIdentifier(identifierInput.value),
+          birthDate: birthDateInput.value
+        };
+      }
+
+      function applyUserToForm(user) {
+        const identifier = user?.identifier || activeUserIdentifier();
+        usernameInput.value = user?.username || "";
+        identifierInput.value = identifier;
+        loadIdentifierInput.value = identifier || loadIdentifierInput.value || "";
+        birthDateInput.value = user?.birthDate || "";
+        identifierInput.readOnly = false;
+        authCodeInput.disabled = Boolean(cloudUser);
+        const age = calculateAge(birthDateInput.value);
+        const path = identifier ? `/u/${identifier}` : "";
+        if (!identifier) {
+          userStatusText.textContent = "未创建用户时，网页训练与本地成绩仍可正常使用。\";
+        } else if (canWriteActiveUser()) {
+          userStatusText.textContent = `已登录用�?{age !== null ? `，当前年�?${age} 岁` : ""}${path ? `，成绩查询路�?${path}` : ""}`;
+        } else {
+          userStatusText.textContent = `已加载识别码 ${identifier}${path ? `，成绩查询路�?${path}` : ""}；当前浏览器未保存该用户写入权限`;
+        }
+      }
+
+      const dailyTaskSpecs = {
+        schulte: {
+          label: "舒尔特方格\",
+          controls: [
+            { key: "size", wrap: taskSizeWrap, input: taskSizeSelect, type: "number", defaultValue: 5 },
+            { key: "reverse", wrap: taskReverseWrap, input: taskReverseSelect, type: "boolean", defaultValue: false },
+            { key: "colorInterference", wrap: taskColorWrap, input: taskColorSelect, type: "boolean", defaultValue: false }
+          ],
+          describe: (mode) => `${mode.size || 5}×${mode.size || 5} ${mode.reverse ? "倒序" : "正序"} ${mode.colorInterference ? "颜色干扰" : "无颜色干扰\"}`
+        },
+        stroop: {
+          label: "斯特鲁普",
+          controls: [
+            { key: "textAnswer", wrap: taskStroopAnswerWrap, input: taskStroopAnswerSelect, type: "boolean", defaultValue: false }
+          ],
+          describe: (mode) => mode.textAnswer ? "按文字作答\" : "按字色作答\"
+        },
+        idiom: {
+          label: "成语训练",
+          controls: [
+            { key: "cols", wrap: taskIdiomWrap, input: taskIdiomSelect, type: "number", defaultValue: 4 },
+            { key: "colorInterference", wrap: taskColorWrap, input: taskColorSelect, type: "boolean", defaultValue: false }
+          ],
+          describe: (mode) => `4×${mode.cols || 4} ${mode.colorInterference ? "颜色干扰" : "无颜色干扰\"}`
+        },
+        poem: {
+          label: "古诗训练",
+          controls: [
+            { key: "colorInterference", wrap: taskColorWrap, input: taskColorSelect, type: "boolean", defaultValue: false }
+          ],
+          describe: (mode) => mode.colorInterference ? "颜色干扰" : "无颜色干扰\"
+        },
+        memory: {
+          label: "记忆训练",
+          controls: [],
+          describe: () => "5×5 10轮\"
+        },
+        decode: {
+          label: "译码训练",
+          controls: [
+            { key: "reverse", wrap: taskDecodeReverseWrap, input: taskDecodeReverseSelect, type: "boolean", defaultValue: false }
+          ],
+          describe: (mode) => mode.reverse ? "字母→符号\" : "符号→字母\"
+        }
+      };
+      const dailyTaskControls = [taskSizeWrap, taskReverseWrap, taskColorWrap, taskIdiomWrap, taskStroopAnswerWrap, taskDecodeReverseWrap];
+
+      function readTaskControl(control) {
+        const raw = control.input.value;
+        if (control.type === "number") return Number(raw);
+        if (control.type === "boolean") return raw === "true";
+        return raw;
+      }
+
+      function modeValue(value, control) {
+        const fallback = control.defaultValue;
+        if (control.type === "number") return Number(value ?? fallback);
+        if (control.type === "boolean") return Boolean(value ?? fallback);
+        return value ?? fallback ?? "";
+      }
+
+      function buildTaskMode(module) {
+        const spec = dailyTaskSpecs[module];
+        const mode = { type: module };
+        if (!spec) return mode;
+        spec.controls.forEach((control) => {
+          mode[control.key] = readTaskControl(control);
+        });
+        return mode;
+      }
+
+      function buildTaskFromControls() {
+        const module = taskModuleSelect.value;
+        const targetCount = Math.min(50, Math.max(1, Math.round(Number(taskCountInput.value || 1)) || 1));
+        return {
+          id: crypto.randomUUID ? crypto.randomUUID() : `task-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          module,
+          mode: buildTaskMode(module),
+          targetCount,
+          completed: false
+        };
+      }
+
+      function taskModuleLabel(module) {
+        return dailyTaskSpecs[module]?.label || "训练";
+      }
+
+      function describeTask(task) {
+        const spec = dailyTaskSpecs[task.module];
+        return spec ? spec.describe(task.mode || {}) : "标准模式";
+      }
+
+      function taskModeSetting(task, key) {
+        const spec = dailyTaskSpecs[task.module];
+        const control = spec?.controls.find((item) => item.key === key);
+        return control ? modeValue((task.mode || {})[key], control) : (task.mode || {})[key];
+      }
+
+      function recordMatchesTask(record, task) {
+        const type = record.type || "schulte";
+        const spec = dailyTaskSpecs[task.module];
+        if (type !== task.module || !spec) return false;
+        return spec.controls.every((control) => {
+          const expected = modeValue((task.mode || {})[control.key], control);
+          const actual = modeValue(record[control.key], control);
+          return actual === expected;
+        });
+      }
+
+      function recordsForDate(date) {
+        return records.filter((record) => (record.date || "").slice(0, 10) === date);
+      }
+
+      function taskTargetCount(task) {
+        return Math.min(50, Math.max(1, Math.round(Number(task.targetCount || 1)) || 1));
+      }
+
+      function taskProgress(task, date = todayKey()) {
+        const target = taskTargetCount(task);
+        const matched = recordsForDate(date).filter((record) => recordMatchesTask(record, task)).length;
+        const count = Math.min(matched, target);
+        return { matched, count, target, done: count >= target };
+      }
+
+      function renderTitleTasks() {
+        titleTaskStrip.replaceChildren();
+        if (!activeUserIdentifier()) {
+          const noticeButton = document.createElement("button");
+          noticeButton.className = "title-task-item notice";
+          noticeButton.type = "button";
+          noticeButton.textContent = "请设置用户\";
+          noticeButton.addEventListener("click", openUserCenter);
+          titleTaskStrip.append(noticeButton);
+          return;
+        }
+
+        if (!dailyTasks.length) {
+          const empty = document.createElement("span");
+          empty.className = "title-task-item notice";
+          empty.textContent = "暂无每日任务";
+          titleTaskStrip.append(empty);
+          return;
+        }
+
+        const progressList = dailyTasks.map((task) => ({ task, progress: taskProgress(task) }));
+        const nextIndex = progressList.findIndex((item) => !item.progress.done);
+        if (nextIndex === -1) {
+          const done = document.createElement("span");
+          done.className = "title-task-item notice done";
+          done.textContent = "今日任务已全部完成\";
+          titleTaskStrip.append(done);
+          return;
+        }
+
+        const { task, progress } = progressList[nextIndex];
+        const button = document.createElement("button");
+        button.className = "title-task-item";
+        button.type = "button";
+        button.title = "�?" + (nextIndex + 1) + " 项：" + taskModuleLabel(task.module) + " · " + describeTask(task) + "：\" + progress.count + "/" + progress.target;
+        const main = document.createElement("span");
+        main.className = "title-task-main";
+        main.textContent = "�?" + (nextIndex + 1) + " �?· " + taskModuleLabel(task.module) + " · " + describeTask(task);
+        const count = document.createElement("span");
+        count.className = "title-task-count";
+        count.textContent = progress.count + "/" + progress.target;
+        button.append(main, count);
+        button.addEventListener("click", () => activateTask(task));
+        titleTaskStrip.append(button);
+      }
+
+      function renderTasks() {
+        renderTitleTasks();
+        taskDateText.textContent = todayKey();
+        if (!dailyTasks.length) {
+          dailyTaskList.innerHTML = `<p class="empty">暂无每日任务</p>`;
+          return;
+        }
+        dailyTaskList.replaceChildren(...dailyTasks.map((task) => {
+          const progress = taskProgress(task);
+          const row = document.createElement("article");
+          row.className = `daily-task-row${progress.done ? " done" : ""}`;
+          const check = document.createElement("input");
+          check.type = "checkbox";
+          check.checked = progress.done;
+          check.disabled = true;
+          check.title = `今日进度 ${progress.count}/${progress.target}`;
+          const text = document.createElement("input");
+          text.className = "task-input";
+          text.value = `${taskModuleLabel(task.module)} · ${describeTask(task)}`;
+          text.readOnly = true;
+          const count = document.createElement("input");
+          count.className = "task-input";
+          count.type = "number";
+          count.min = "1";
+          count.max = "50";
+          count.value = String(progress.target);
+          count.title = `今日进度 ${progress.count}/${progress.target}`;
+          count.addEventListener("change", () => {
+            task.targetCount = taskTargetCount({ targetCount: count.value });
+            persistUserCenter();
+          });
+          const remove = document.createElement("button");
+          remove.className = "icon-button";
+          remove.type = "button";
+          remove.textContent = "×";
+          remove.setAttribute("aria-label", "删除任务");
+          remove.addEventListener("click", () => {
+            dailyTasks = dailyTasks.filter((item) => item.id !== task.id);
+            persistUserCenter();
+          });
+          row.append(check, text, count, remove);
+          return row;
+        }));
+      }
+
+      function renderDailyScores() {
+        const date = scoreDateInput.value || todayKey();
+        scoreDateInput.value = date;
+        const dayRecords = recordsForDate(date);
+        if (!dayRecords.length) {
+          dailyScoreList.innerHTML = `<p class="empty">该日期暂无成绩记�?/p>`;
+          return;
+        }
+        const practiceSummary = document.createElement("div");
+        practiceSummary.className = "notice";
+        practiceSummary.textContent = `当日累计练习时长�?{formatPracticeDuration(dailyPracticeMs(date))}`;
+        dailyScoreList.replaceChildren(practiceSummary, ...dayRecords.map((record) => {
+          const node = createRecordNode(record);
+          const rating = scoreSchulteRecord(record, birthDateInput.value);
+          if (rating) {
+            const ratingNode = document.createElement("div");
+            ratingNode.className = "score-rating";
+            ratingNode.textContent = `评分�?{rating}`;
+            node.append(ratingNode);
+          }
+          return node;
+        }));
+      }
+
+      async function loadUserCenter() {
+        scoreDateInput.value ||= todayKey();
+        const identifier = activeUserIdentifier();
+        applyUserToForm(identifier ? { identifier } : null);
+        dailyTasks = [];
+        if (!identifier) {
+          renderTasks();
+          renderTitleTasks();
+          renderDailyScores();
+          return;
+        }
+        try {
+          const payload = await apiJson(`/api/users/${encodeURIComponent(identifier)}?date=${todayKey()}`);
+          if (canWriteActiveUser()) {
+            cloudUser.identifier = payload.user.identifier;
+            saveCloudUser();
+          }
+          applyUserToForm(payload.user);
+          dailyTasks = Array.isArray(payload.tasks) ? payload.tasks : [];
+          setNotice(userCenterNotice, canWriteActiveUser() ? "用户资料已加载\" : "已加载同步用户数据\");
+        } catch (error) {
+          setNotice(userCenterNotice, error.message, true);
+        }
+        renderTasks();
+        renderTitleTasks();
+        renderDailyScores();
+      }
+
+      async function loadSyncedUserByIdentifier() {
+        const identifier = cleanIdentifier(loadIdentifierInput.value || identifierInput.value);
+        if (!validIdentifier(identifier)) {
+          setNotice(userCenterNotice, "请输入合法识别码", true);
+          return;
+        }
+        try {
+          const loginPassword = loginPasswordInput.value.trim();
+          const [userPayload, publicPayload] = await Promise.all([
+            loginPassword
+              ? apiJson("/api/users/" + encodeURIComponent(identifier) + "/login", { method: "POST", body: JSON.stringify({ password: loginPassword, date: todayKey() }) })
+              : apiJson("/api/users/" + encodeURIComponent(identifier) + "?date=" + todayKey()),
+            apiJson("/api/users/" + encodeURIComponent(identifier) + "/public")
+          ]);
+          const loadedUser = userPayload.user || publicPayload.user;
+          const isBoundUser = Boolean(cloudUser && loadedUser && cloudUser.identifier === loadedUser.identifier);
+          if (loginPassword) {
+            cloudUser = { identifier: loadedUser.identifier, sessionToken: userPayload.sessionToken };
+            loadedUserIdentifier = "";
+            loginPasswordInput.value = "";
+            saveCloudUser();
+          } else {
+            loadedUserIdentifier = isBoundUser ? "" : loadedUser.identifier;
+          }
+          saveLoadedUserIdentifier();
+          if (isBoundUser && cloudUser) {
+            cloudUser.identifier = loadedUser.identifier;
+            saveCloudUser();
+          }
+          applyUserToForm(loadedUser);
+          dailyTasks = Array.isArray(userPayload.tasks) ? userPayload.tasks : [];
+          const added = mergeSyncedRecords(publicPayload.records);
+          renderTasks();
+          renderTitleTasks();
+          renderDailyScores();
+          setNotice(
+            userCenterNotice,
+            loginPassword
+              ? "密码登录成功，新�?" + added + " 条成绩记录\"
+              : isBoundUser
+                ? "同步数据已加载，新增 " + added + " 条成绩记录\"
+                : "已按识别码加载资料、任务与成绩，新�?" + added + " 条本地记录\"
+          );
+        } catch (error) {
+          setNotice(userCenterNotice, error.message, true);
+        }
+      }
+
+      async function persistUserCenter() {
+        if (!canWriteActiveUser()) {
+          renderTasks();
+          renderTitleTasks();
+          renderDailyScores();
+          setNotice(userCenterNotice, activeUserIdentifier()
+            ? "当前载入识别码未绑定写入权限，未保存到云端，也不会写入原保存用户"
+            : "未创建用户时，任务只在本次页面中显示");
+          return;
+        }
+        try {
+          const user = userPayloadFromForm();
+          const payload = await apiJson(`/api/users/${encodeURIComponent(cloudUser.identifier)}`, {
+            method: "PUT",
+            body: JSON.stringify({
+              sessionToken: cloudUser.sessionToken,
+              user,
+              date: todayKey(),
+              tasks: dailyTasks
+            })
+          });
+          cloudUser.identifier = payload.user.identifier;
+          if (payload.sessionToken) cloudUser.sessionToken = payload.sessionToken;
+          loadedUserIdentifier = "";
+          saveCloudUser();
+          saveLoadedUserIdentifier();
+          applyUserToForm(payload.user);
+          dailyTasks = payload.tasks || dailyTasks;
+          renderTasks();
+          renderDailyScores();
+          setNotice(userCenterNotice, "已保存到云端");
+        } catch (error) {
+          setNotice(userCenterNotice, error.message, true);
+        }
+      }
+
+      async function saveUserProfile() {
+        const user = userPayloadFromForm();
+        if (!validIdentifier(user.identifier)) {
+          setNotice(userCenterNotice, "识别码仅可输入数字与字母", true);
+          return;
+        }
+        if (loadedUserIdentifier && !canWriteActiveUser()) {
+          setNotice(userCenterNotice, "当前载入识别码未绑定写入权限，不能保存用户资料\", true);
+          return;
+        }
+        if (!cloudUser) {
+          try {
+            const payload = await apiJson("/api/users", {
+              method: "POST",
+              body: JSON.stringify({
+                authCode: authCodeInput.value,
+                password: userPasswordInput.value,
+                user,
+                date: todayKey(),
+                tasks: dailyTasks
+              })
+            });
+            cloudUser = { identifier: payload.user.identifier, sessionToken: payload.sessionToken };
+            loadedUserIdentifier = "";
+            saveCloudUser();
+            saveLoadedUserIdentifier();
+            authCodeInput.value = "";
+            userPasswordInput.value = "";
+            dailyTasks = payload.tasks || dailyTasks;
+            applyUserToForm(payload.user);
+            renderTasks();
+            renderDailyScores();
+            setNotice(userCenterNotice, "用户已创建，后续成绩会自动同步\");
+          } catch (error) {
+            setNotice(userCenterNotice, error.message, true);
+          }
+          return;
+        }
+        await persistUserCenter();
+      }
+
+      async function syncRecordToCloud(record) {
+        if (!canWriteActiveUser()) return;
+        try {
+          await apiJson(`/api/users/${encodeURIComponent(activeUserIdentifier())}/records`, {
+            method: "POST",
+            body: JSON.stringify({
+              sessionToken: cloudUser.sessionToken,
+              record
+            })
+          });
+          setNotice(recordsNotice, "已生成本次成绩记录，并同步到云端");
+        } catch (error) {
+          setNotice(recordsNotice, `本地已保存，云端同步失败�?{error.message}`, true);
+        }
+      }
+
+      function addRecord(record) {
+        record.practiceMs = recordPracticeMs(record);
+        sessionElapsedMs = 0;
+        refreshSessionTimer();
+        records.unshift(record);
+        saveRecords();
+        refreshScorePanel();
+        renderTasks();
+        if (scoreDateInput.value === todayKey()) renderDailyScores();
+        recordsNotice.textContent = "已生成本次成绩记录\";
+        syncRecordToCloud(record);
+      }
+
+      function updateTaskConfigVisibility() {
+        const spec = dailyTaskSpecs[taskModuleSelect.value];
+        dailyTaskControls.forEach((wrap) => wrap.classList.add("is-hidden"));
+        if (!spec) return;
+        spec.controls.forEach((control) => control.wrap.classList.remove("is-hidden"));
+      }
+
+      function adminAuthHeaders() {
+        return { Authorization: `Bearer ${adminPassword}` };
+      }
+
+      function renderAdminUsers(users) {
+        adminIdentifierInput.replaceChildren();
+        if (!users.length) {
+          const option = document.createElement("option");
+          option.value = "";
+          option.textContent = "暂无用户";
+          adminIdentifierInput.append(option);
+          adminIdentifierInput.disabled = true;
+          return;
+        }
+        adminIdentifierInput.disabled = false;
+        users.forEach((user) => {
+          const option = document.createElement("option");
+          option.value = user.identifier;
+          option.textContent = `${user.username || "未命名\"}�?{user.identifier}）`;
+          adminIdentifierInput.append(option);
+        });
+      }
+
+      async function loadAdminUsers() {
+        adminIdentifierInput.disabled = true;
+        adminIdentifierInput.replaceChildren(new Option("正在加载用户...", ""));
+        try {
+          const payload = await apiJson("/api/admin/users", { headers: adminAuthHeaders() });
+          renderAdminUsers(payload.users || []);
+          adminUserPreview.innerHTML = "";
+          setNotice(adminPanelNotice, payload.users && payload.users.length ? `已加�?${payload.users.length} 个用户` : "暂无可管理用户\");
+          if (payload.users && payload.users.length) await adminLookup();
+        } catch (error) {
+          adminIdentifierInput.replaceChildren(new Option("用户加载失败", ""));
+          setNotice(adminPanelNotice, error.message, true);
+        }
+      }
+
+      async function adminLookup() {
+        const identifier = cleanIdentifier(adminIdentifierInput.value);
+        if (!validIdentifier(identifier)) {
+          setNotice(adminPanelNotice, "请输入合法识别码", true);
+          return;
+        }
+        try {
+          const payload = await apiJson(`/api/admin/users/${encodeURIComponent(identifier)}`, { headers: adminAuthHeaders() });
+          const user = payload.user;
+          adminUserPreview.innerHTML = `
+            <article class="record">
+              <div class="mode">${user.username || "未命名\"}</div>
+              <div><strong>${user.identifier}</strong><time>出生日期�?{user.birthDate || "未填写\"} · 记录 ${payload.recordCount || 0} �?· 任务 ${payload.taskKeyCount || 0} �?/time></div>
+              <div class="score">KV</div>
+            </article>
+          `;
+          setNotice(adminPanelNotice, "已查询到用户");
+        } catch (error) {
+          adminUserPreview.innerHTML = "";
+          setNotice(adminPanelNotice, error.message, true);
+        }
+      }
+
+      async function adminResetPassword() {
+        const identifier = cleanIdentifier(adminIdentifierInput.value);
+        const newPassword = adminNewPasswordInput.value;
+        if (!validIdentifier(identifier)) {
+          setNotice(adminPanelNotice, "请输入合法识别码", true);
+          return;
+        }
+        if (!newPassword) {
+          setNotice(adminPanelNotice, "请输入新密码", true);
+          return;
+        }
+        try {
+          await apiJson(`/api/admin/users/${encodeURIComponent(identifier)}/password`, {
+            method: "POST",
+            headers: adminAuthHeaders(),
+            body: JSON.stringify({ newPassword })
+          });
+          adminNewPasswordInput.value = "";
+          setNotice(adminPanelNotice, "用户密码已重置\");
+        } catch (error) {
+          setNotice(adminPanelNotice, error.message, true);
+        }
+      }
+
+      async function adminDeleteUser() {
+        const identifier = cleanIdentifier(adminIdentifierInput.value);
+        if (!validIdentifier(identifier)) {
+          setNotice(adminPanelNotice, "请输入合法识别码", true);
+          return;
+        }
+        if (!window.confirm(`确定永久删除 ${identifier} �?KV 用户数据吗？`)) return;
+        try {
+          await apiJson(`/api/admin/users/${encodeURIComponent(identifier)}`, {
+            method: "DELETE",
+            headers: adminAuthHeaders(),
+            body: JSON.stringify({})
+          });
+          adminUserPreview.innerHTML = "";
+          await loadAdminUsers();
+          setNotice(adminPanelNotice, "用户数据已删除\");
+        } catch (error) {
+          setNotice(adminPanelNotice, error.message, true);
+        }
+      }
+
+      function formatSeconds(ms) {
+        return (ms / 1000).toFixed(2);
+      }
+
+      function formatDuration(ms) {
+        const totalSeconds = Math.floor(ms / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        return [hours, minutes, seconds].map((value) => String(value).padStart(2, "0")).join(":");
+      }
+
+      function recordPracticeMs(record) {
+        return Math.max(0, Math.round(Number(record && (record.practiceMs || record.timeMs) || 0)));
+      }
+
+      function formatPracticeDuration(ms) {
+        const totalSeconds = Math.round(Number(ms || 0) / 1000);
+        if (totalSeconds < 60) return `${totalSeconds} 秒`;
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return seconds ? `${minutes} �?${seconds} 秒` : `${minutes} 分钟`;
+      }
+
+      function dailyPracticeMs(date) {
+        return recordsForDate(date).reduce((sum, record) => sum + recordPracticeMs(record), 0);
+      }
+
+      function formatShortDate(iso) {
+        const date = new Date(iso);
+        return date.toLocaleString("zh-CN", {
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false
+        });
+      }
+
+      function shuffle(values) {
+        const copy = [...values];
+        for (let index = copy.length - 1; index > 0; index -= 1) {
+          const swapIndex = Math.floor(Math.random() * (index + 1));
+          [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
+        }
+        return copy;
+      }
+
+      function parsePoems(text) {
+        return text
+          .split("###***")
+          .map((block) => block.split(/\r?\
+/).map((line) => line.trim()).filter(Boolean))
+          .filter((lines) => lines.length >= 3)
+          .map((lines) => {
+            const [title, authorLine, ...bodyLines] = lines;
+            const [dynasty = "", ...authorParts] = authorLine.split(/\s+/);
+            const body = bodyLines.join("\
+");
+            const chars = [...body.replace(/[，。！？；：�?.!?;:\s《》（�?)“”\"‘�?·]/g, "")];
+            const lineLengths = bodyLines
+              .map((line) => [...line.replace(/[，。！？；：�?.!?;:\s《》（�?)“”\"‘�?·]/g, "")].length)
+              .filter((length) => length > 0);
+            const meter = lineLengths.find((length) => length === 5 || length === 7) || 0;
+            return {
+              title,
+              dynasty,
+              author: authorParts.join(" ") || "佚名",
+              body,
+              chars,
+              meter
+            };
+          })
+          .filter((poem) => poem.chars.length > 0);
+      }
+
+      async function loadPoems() {
+        try {
+          const response = await fetch("古诗.txt", { cache: "no-store" });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const loaded = parsePoems(await response.text());
+          if (loaded.length) {
+            poems = loaded;
+            if (currentTraining === "poem") buildBoard();
+          }
+        } catch (error) {
+          console.warn("古诗.txt 读取失败，使用内置备用古诗。\", error);
+        }
+      }
+
+      function buildBoard() {
+        stopTimer();
+        window.clearTimeout(memoryPreviewTimer);
+        memoryPreviewTimer = 0;
+        started = false;
+        finished = false;
+        memoryPreviewing = false;
+        memoryReplayCount = 0;
+        errors = 0;
+        elapsedMs = 0;
+        timeText.textContent = "0.00";
+        errorText.textContent = "0";
+        notice.textContent = "";
+        recordsNotice.textContent = "";
+        boardShell.dataset.training = currentTraining;
+        boardShell.style.removeProperty("--board-max");
+        memoryStartButton.classList.add("is-hidden");
+        memoryStartButton.disabled = false;
+        memoryStartButton.textContent = "开始记忆\";
+        memoryReplayButton.classList.add("is-hidden");
+        memoryReplayButton.disabled = true;
+        poemToggleButton.classList.add("is-hidden");
+        poemToggleButton.setAttribute("aria-expanded", "false");
+        poemToggleButton.textContent = "显示全诗";
+        poemFullText.classList.add("is-hidden");
+        poemFullText.textContent = "";
+        poemMeta.classList.add("is-hidden");
+        reverseOrderWrap.classList.add("is-hidden");
+        decodeReverseWrap.classList.add("is-hidden");
+        stroopTextAnswerWrap.classList.add("is-hidden");
+        decodePanel.classList.add("is-hidden");
+        decodeKey.replaceChildren();
+        decodeQuestions.replaceChildren();
+        decodeAnswerPad.replaceChildren();
+
+        if (currentTraining === "stroop") {
+          buildStroop();
+          refreshStats();
+          return;
+        }
+
+        if (currentTraining === "idiom") {
+          buildIdiom();
+          refreshStats();
+          return;
+        }
+
+        if (currentTraining === "poem") {
+          buildPoem();
+          refreshStats();
+          return;
+        }
+
+        if (currentTraining === "memory") {
+          buildMemory();
+          refreshStats();
+          return;
+        }
+
+        if (currentTraining === "decode") {
+          buildDecode();
+          refreshStats();
+          return;
+        }
+
+        buildSchulte();
+        refreshStats();
+      }
+
+      function buildSchulte() {
+        next = reverseOrderOn ? size * size : 1;
+        targetLabel.textContent = "下一个数字";
+        targetText.textContent = String(next);
+        resetButton.textContent = "重置方格";
+        sizeSwitch.classList.remove("is-hidden");
+        idiomSizeSwitch.classList.add("is-hidden");
+        hintWrap.classList.remove("is-hidden");
+        reverseOrderWrap.classList.remove("is-hidden");
+        colorInterferenceWrap.classList.remove("is-hidden");
+        idiomTarget.classList.add("is-hidden");
+        poemMeta.classList.add("is-hidden");
+        board.classList.remove("is-hidden");
+        stroopPanel.classList.add("is-hidden");
+        boardShell.dataset.size = String(size);
+        board.dataset.size = String(size);
+        board.dataset.cols = String(size);
+        board.dataset.rows = String(size);
+        board.dataset.training = "schulte";
+        board.style.gridTemplateColumns = `repeat(${size}, minmax(0, 1fr))`;
+        board.style.gridTemplateRows = `repeat(${size}, minmax(0, 1fr))`;
+        board.style.aspectRatio = "1";
+        board.replaceChildren();
+
+        const firstTarget = reverseOrderOn ? size * size : 1;
+        const values = shuffle(Array.from({ length: size * size }, (_, index) => index + 1));
+        values.forEach((value) => {
+          const cell = document.createElement("button");
+          cell.type = "button";
+          cell.className = "cell";
+          cell.dataset.value = String(value);
+          cell.setAttribute("aria-label", `数字 ${value}`);
+
+          if (value === firstTarget) {
+            cell.textContent = value;
+            cell.classList.add("first-target");
+          } else {
+            cell.textContent = "";
+            cell.classList.add("hidden-content");
+          }
+
+          cell.addEventListener("click", () => handleCell(cell, value));
+          board.append(cell);
+        });
+
+        applyGridTextColors();
+        refreshHint();
+      }
+
+      function buildStroop() {
+        stroopTextAnswerOn = stroopTextAnswerToggle.checked;
+        stroopTrial = 1;
+        currentStroopColor = null;
+        currentStroopAnswerColor = null;
+        previousStroopColorKey = "";
+        targetLabel.textContent = "进度";
+        targetText.textContent = `1/${stroopTotal}`;
+        resetButton.textContent = "重置训练";
+        sizeSwitch.classList.add("is-hidden");
+        idiomSizeSwitch.classList.add("is-hidden");
+        hintWrap.classList.add("is-hidden");
+        colorInterferenceWrap.classList.add("is-hidden");
+        stroopTextAnswerWrap.classList.remove("is-hidden");
+        idiomTarget.classList.add("is-hidden");
+        poemMeta.classList.add("is-hidden");
+        board.classList.add("is-hidden");
+        board.replaceChildren();
+        stroopPanel.classList.remove("is-hidden");
+        boardShell.dataset.size = "stroop";
+        nextStroopPrompt();
+      }
+
+      function buildDecode() {
+        decodeReverseOn = decodeReverseToggle.checked;
+        decodePairs = shuffle(decodeSymbols).slice(0, decodeLetters.length).map((symbol, index) => ({
+          symbol,
+          letter: decodeLetters[index]
+        }));
+        let previousPair = null;
+        decodeQuestionsData = Array.from({ length: decodeTotal }, () => {
+          const candidates = previousPair
+            ? decodePairs.filter((pair) => pair !== previousPair)
+            : decodePairs;
+          const pair = candidates[Math.floor(Math.random() * candidates.length)];
+          previousPair = pair;
+          return { symbol: pair.symbol, letter: pair.letter };
+        });
+        decodeAnswerOptions = shuffle(decodePairs.map((pair) => decodeReverseOn ? pair.symbol : pair.letter));
+        decodeAnswered = 0;
+        targetLabel.textContent = "进度";
+        targetText.textContent = `0/${decodeTotal}`;
+        resetButton.textContent = "重置译码";
+        sizeSwitch.classList.add("is-hidden");
+        idiomSizeSwitch.classList.add("is-hidden");
+        hintWrap.classList.add("is-hidden");
+        colorInterferenceWrap.classList.add("is-hidden");
+        decodeReverseWrap.classList.remove("is-hidden");
+        idiomTarget.classList.add("is-hidden");
+        poemMeta.classList.add("is-hidden");
+        board.classList.add("is-hidden");
+        board.replaceChildren();
+        stroopPanel.classList.add("is-hidden");
+        decodePanel.classList.remove("is-hidden");
+        boardShell.dataset.size = "decode";
+        boardShell.dataset.training = "decode";
+
+        decodeKey.replaceChildren(...decodePairs.map((pair) => {
+          const item = document.createElement("div");
+          item.className = "decode-key-item";
+          item.innerHTML = `<span class="decode-symbol">${pair.symbol}</span><span class="decode-letter">${pair.letter}</span>`;
+          return item;
+        }));
+
+        decodeQuestions.replaceChildren(...decodeQuestionsData.map((question, index) => {
+          const item = document.createElement("article");
+          item.className = "decode-question";
+          item.dataset.index = String(index);
+
+          const symbol = document.createElement("div");
+          symbol.className = "decode-symbol";
+          symbol.textContent = decodeReverseOn ? question.letter : question.symbol;
+          item.append(symbol);
+          return item;
+        }));
+        renderDecodeAnswerPad();
+        refreshDecodeCursor();
+      }
+
+      function buildIdiom() {
+        currentIdioms = selectUniqueIdioms(idiomCols);
+        currentIdiom = currentIdioms[0];
+        idiomNextIndex = 0;
+        targetLabel.textContent = "下一个字";
+        targetText.textContent = currentIdiom[0];
+        resetButton.textContent = "重置成语";
+        sizeSwitch.classList.add("is-hidden");
+        idiomSizeSwitch.classList.remove("is-hidden");
+        hintWrap.classList.add("is-hidden");
+        colorInterferenceWrap.classList.remove("is-hidden");
+        idiomTarget.classList.remove("is-hidden");
+        poemMeta.classList.add("is-hidden");
+        idiomText.textContent = currentIdiom;
+        board.classList.remove("is-hidden");
+        stroopPanel.classList.add("is-hidden");
+        boardShell.dataset.size = String(idiomCols);
+        board.dataset.size = String(idiomCols);
+        board.dataset.cols = String(idiomCols);
+        board.dataset.rows = "4";
+        board.dataset.training = "idiom";
+        board.style.gridTemplateColumns = `repeat(${idiomCols}, minmax(0, 1fr))`;
+        board.style.gridTemplateRows = "repeat(4, minmax(0, 1fr))";
+        board.style.aspectRatio = `${idiomCols} / 4`;
+        board.replaceChildren();
+
+        const targetEntries = currentIdioms.flatMap((idiom, idiomIndex) =>
+          [...idiom].map((char, charIndex) => ({
+            char,
+            order: idiomIndex * 4 + charIndex,
+            target: true
+          }))
+        );
+
+        shuffle(targetEntries).forEach((entry) => {
+          const cell = document.createElement("button");
+          cell.type = "button";
+          cell.className = "cell";
+          cell.dataset.order = String(entry.order);
+          cell.dataset.target = String(entry.target);
+          cell.dataset.char = entry.char;
+          cell.setAttribute("aria-label", entry.char);
+
+          if (entry.order === 0) {
+            cell.textContent = entry.char;
+            cell.classList.add("first-target");
+          } else {
+            cell.textContent = "";
+            cell.classList.add("hidden-content");
+          }
+
+          cell.addEventListener("click", () => handleIdiomCell(cell));
+          board.append(cell);
+        });
+
+        applyGridTextColors();
+      }
+
+      function buildPoem() {
+        currentPoem = poems[Math.floor(Math.random() * poems.length)];
+        poemChars = currentPoem.chars;
+        poemNextIndex = 0;
+        const cols = currentPoem.meter === 5 || currentPoem.meter === 7
+          ? currentPoem.meter
+          : Math.ceil(Math.sqrt(poemChars.length));
+        const rows = Math.ceil(poemChars.length / cols);
+
+        targetLabel.textContent = "下一个字";
+        targetText.textContent = poemChars[0] || "--";
+        resetButton.textContent = "重置古诗";
+        sizeSwitch.classList.add("is-hidden");
+        idiomSizeSwitch.classList.add("is-hidden");
+        hintWrap.classList.add("is-hidden");
+        colorInterferenceWrap.classList.remove("is-hidden");
+        idiomTarget.classList.remove("is-hidden");
+        poemMeta.classList.remove("is-hidden");
+        idiomText.textContent = currentPoem.title;
+        poemMeta.textContent = `${currentPoem.dynasty} · ${currentPoem.author}`;
+        poemToggleButton.classList.remove("is-hidden");
+        poemFullText.textContent = currentPoem.body;
+        board.classList.remove("is-hidden");
+        stroopPanel.classList.add("is-hidden");
+        boardShell.dataset.size = "poem";
+        boardShell.style.setProperty("--board-max", `${Math.min(640, Math.max(330, cols * 72))}px`);
+        board.dataset.size = "poem";
+        board.dataset.cols = String(cols);
+        board.dataset.rows = String(rows);
+        board.dataset.training = "poem";
+        board.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+        board.style.gridTemplateRows = `repeat(${rows}, minmax(0, 1fr))`;
+        board.style.aspectRatio = `${cols} / ${rows}`;
+        board.replaceChildren();
+
+        shuffle(poemChars.map((char, order) => ({ char, order }))).forEach((entry) => {
+          const cell = document.createElement("button");
+          cell.type = "button";
+          cell.className = "cell";
+          cell.dataset.char = entry.char;
+          cell.dataset.order = String(entry.order);
+          cell.setAttribute("aria-label", entry.char);
+
+          if (entry.order === 0) {
+            cell.textContent = entry.char;
+            cell.classList.add("first-target");
+          } else {
+            cell.textContent = "";
+            cell.classList.add("hidden-content");
+          }
+
+          cell.addEventListener("click", () => handlePoemCell(cell));
+          board.append(cell);
+        });
+
+        applyGridTextColors();
+      }
+
+      function buildMemory() {
+        memoryRound = 1;
+        memoryTargets = [];
+        memoryRemaining = new Set();
+        memoryActive = false;
+        memoryPreviewing = false;
+        memoryReplayCount = 0;
+        targetLabel.textContent = "轮次";
+        targetText.textContent = "待开始\";
+        resetButton.textContent = "重置记忆";
+        memoryStartButton.classList.remove("is-hidden");
+        memoryStartButton.disabled = false;
+        memoryStartButton.textContent = "开始记忆\";
+        memoryReplayButton.classList.remove("is-hidden");
+        memoryReplayButton.disabled = true;
+        sizeSwitch.classList.add("is-hidden");
+        idiomSizeSwitch.classList.add("is-hidden");
+        hintWrap.classList.add("is-hidden");
+        colorInterferenceWrap.classList.add("is-hidden");
+        idiomTarget.classList.add("is-hidden");
+        board.classList.remove("is-hidden");
+        stroopPanel.classList.add("is-hidden");
+        boardShell.dataset.size = String(memorySize);
+        board.dataset.size = String(memorySize);
+        board.dataset.cols = String(memorySize);
+        board.dataset.rows = String(memorySize);
+        board.dataset.training = "memory";
+        board.style.gridTemplateColumns = `repeat(${memorySize}, minmax(0, 1fr))`;
+        board.style.gridTemplateRows = `repeat(${memorySize}, minmax(0, 1fr))`;
+        board.style.aspectRatio = "1";
+        board.replaceChildren();
+
+        for (let index = 0; index < memorySize * memorySize; index += 1) {
+          const cell = document.createElement("button");
+          cell.type = "button";
+          cell.className = "cell";
+          cell.dataset.index = String(index);
+          cell.setAttribute("aria-label", `记忆方格 ${index + 1}`);
+          cell.addEventListener("click", () => handleMemoryCell(cell, index));
+          board.append(cell);
+        }
+
+        notice.textContent = "点击开始记忆\";
+      }
+
+      function startMemoryTraining() {
+        if (currentTraining !== "memory" || memoryActive || finished) return;
+        memoryActive = true;
+        memoryStartButton.disabled = true;
+        memoryStartButton.textContent = "记忆中\";
+        if (!started) startTimer();
+        addMemoryTarget();
+        showMemoryPreview();
+      }
+
+      function addMemoryTarget() {
+        const used = new Set(memoryTargets);
+        const candidates = Array.from({ length: memorySize * memorySize }, (_, index) => index)
+          .filter((index) => !used.has(index));
+        const nextTarget = candidates[Math.floor(Math.random() * candidates.length)];
+        memoryTargets.push(nextTarget);
+      }
+
+      function updateMemoryReplayButton() {
+        memoryReplayButton.disabled = currentTraining !== "memory" || !memoryActive || finished || memoryPreviewing || !memoryTargets.length;
+      }
+
+      function showMemoryPreview() {
+        if (!memoryActive || finished) return;
+        window.clearTimeout(memoryPreviewTimer);
+        memoryPreviewing = true;
+        updateMemoryReplayButton();
+        memoryRemaining = new Set(memoryTargets);
+        targetText.textContent = `${memoryRound}/${memoryTotalRounds}`;
+        notice.textContent = "记住蓝色方格";
+        board.querySelectorAll(".cell").forEach((cell) => {
+          cell.classList.remove("memory-correct", "memory-wrong");
+          cell.classList.toggle("memory-lit", memoryTargets.includes(Number(cell.dataset.index)));
+        });
+
+        memoryPreviewTimer = window.setTimeout(() => {
+          memoryPreviewing = false;
+          board.querySelectorAll(".memory-lit").forEach((cell) => cell.classList.remove("memory-lit"));
+          notice.textContent = "请点击刚刚点亮的方格";
+          updateMemoryReplayButton();
+        }, memoryPreviewMs);
+      }
+
+      function replayMemoryPreview() {
+        if (currentTraining !== "memory" || !memoryActive || finished || memoryPreviewing || !memoryTargets.length) return;
+        memoryReplayCount += 1;
+        window.clearTimeout(memoryPreviewTimer);
+        memoryPreviewing = true;
+        updateMemoryReplayButton();
+        notice.textContent = "复现蓝色方格";
+        board.querySelectorAll(".cell").forEach((cell) => {
+          cell.classList.toggle("memory-lit", memoryTargets.includes(Number(cell.dataset.index)));
+        });
+        memoryPreviewTimer = window.setTimeout(() => {
+          memoryPreviewing = false;
+          board.querySelectorAll(".memory-lit").forEach((cell) => cell.classList.remove("memory-lit"));
+          notice.textContent = "请点击刚刚点亮的方格";
+          updateMemoryReplayButton();
+        }, memoryPreviewMs);
+      }
+
+      function selectUniqueIdioms(count) {
+        for (let attempt = 0; attempt < 300; attempt += 1) {
+          const used = new Set();
+          const picked = [];
+          for (const idiom of shuffle(idiomList)) {
+            const chars = [...idiom];
+            if (new Set(chars).size !== chars.length) continue;
+            if (chars.some((char) => used.has(char))) continue;
+            picked.push(idiom);
+            chars.forEach((char) => used.add(char));
+            if (picked.length === count) return picked;
+          }
+        }
+        throw new Error("无法抽取足够数量且无重复字的成语");
+      }
+
+      function renderColorChoices() {
+        colorChoices.dataset.cols = String(stroopColors.length);
+        colorChoices.dataset.rows = "1";
+        colorChoices.style.gridTemplateColumns = `repeat(${stroopColors.length}, minmax(0, 1fr))`;
+        colorChoices.replaceChildren();
+        shuffle(stroopColors).forEach((color) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "color-choice";
+          button.style.backgroundColor = color.value;
+          button.dataset.color = color.key;
+          button.setAttribute("aria-label", color.name);
+          button.title = color.name;
+          button.addEventListener("click", () => handleColorChoice(button, color.key));
+          colorChoices.append(button);
+        });
+      }
+
+      function nextStroopPrompt() {
+        const answerOptions = stroopColors.filter((color) => color.key !== previousStroopColorKey);
+        const answerColor = answerOptions[Math.floor(Math.random() * answerOptions.length)];
+        const distractorOptions = stroopColors.filter((color) => color.key !== answerColor.key);
+        const distractorColor = distractorOptions[Math.floor(Math.random() * distractorOptions.length)];
+        const targetColor = stroopTextAnswerOn ? distractorColor : answerColor;
+        const wordColor = stroopTextAnswerOn ? answerColor : distractorColor;
+        currentStroopColor = targetColor;
+        currentStroopAnswerColor = answerColor;
+        previousStroopColorKey = answerColor.key;
+        stroopWord.textContent = wordColor.name;
+        stroopWord.style.color = targetColor.value;
+        stroopProgress.textContent = `${stroopTrial} / ${stroopTotal}`;
+        targetText.textContent = `${stroopTrial}/${stroopTotal}`;
+        renderColorChoices();
+      }
+
+      function renderDecodeAnswerPad() {
+        decodeAnswerPad.replaceChildren();
+        decodeAnswerOptions.forEach((value) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "decode-choice";
+          button.textContent = value;
+          button.dataset.answer = value;
+          button.addEventListener("click", () => handleDecodeChoice(button));
+          decodeAnswerPad.append(button);
+        });
+      }
+
+      function refreshDecodeCursor() {
+        decodeQuestions.querySelectorAll(".decode-question").forEach((item, index) => {
+          item.classList.toggle("current", index === decodeAnswered && !finished);
+        });
+      }
+
+      function startTimer() {
+        startSessionTimer();
+        started = true;
+        startStamp = performance.now() - elapsedMs;
+        timerId = window.setInterval(() => {
+          elapsedMs = performance.now() - startStamp;
+          timeText.textContent = formatSeconds(elapsedMs);
+        }, 40);
+      }
+
+      function stopTimer() {
+        stopSessionTimer();
+        if (timerId) {
+          window.clearInterval(timerId);
+          timerId = 0;
+        }
+      }
+
+      function refreshSessionTimer() {
+        if (sessionStarted) sessionElapsedMs = performance.now() - sessionStartStamp;
+        sessionTimeText.textContent = formatDuration(sessionElapsedMs);
+      }
+
+      function startSessionTimer() {
+        if (sessionStarted) return;
+        sessionStarted = true;
+        sessionStartStamp = performance.now() - sessionElapsedMs;
+        sessionStartButton.disabled = true;
+        sessionStopButton.disabled = false;
+        refreshSessionTimer();
+        sessionTimerId = window.setInterval(refreshSessionTimer, 250);
+      }
+
+      function stopSessionTimer() {
+        if (!sessionStarted) return Math.round(sessionElapsedMs);
+        refreshSessionTimer();
+        sessionStarted = false;
+        if (sessionTimerId) {
+          window.clearInterval(sessionTimerId);
+          sessionTimerId = 0;
+        }
+        sessionStartButton.disabled = false;
+        sessionStopButton.disabled = true;
+        return Math.round(sessionElapsedMs);
+      }
+
+      function revealAllCells() {
+        board.querySelectorAll(".hidden-content").forEach(cell => {
+          cell.textContent = cell.dataset.value || cell.dataset.char || "";
+          cell.classList.remove("hidden-content");
+        });
+        board.querySelectorAll(".first-target").forEach(cell => {
+          cell.classList.remove("first-target");
+        });
+      }
+
+      function handleCell(cell, value) {
+        if (finished || cell.classList.contains("found")) return;
+
+        if (!started) {
+          startTimer();
+          revealAllCells();
+        }
+
+        if (value === next) {
+          cell.classList.add("found");
+          next += reverseOrderOn ? -1 : 1;
+          if (reverseOrderOn ? next < 1 : next > size * size) {
+            completeRound();
+            return;
+          }
+          targetText.textContent = String(next);
+          refreshHint();
+          return;
+        }
+
+        errors += 1;
+        errorText.textContent = String(errors);
+        cell.classList.remove("wrong");
+        void cell.offsetWidth;
+        cell.classList.add("wrong");
+        window.clearTimeout(cell._wrongTimer);
+        cell._wrongTimer = window.setTimeout(() => {
+          cell.classList.remove("wrong");
+        }, 300);
+      }
+
+      function handleColorChoice(button, colorKey) {
+        if (finished) return;
+        if (!started) startTimer();
+
+        if (currentStroopAnswerColor && colorKey === currentStroopAnswerColor.key) {
+          button.classList.add("correct");
+          window.setTimeout(() => button.classList.remove("correct"), 180);
+          if (stroopTrial >= stroopTotal) {
+            completeStroopRound();
+            return;
+          }
+          stroopTrial += 1;
+          nextStroopPrompt();
+          return;
+        }
+
+        errors += 1;
+        errorText.textContent = String(errors);
+        button.classList.remove("wrong");
+        void button.offsetWidth;
+        button.classList.add("wrong");
+        window.clearTimeout(button._wrongTimer);
+        button._wrongTimer = window.setTimeout(() => {
+          button.classList.remove("wrong");
+        }, 300);
+      }
+
+      function handleDecodeChoice(button) {
+        if (finished || decodeAnswered >= decodeQuestionsData.length) return;
+        if (!started) startTimer();
+        const item = decodeQuestions.querySelector(`.decode-question[data-index="${decodeAnswered}"]`);
+        const question = decodeQuestionsData[decodeAnswered];
+        const answer = decodeReverseOn ? question.symbol : question.letter;
+
+        if (button.dataset.answer === answer) {
+          item.classList.add("answered");
+          decodeAnswered += 1;
+          targetText.textContent = `${decodeAnswered}/${decodeTotal}`;
+          refreshDecodeCursor();
+          if (decodeAnswered >= decodeTotal) completeDecodeRound();
+          return;
+        }
+
+        errors += 1;
+        errorText.textContent = String(errors);
+        button.classList.remove("wrong");
+        void button.offsetWidth;
+        button.classList.add("wrong");
+        window.clearTimeout(button._wrongTimer);
+        button._wrongTimer = window.setTimeout(() => {
+          button.classList.remove("wrong");
+        }, 300);
+      }
+
+      function handleIdiomCell(cell) {
+        if (finished || cell.classList.contains("found")) return;
+
+        if (!started) {
+          startTimer();
+          revealAllCells();
+        }
+
+        if (cell.dataset.target === "true" && Number(cell.dataset.order) === idiomNextIndex) {
+          cell.classList.add("found");
+          idiomNextIndex += 1;
+          if (idiomNextIndex >= currentIdioms.length * 4) {
+            completeIdiomRound();
+            return;
+          }
+          currentIdiom = currentIdioms[Math.floor(idiomNextIndex / 4)];
+          idiomText.textContent = currentIdiom;
+          targetText.textContent = currentIdiom[idiomNextIndex % 4];
+          return;
+        }
+
+        errors += 1;
+        errorText.textContent = String(errors);
+        cell.classList.remove("wrong");
+        void cell.offsetWidth;
+        cell.classList.add("wrong");
+        window.clearTimeout(cell._wrongTimer);
+        cell._wrongTimer = window.setTimeout(() => {
+          cell.classList.remove("wrong");
+        }, 300);
+      }
+
+      function handlePoemCell(cell) {
+        if (finished || cell.classList.contains("found")) return;
+
+        if (!started) {
+          startTimer();
+          revealAllCells();
+        }
+
+        if (cell.dataset.char === poemChars[poemNextIndex]) {
+          cell.classList.add("found");
+          poemNextIndex += 1;
+          if (poemNextIndex >= poemChars.length) {
+            completePoemRound();
+            return;
+          }
+          targetText.textContent = poemChars[poemNextIndex];
+          return;
+        }
+
+        errors += 1;
+        errorText.textContent = String(errors);
+        cell.classList.remove("wrong");
+        void cell.offsetWidth;
+        cell.classList.add("wrong");
+        window.clearTimeout(cell._wrongTimer);
+        cell._wrongTimer = window.setTimeout(() => {
+          cell.classList.remove("wrong");
+        }, 300);
+      }
+
+      function handleMemoryCell(cell, index) {
+        if (!memoryActive || finished || memoryPreviewing || cell.classList.contains("memory-correct")) return;
+        if (!started) startTimer();
+
+        if (memoryRemaining.has(index)) {
+          cell.classList.add("memory-correct");
+          memoryRemaining.delete(index);
+          if (memoryRemaining.size === 0) {
+            if (memoryRound >= memoryTotalRounds) {
+              completeMemoryRound();
+              return;
+            }
+            memoryRound += 1;
+            addMemoryTarget();
+            memoryPreviewing = true;
+            notice.textContent = "准备下一轮\";
+            window.clearTimeout(memoryPreviewTimer);
+            memoryPreviewTimer = window.setTimeout(showMemoryPreview, 350);
+          }
+          return;
+        }
+
+        errors += 1;
+        errorText.textContent = String(errors);
+        cell.classList.remove("memory-wrong");
+        void cell.offsetWidth;
+        cell.classList.add("memory-wrong");
+        window.clearTimeout(cell._wrongTimer);
+        cell._wrongTimer = window.setTimeout(() => {
+          cell.classList.remove("memory-wrong");
+        }, 300);
+      }
+
+      function completeRound() {
+        finished = true;
+        stopTimer();
+        elapsedMs = performance.now() - startStamp;
+        timeText.textContent = formatSeconds(elapsedMs);
+        targetText.textContent = "完成";
+
+        const total = size * size;
+        const record = {
+          id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+          type: "schulte",
+          size,
+          reverse: reverseOrderOn,
+          colorInterference: colorInterferenceOn,
+          timeMs: Math.round(elapsedMs),
+          errors,
+          accuracy: Math.round((total / (total + errors)) * 1000) / 10,
+          date: new Date().toISOString()
+        };
+
+        const previousBest = bestForSize(size);
+        addRecord(record);
+        showResult(record, !previousBest || record.timeMs < previousBest.timeMs);
+      }
+
+      function completeStroopRound() {
+        finished = true;
+        stopTimer();
+        elapsedMs = performance.now() - startStamp;
+        timeText.textContent = formatSeconds(elapsedMs);
+        targetText.textContent = "完成";
+
+        const record = {
+          id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+          type: "stroop",
+          trials: stroopTotal,
+          textAnswer: stroopTextAnswerOn,
+          timeMs: Math.round(elapsedMs),
+          errors,
+          accuracy: Math.round((stroopTotal / (stroopTotal + errors)) * 1000) / 10,
+          date: new Date().toISOString()
+        };
+
+        const previousBest = bestForCurrentTraining();
+        addRecord(record);
+        showResult(record, !previousBest || record.timeMs < previousBest.timeMs);
+      }
+
+      function completeDecodeRound() {
+        finished = true;
+        stopTimer();
+        elapsedMs = performance.now() - startStamp;
+        timeText.textContent = formatSeconds(elapsedMs);
+        targetText.textContent = "完成";
+
+        const record = {
+          id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+          type: "decode",
+          trials: decodeTotal,
+          reverse: decodeReverseOn,
+          symbols: decodePairs.map((pair) => pair.symbol).join(""),
+          timeMs: Math.round(elapsedMs),
+          errors,
+          accuracy: Math.round((decodeTotal / (decodeTotal + errors)) * 1000) / 10,
+          date: new Date().toISOString()
+        };
+
+        const previousBest = bestForCurrentTraining();
+        addRecord(record);
+        showResult(record, !previousBest || record.timeMs < previousBest.timeMs);
+      }
+
+      function completeIdiomRound() {
+        finished = true;
+        stopTimer();
+        elapsedMs = performance.now() - startStamp;
+        timeText.textContent = formatSeconds(elapsedMs);
+        targetText.textContent = "完成";
+
+        const record = {
+          id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+          type: "idiom",
+          cols: idiomCols,
+          rows: 4,
+          colorInterference: colorInterferenceOn,
+          idioms: currentIdioms,
+          idiom: currentIdioms.join("、\"),
+          timeMs: Math.round(elapsedMs),
+          errors,
+          accuracy: Math.round(((idiomCols * 4) / (idiomCols * 4 + errors)) * 1000) / 10,
+          date: new Date().toISOString()
+        };
+
+        const previousBest = bestForCurrentTraining();
+        addRecord(record);
+        showResult(record, !previousBest || record.timeMs < previousBest.timeMs);
+      }
+
+      function completePoemRound() {
+        finished = true;
+        stopTimer();
+        elapsedMs = performance.now() - startStamp;
+        timeText.textContent = formatSeconds(elapsedMs);
+        targetText.textContent = "完成";
+
+        const record = {
+          id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+          type: "poem",
+          title: currentPoem.title,
+          dynasty: currentPoem.dynasty,
+          author: currentPoem.author,
+          colorInterference: colorInterferenceOn,
+          chars: poemChars.length,
+          timeMs: Math.round(elapsedMs),
+          errors,
+          accuracy: Math.round((poemChars.length / (poemChars.length + errors)) * 1000) / 10,
+          date: new Date().toISOString()
+        };
+
+        const previousBest = bestForCurrentTraining();
+        addRecord(record);
+        showResult(record, !previousBest || record.timeMs < previousBest.timeMs);
+      }
+
+      function completeMemoryRound() {
+        finished = true;
+        memoryActive = false;
+        memoryReplayButton.disabled = true;
+        memoryStartButton.disabled = false;
+        memoryStartButton.textContent = "开始记忆\";
+        stopTimer();
+        elapsedMs = performance.now() - startStamp;
+        timeText.textContent = formatSeconds(elapsedMs);
+        targetText.textContent = "完成";
+        notice.textContent = "";
+
+        const correctClicks = (memoryTotalRounds * (memoryTotalRounds + 1)) / 2;
+        const record = {
+          id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+          type: "memory",
+          rounds: memoryTotalRounds,
+          grid: `${memorySize}×${memorySize}`,
+          replays: memoryReplayCount,
+          timeMs: Math.round(elapsedMs),
+          errors,
+          accuracy: Math.round((correctClicks / (correctClicks + errors)) * 1000) / 10,
+          date: new Date().toISOString()
+        };
+
+        const previousBest = bestForCurrentTraining();
+        addRecord(record);
+        showResult(record, !previousBest || record.timeMs < previousBest.timeMs);
+      }
+
+      function bestForSize(targetSize) {
+        return records
+          .filter((record) => recordMatchesTraining(record, "schulte") && record.size === targetSize && Boolean(record.reverse) === reverseOrderOn)
+          .sort((a, b) => a.timeMs - b.timeMs)[0];
+      }
+
+      function recordMatchesTraining(record, training = currentTraining) {
+        const type = record.type || "schulte";
+        return type === training;
+      }
+
+      function recordsForCurrentTraining() {
+        return records.filter((record) => {
+          if (!recordMatchesTraining(record)) return false;
+          if (currentTraining === "schulte") return record.size === size && Boolean(record.reverse) === reverseOrderOn;
+          if (currentTraining === "idiom") return record.cols === idiomCols;
+          return true;
+        });
+      }
+
+      function bestForCurrentTraining() {
+        return recordsForCurrentTraining().sort((a, b) => a.timeMs - b.timeMs)[0];
+      }
+
+      function refreshStats() {
+        const current = recordsForCurrentTraining();
+        const best = bestForCurrentTraining();
+        countText.textContent = String(current.length);
+        fastText.textContent = best ? `${formatSeconds(best.timeMs)}s` : "--";
+        avgText.textContent = current.length
+          ? `${formatSeconds(current.reduce((sum, record) => sum + record.timeMs, 0) / current.length)}s`
+          : "--";
+        avgErrorText.textContent = current.length
+          ? (current.reduce((sum, record) => sum + record.errors, 0) / current.length).toFixed(1)
+          : "--";
+      }
+
+      function refreshScorePanel() {
+        refreshStats();
+        renderFullRecords();
+      }
+
+      function refreshHint() {
+        board.querySelectorAll(".next").forEach((cell) => cell.classList.remove("next"));
+        if (!hintOn || finished) return;
+        const target = board.querySelector(`[data-value="${next}"]`);
+        if (target && !target.classList.contains("found")) target.classList.add("next");
+      }
+
+      function applyGridTextColors() {
+        board.querySelectorAll(".cell").forEach((cell) => {
+          const color = colorInterferenceOn
+            ? schulteDigitColors[Math.floor(Math.random() * schulteDigitColors.length)]
+            : "#101719";
+          cell.style.setProperty("--digit-color", color);
+        });
+      }
+
+      function createRecordNode(record) {
+        const node = document.createElement("article");
+        node.className = "record";
+        const type = record.type || "schulte";
+        const label = type === "stroop" ? "斯特鲁普" : type === "decode" ? "\u8bd1\u7801\u8bad\u7ec3" : type === "idiom" ? `4×${record.cols}` : type === "poem" ? "古诗训练" : type === "memory" ? "记忆训练" : `${record.size}×${record.size}${record.reverse ? " 倒序" : ""}`;
+        const detail = type === "stroop"
+          ? `${record.trials || stroopTotal}�?· �?${record.errors}`
+          : type === "decode"
+            ? `${record.trials || decodeTotal}\u9898 \u00b7 \u9519 ${record.errors}`
+          : type === "idiom"
+            ? `${record.idioms?.length || record.cols || 1}个成�?· �?${record.errors}`
+            : type === "poem"
+              ? `${record.title || "古诗"} · ${record.chars || 0}�?· �?${record.errors}`
+              : type === "memory"
+                ? `${record.rounds || memoryTotalRounds}�?· �?${record.errors}${Number(record.replays || 0) > 0 ? ` · 复现 ${Number(record.replays || 0)} 次` : ""}`
+                : `�?${record.errors}`;
+        node.innerHTML = `
+          <div class="mode">${label}</div>
+          <div>
+            <strong>${record.accuracy}%</strong>
+            <time datetime="${record.date}">${formatShortDate(record.date)} · ${detail}</time>
+          </div>
+          <div class="score">${formatSeconds(record.timeMs)}s</div>
+        `;
+        return node;
+      }
+
+      function renderFullRecords() {
+        const current = recordsForCurrentTraining();
+        if (!current.length) {
+          fullRecords.innerHTML = `<p class="empty">暂无成绩记录</p>`;
+          return;
+        }
+        fullRecords.replaceChildren(...current.map(createRecordNode));
+      }
+
+      function showResult(record, isBest) {
+        const type = record.type || "schulte";
+        const label = type === "stroop" ? "斯特鲁普" : type === "decode" ? "\u8bd1\u7801\u8bad\u7ec3" : type === "idiom" ? `成语训练` : type === "poem" ? "古诗训练" : type === "memory" ? "记忆训练" : `${record.size}×${record.size}${record.reverse ? " 倒序" : ""}`;
+        const unit = type === "decode" ? `${record.trials || decodeTotal}\u9898` : type === "stroop" ? `${record.trials || stroopTotal}题` : type === "idiom" ? `${record.idioms?.length || record.cols || 1}个成�?· 4×${record.cols}` : type === "poem" ? `${record.title || "古诗"} · ${record.chars || 0}字` : type === "memory" ? `${record.rounds || memoryTotalRounds}�?· ${record.grid || "5×5"}` : record.reverse ? "倒序方格" : "方格";
+        resultSummary.innerHTML = `
+          <div class="summary-item"><span>模式</span><strong>${label}</strong></div>
+          <div class="summary-item"><span>内容</span><strong>${unit}</strong></div>
+          <div class="summary-item"><span>用时</span><strong>${formatSeconds(record.timeMs)}s</strong></div>
+          <div class="summary-item"><span>错误</span><strong>${record.errors}</strong></div>
+          <div class="summary-item"><span>正确�?/span><strong>${record.accuracy}%</strong></div>
+          ${type === "memory" && Number(record.replays || 0) > 0 ? `<div class="summary-item"><span>复现</span><strong>${Number(record.replays || 0)}�?/strong></div>` : ""}
+        `;
+        notice.textContent = isBest ? "刷新最快成绩\" : "";
+        if (typeof resultDialog.showModal === "function") resultDialog.showModal();
+      }
+
+      function syncModeControls() {
+        reverseOrderToggle.checked = reverseOrderOn;
+        colorInterferenceToggle.checked = colorInterferenceOn;
+        decodeReverseToggle.checked = decodeReverseOn;
+        stroopTextAnswerToggle.checked = stroopTextAnswerOn;
+        modeButtons.forEach((button) => {
+          button.classList.toggle("active", Number(button.dataset.size) === size);
+        });
+        idiomModeButtons.forEach((button) => {
+          button.classList.toggle("active", Number(button.dataset.idiomCols) === idiomCols);
+        });
+      }
+
+      function activateTask(task) {
+        if (!dailyTaskSpecs[task.module]) return;
+        if (task.module === "schulte") {
+          size = Number(taskModeSetting(task, "size")) || 5;
+          reverseOrderOn = Boolean(taskModeSetting(task, "reverse"));
+          colorInterferenceOn = Boolean(taskModeSetting(task, "colorInterference"));
+        } else if (task.module === "stroop") {
+          stroopTextAnswerOn = Boolean(taskModeSetting(task, "textAnswer"));
+        } else if (task.module === "idiom") {
+          idiomCols = Number(taskModeSetting(task, "cols")) || 4;
+          colorInterferenceOn = Boolean(taskModeSetting(task, "colorInterference"));
+        } else if (task.module === "poem") {
+          colorInterferenceOn = Boolean(taskModeSetting(task, "colorInterference"));
+        } else if (task.module === "decode") {
+          decodeReverseOn = Boolean(taskModeSetting(task, "reverse"));
+        }
+        syncModeControls();
+        setTraining(task.module);
+      }
+
+      function setTraining(training) {
+        currentTraining = training;
+        trainingButtons.forEach((button) => {
+          button.classList.toggle("active", button.dataset.training === currentTraining);
+        });
+        if (resultDialog.open) resultDialog.close();
+        buildBoard();
+      }
+
+      function setSize(nextSize) {
+        size = nextSize;
+        modeButtons.forEach((button) => {
+          button.classList.toggle("active", Number(button.dataset.size) === size);
+        });
+        buildBoard();
+      }
+
+      function setIdiomCols(nextCols) {
+        idiomCols = nextCols;
+        idiomModeButtons.forEach((button) => {
+          button.classList.toggle("active", Number(button.dataset.idiomCols) === idiomCols);
+        });
+        buildBoard();
+      }
+
+      trainingButtons.forEach((button) => {
+        button.addEventListener("click", () => setTraining(button.dataset.training));
+      });
+
+      modeButtons.forEach((button) => {
+        button.addEventListener("click", () => setSize(Number(button.dataset.size)));
+      });
+
+      idiomModeButtons.forEach((button) => {
+        button.addEventListener("click", () => setIdiomCols(Number(button.dataset.idiomCols)));
+      });
+
+      document.getElementById("resetButton").addEventListener("click", buildBoard);
+      memoryStartButton.addEventListener("click", startMemoryTraining);
+      memoryReplayButton.addEventListener("click", replayMemoryPreview);
+      poemToggleButton.addEventListener("click", () => {
+        const expanded = poemToggleButton.getAttribute("aria-expanded") === "true";
+        poemToggleButton.setAttribute("aria-expanded", String(!expanded));
+        poemToggleButton.textContent = expanded ? "显示全诗" : "隐藏全诗";
+        poemFullText.classList.toggle("is-hidden", expanded);
+      });
+      document.getElementById("againButton").addEventListener("click", () => {
+        resultDialog.close();
+        buildBoard();
+      });
+      document.getElementById("recordsButton").addEventListener("click", () => {
+        recordsNotice.textContent = "";
+        refreshScorePanel();
+        if (typeof recordsDialog.showModal === "function") recordsDialog.showModal();
+      });
+      document.getElementById("closeResultButton").addEventListener("click", () => resultDialog.close());
+      document.getElementById("closeRecordsButton").addEventListener("click", () => recordsDialog.close());
+      document.getElementById("closeRecordsBottomButton").addEventListener("click", () => recordsDialog.close());
+      function clearRecords() {
+        const current = recordsForCurrentTraining();
+        if (!current.length) {
+          refreshScorePanel();
+          recordsNotice.textContent = "暂无可清空的成绩记录";
+          return;
+        }
+        if (window.confirm("确定清空当前模式的所有成绩记录吗？\")) {
+          records = records.filter((record) => !current.includes(record));
+          saveRecords();
+          refreshScorePanel();
+          notice.textContent = "成绩记录已清空\";
+          recordsNotice.textContent = "全部成绩记录已清空\";
+        }
+      }
+
+      document.getElementById("clearAllButton").addEventListener("click", clearRecords);
+      sessionStartButton.style.display = "none";
+      sessionStopButton.style.display = "none";
+      sessionStartButton.addEventListener("click", startSessionTimer);
+      sessionStopButton.addEventListener("click", stopSessionTimer);
+      hintToggle.addEventListener("change", () => {
+        hintOn = hintToggle.checked;
+        refreshHint();
+      });
+      reverseOrderToggle.addEventListener("change", () => {
+        reverseOrderOn = reverseOrderToggle.checked;
+        if (currentTraining === "schulte") buildBoard();
+      });
+      colorInterferenceToggle.addEventListener("change", () => {
+        colorInterferenceOn = colorInterferenceToggle.checked;
+        if (currentTraining !== "stroop") applyGridTextColors();
+      });
+      decodeReverseToggle.addEventListener("change", () => {
+        decodeReverseOn = decodeReverseToggle.checked;
+        if (currentTraining === "decode") buildBoard();
+      });
+      stroopTextAnswerToggle.addEventListener("change", () => {
+        stroopTextAnswerOn = stroopTextAnswerToggle.checked;
+        if (currentTraining === "stroop") buildBoard();
+      });
+      function openUserCenter() {
+        setNotice(userCenterNotice, "");
+        loadUserCenter();
+        if (typeof userCenterDialog.showModal === "function") userCenterDialog.showModal();
+      }
+
+      userCenterButton.addEventListener("click", openUserCenter);
+      closeUserCenterButton.addEventListener("click", () => userCenterDialog.close());
+      saveUserButton.addEventListener("click", saveUserProfile);
+      logoutUserButton.addEventListener("click", () => {
+        cloudUser = null;
+        loadedUserIdentifier = "";
+        loginPasswordInput.value = "";
+        saveCloudUser();
+        saveLoadedUserIdentifier();
+        loadUserCenter();
+        setNotice(userCenterNotice, "已登出\");
+      });
+      loadUserButton.addEventListener("click", loadSyncedUserByIdentifier);
+      loginUserButton.addEventListener("click", loadSyncedUserByIdentifier);
+      birthDateInput.addEventListener("change", () => {
+        applyUserToForm(userPayloadFromForm());
+        renderDailyScores();
+      });
+      taskModuleSelect.addEventListener("change", updateTaskConfigVisibility);
+      taskSizeSelect.addEventListener("change", updateTaskConfigVisibility);
+      taskReverseSelect.addEventListener("change", updateTaskConfigVisibility);
+      taskColorSelect.addEventListener("change", updateTaskConfigVisibility);
+      taskIdiomSelect.addEventListener("change", updateTaskConfigVisibility);
+      taskStroopAnswerSelect.addEventListener("change", updateTaskConfigVisibility);
+      taskDecodeReverseSelect.addEventListener("change", updateTaskConfigVisibility);
+      addTaskButton.addEventListener("click", () => {
+        dailyTasks.push(buildTaskFromControls());
+        persistUserCenter();
+      });
+      refreshDailyScoresButton.addEventListener("click", renderDailyScores);
+      closeAdminLoginButton.addEventListener("click", () => adminLoginDialog.close());
+      closeAdminPanelButton.addEventListener("click", () => adminPanelDialog.close());
+      appTitle.addEventListener("click", () => {
+        window.clearTimeout(adminClickTimer);
+        adminClickCount += 1;
+        adminClickTimer = window.setTimeout(() => {
+          adminClickCount = 0;
+        }, 1200);
+        if (adminClickCount >= 5) {
+          adminClickCount = 0;
+          setNotice(adminLoginNotice, "");
+          adminPasswordInput.value = "";
+          if (typeof adminLoginDialog.showModal === "function") adminLoginDialog.showModal();
+        }
+      });
+      adminLoginButton.addEventListener("click", () => {
+        adminPassword = adminPasswordInput.value;
+        if (!adminPassword) {
+          setNotice(adminLoginNotice, "请输入管理密码\", true);
+          return;
+        }
+        adminLoginDialog.close();
+        setNotice(adminPanelNotice, "");
+        adminUserPreview.innerHTML = "";
+        if (typeof adminPanelDialog.showModal === "function") adminPanelDialog.showModal();
+        loadAdminUsers();
+      });
+      adminIdentifierInput.addEventListener("change", adminLookup);
+      adminLookupButton.addEventListener("click", adminLookup);
+      adminResetPasswordButton.addEventListener("click", adminResetPassword);
+      adminDeleteButton.addEventListener("click", adminDeleteUser);
+      renderTitleTasks();
+      updateTaskConfigVisibility();
+      loadUserCenter();
+      loadPoems();
+      buildBoard();
+    })();
+  </script>
+</body>
+</html>
