@@ -1,96 +1,195 @@
-# 舒尔特方格专注力训练应用
+# 舒尔特方格专注力训练
 
-Docker 部署版本 - 基于 Node.js + Express + SQLite
+一款在线的专注力训练工具，包含舒尔特方格、斯特鲁普、成语、古诗、记忆、译码六种训练模式。支持多用户、云端同步成绩、每日任务管理。
 
-## 快速部署
+---
 
-### 1. 配置环境变量
+## 功能一览
+
+- **6 种训练模式**：舒尔特方格（3×3 ~ 7×7，含倒序/色彩干扰）、斯特鲁普（文字/颜色）、成语填空、古诗填空、记忆翻牌、译码挑战
+- **多用户系统**：每个用户有唯一识别码，登录后可同步成绩到云端
+- **每日任务**：管理员可为用户分配每日训练任务，自动跟踪完成进度
+- **成绩记录**：自动保存每次训练的成绩（用时、错误率等），保留近 90 天
+- **公开成绩页**：每个用户拥有独立的公开页面 `/u/{识别码}`，可分享给他人
+- **时区设置**：管理员可在管理面板中设置时区（默认东八区），所有时间显示以此为准
+- **管理员面板**：点击顶部标题 5 次进入，可管理用户、重置密码、删除用户、设置时区
+
+---
+
+## 快速部署（Docker 推荐）
+
+### 1. 准备环境变量
+
+创建 `docker-compose.yml`（项目已自带），只需要设置两个必填变量：
+
+| 变量 | 说明 | 示例 |
+|------|------|------|
+| `ADMIN_PASSWORD` | 管理员密码（必填） | `MyAdmin123` |
+| `USER_CREATE_CODE` | 用户注册授权码（必填） | `Register2024` |
+
+### 2. 启动
 
 ```bash
-cp .env.example .env
+docker compose up -d
 ```
 
-编辑 `.env` 文件，设置以下变量：
+首次启动会自动创建 SQLite 数据库，无需手动初始化。
 
-- `ADMIN_PASSWORD` - 管理员密码（必填）
-- `USER_CREATE_CODE` - 用户创建授权码（必填）
-- `TELEGRAM_BOT_TOKEN` - Telegram Bot Token（可选）
+### 3. 访问
 
-### 2. 使用 Docker Compose 启动
+- **主页面**：`http://你的服务器IP:3000`
+- **健康检查**：`http://你的服务器IP:3000/health`
+- **用户公开页**：`http://你的服务器IP:3000/u/{识别码}`
+
+### 停止
 
 ```bash
-docker-compose up -d
+docker compose down
 ```
 
-### 3. 访问应用
-
-- 主页：http://your-server:3000
-- 健康检查：http://your-server:3000/health
-- 用户公开页：http://your-server:3000/u/{identifier}
-
-## 手动部署
-
-### 1. 安装依赖
+### 更新
 
 ```bash
+git pull
+docker compose build
+docker compose up -d
+```
+
+---
+
+## 手动部署（无 Docker）
+
+### 1. 安装 Node.js
+
+需要 Node.js 18 或更高版本。
+
+### 2. 下载项目并安装依赖
+
+```bash
+cd schulte-app
 npm install
 ```
 
-### 2. 配置环境变量
+### 3. 配置环境变量
+
+创建 `.env` 文件（与 `docker-compose.yml` 同目录）：
 
 ```bash
-cp .env.example .env
-# 编辑 .env 文件
+ADMIN_PASSWORD=你的管理员密码
+USER_CREATE_CODE=用户注册授权码
 ```
 
-### 3. 启动应用
+### 4. 启动
 
 ```bash
 npm start
 ```
 
+默认监听 `0.0.0.0:3000`。
+
+---
+
+## 使用指南
+
+### 首次使用
+
+1. 打开主页面，点击右上角「用户中心」
+2. 输入「授权码」（管理员设置的 `USER_CREATE_CODE`）
+3. 设置「识别码」（字母+数字，唯一标识）和「密码」
+4. 点击「创建用户」
+5. 创建成功后，后续训练成绩会自动同步到云端
+
+### 训练
+
+点击主界面的训练按钮即可开始：
+
+- **舒尔特**：按顺序点击 1~N 的数字方格
+- **斯特鲁普**：判断文字颜色与文字含义是否一致
+- **成语**：从打乱的汉字中拼出完整成语
+- **古诗**：从打乱的诗句中拼出完整古诗
+- **记忆**：记住方格内容，翻牌配对
+- **译码**：根据符号对照表，翻译题目
+
+### 管理面板
+
+1. 点击页面顶部标题文字 **5 次**，弹出管理员登录窗口
+2. 输入管理员密码（`ADMIN_PASSWORD`），进入管理界面
+3. 可执行以下操作：
+
+| 功能 | 说明 |
+|------|------|
+| 查询用户 | 查看用户资料和成绩数量 |
+| 重置密码 | 当用户忘记密码时，管理员可强制重置 |
+| 删除用户 | 永久删除用户及其所有数据 |
+| 设置时区 | 修改时区（如 `Asia/Shanghai`、`America/New_York`），所有时间都按此显示 |
+
+### 公开成绩页
+
+每个用户都有一个独立的公开页面，地址为 `/u/{识别码}`。无需登录即可查看该用户的每日任务进度和历史成绩，页面显示的时间按管理员设置的时区转换。
+
+---
+
 ## API 接口
 
-### 用户相关
+所有接口的请求和响应均为 JSON 格式。
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| POST | /api/users | 创建用户 |
-| GET | /api/users/:id | 获取用户信息 |
-| PUT | /api/users/:id | 更新用户信息 |
-| DELETE | /api/users/:id | 删除用户 |
-| POST | /api/users/:id/login | 用户登录 |
-| POST | /api/users/:id/records | 保存训练记录 |
-| GET | /api/users/:id/public | 获取公开信息 |
+### 用户接口
+
+| 方法 | 路径 | 说明 | 需要认证 |
+|------|------|------|---------|
+| POST | `/api/users` | 创建用户 | 授权码 |
+| GET | `/api/users/:id` | 获取用户信息+今日任务 | 无 |
+| PUT | `/api/users/:id` | 更新用户信息+保存任务 | 登录 |
+| DELETE | `/api/users/:id` | 删除用户 | 登录+密码 |
+| POST | `/api/users/:id/login` | 密码登录 | 无 |
+| POST | `/api/users/:id/records` | 保存一条训练记录 | 登录 |
+| GET | `/api/users/:id/public` | 获取公开信息+成绩 | 无 |
+
+### 设置接口
+
+| 方法 | 路径 | 说明 | 需要认证 |
+|------|------|------|---------|
+| GET | `/api/settings` | 获取系统设置（时区） | 无 |
+| PUT | `/api/admin/settings` | 保存系统设置 | 管理员 |
 
 ### 管理员接口
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | /api/admin/users | 列出所有用户 |
-| GET | /api/admin/users/:id | 获取用户详情 |
-| POST | /api/admin/users/:id/password | 重置密码 |
-| DELETE | /api/admin/users/:id | 删除用户 |
+| 方法 | 路径 | 说明 | 需要认证 |
+|------|------|------|---------|
+| GET | `/api/admin/users` | 列出所有用户 | 管理员 |
+| GET | `/api/admin/users/:id` | 获取用户详情+成绩数 | 管理员 |
+| POST | `/api/admin/users/:id/password` | 重置用户密码 | 管理员 |
+| DELETE | `/api/admin/users/:id` | 删除用户 | 管理员 |
 
 ### 其他
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| POST | /api/send-daily-report | 发送 Telegram 简报 |
-| GET | /health | 健康检查 |
+| GET | `/health` | 健康检查 |
 
-## 数据持久化
+---
 
-SQLite 数据库文件保存在 `data/schulte.db`，Docker 部署时会挂载 `./data` 目录。
+## 数据存储
 
-## 备份
+- **数据库**：SQLite，文件位于 `data/schulte.db`
+- **数据表**：`users`（用户）、`tasks`（每日任务）、`records`（成绩记录）、`settings`（系统设置）
+- **备份**：备份整个 `data/` 目录即可保存所有数据
+- **自动清理**：成绩记录超过 90 天自动删除
 
-备份 `data` 目录即可保存所有数据。
+---
 
-## 更新
+## 数据安全
 
-```bash
-docker-compose down
-docker-compose build
-docker-compose up -d
-```
+- 密码使用 PBKDF2 + SHA-256 加盐哈希存储
+- 会话使用 SHA-256 哈希，不存明文 Token
+- 管理员密码通过环境变量配置，不存储在数据库中
+- 所有敏感字段（密码、Token）不会通过公开接口返回
+
+---
+
+## 技术栈
+
+- **后端**：Node.js + Express
+- **数据库**：SQL.js（SQLite WebAssembly 实现）
+- **前端**：原生 JavaScript（无框架）
+- **部署**：Docker / Docker Compose
