@@ -987,6 +987,32 @@
       gap: 12px;
     }
 
+    .tz-row {
+      grid-template-columns: 1fr auto;
+      align-items: end;
+    }
+    .tz-row .form-field {
+      display: grid;
+      gap: 6px;
+    }
+    .tz-row select {
+      width: 100%;
+    }
+
+    .user-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: end;
+    }
+    .user-actions input {
+      flex: 1 1 100px;
+      min-width: 80px;
+    }
+    .user-actions .tool-button {
+      white-space: nowrap;
+    }
+
     .load-user-row {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
@@ -1358,6 +1384,17 @@
         grid-template-columns: 1fr;
       }
 
+      .user-actions {
+        flex-direction: column;
+      }
+      .user-actions input {
+        flex: none;
+        width: auto;
+      }
+      .user-actions .tool-button {
+        width: 100%;
+      }
+
       .training-switch {
         grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
       }
@@ -1677,20 +1714,51 @@
         <button class="icon-button" type="button" id="closeAdminPanelButton" aria-label="关闭">×</button>
       </div>
       <section class="panel task-panel">
-        <div class="admin-grid">
-          <label class="form-field">用户<select id="adminIdentifierInput"><option value="">正在加载用户...</option></select></label>
-          <div class="dialog-actions">
-            <button class="tool-button" type="button" id="adminLookupButton">查询用户</button>
-            <label class="form-field">新密码：<input id="adminNewPasswordInput" type="password" autocomplete="new-password"></label>
-            <button class="tool-button" type="button" id="adminResetPasswordButton">重置密码</button>
-            <button class="tool-button primary" type="button" id="adminDeleteButton">删除用户数据</button>
-          </div>
+        <div class="admin-grid tz-row">
+          <label class="form-field">时区<select id="adminTimezoneInput">
+            <option value="Pacific/Midway">中途岛 (UTC-11)</option>
+            <option value="Pacific/Honolulu">夏威夷 (UTC-10)</option>
+            <option value="America/Anchorage">安克雷奇 (UTC-9)</option>
+            <option value="America/Los_Angeles">洛杉矶 (UTC-8)</option>
+            <option value="America/Denver">丹佛 (UTC-7)</option>
+            <option value="America/Chicago">芝加哥 (UTC-6)</option>
+            <option value="America/New_York">纽约 (UTC-5)</option>
+            <option value="America/Caracas">加拉加斯 (UTC-4)</option>
+            <option value="America/Sao_Paulo">巴西利亚 (UTC-3)</option>
+            <option value="America/Noronha">费尔南多·迪诺罗尼亚 (UTC-2)</option>
+            <option value="Atlantic/Azores">亚速尔 (UTC-1)</option>
+            <option value="UTC">协调世界时 (UTC+0)</option>
+            <option value="Europe/London">伦敦 (UTC+0)</option>
+            <option value="Europe/Paris">巴黎 (UTC+1)</option>
+            <option value="Europe/Helsinki">赫尔辛基 (UTC+2)</option>
+            <option value="Europe/Moscow">莫斯科 (UTC+3)</option>
+            <option value="Asia/Dubai">迪拜 (UTC+4)</option>
+            <option value="Asia/Karachi">卡拉奇 (UTC+5)</option>
+            <option value="Asia/Kolkata">加尔各答 (UTC+5:30)</option>
+            <option value="Asia/Dhaka">达卡 (UTC+6)</option>
+            <option value="Asia/Bangkok">曼谷 (UTC+7)</option>
+            <option value="Asia/Shanghai" selected>北京/上海 (UTC+8)</option>
+            <option value="Asia/Hong_Kong">香港 (UTC+8)</option>
+            <option value="Asia/Taipei">台北 (UTC+8)</option>
+            <option value="Asia/Singapore">新加坡 (UTC+8)</option>
+            <option value="Asia/Tokyo">东京 (UTC+9)</option>
+            <option value="Asia/Seoul">首尔 (UTC+9)</option>
+            <option value="Australia/Sydney">悉尼 (UTC+10)</option>
+            <option value="Pacific/Guam">关岛 (UTC+10)</option>
+            <option value="Pacific/Noumea">努美阿 (UTC+11)</option>
+            <option value="Pacific/Auckland">奥克兰 (UTC+12)</option>
+            <option value="Pacific/Fiji">斐济 (UTC+12)</option>
+          </select></label>
+          <button class="tool-button" type="button" id="adminSaveSettingsButton">保存时区</button>
         </div>
         <hr class="subsection-divider">
         <div class="admin-grid">
-          <label class="form-field">时区<input id="adminTimezoneInput" type="text" placeholder="Asia/Shanghai" value="Asia/Shanghai"></label>
-          <div class="dialog-actions">
-            <button class="tool-button" type="button" id="adminSaveSettingsButton">保存设置</button>
+          <label class="form-field">用户<select id="adminIdentifierInput"><option value="">正在加载用户...</option></select></label>
+          <div class="user-actions">
+            <button class="tool-button" type="button" id="adminLookupButton">查询用户</button>
+            <input id="adminNewPasswordInput" type="password" placeholder="新密码" autocomplete="new-password">
+            <button class="tool-button" type="button" id="adminResetPasswordButton">重置密码</button>
+            <button class="tool-button primary" type="button" id="adminDeleteButton">删除用户</button>
           </div>
         </div>
         <div class="full-records" id="adminUserPreview"></div>
@@ -2874,6 +2942,9 @@
           if (payload.timezone) {
             appSettings.timezone = payload.timezone;
             adminTimezoneInput.value = payload.timezone;
+            if (adminTimezoneInput.value !== payload.timezone) {
+              adminTimezoneInput.value = "Asia/Shanghai";
+            }
           }
         } catch (error) {
           setNotice(adminPanelNotice, error.message, true);
