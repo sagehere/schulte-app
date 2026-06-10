@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>专注力训�?/title>
+  <title>专注力训练</title>
   <style>
     :root {
       color-scheme: light;
@@ -1362,12 +1362,12 @@
   <main class="app">
     <header class="topbar">
       <div class="title-row">
-        <h1 id="appTitle" class="admin-trigger-title">专注力训�?/h1>
+        <h1 id="appTitle" class="admin-trigger-title">专注力训练/h1>
         <div class="title-task-strip" id="titleTaskStrip" aria-live="polite"></div>
         <div class="global-timer" aria-label="训练计时">
           <span>训练时长</span>
           <strong id="sessionTimeText">00:00:00</strong>
-          <button class="tool-button" type="button" id="sessionStartButton">开始计�?/button>
+          <button class="tool-button" type="button" id="sessionStartButton">开始计时</button>
           <button class="tool-button" type="button" id="sessionStopButton" disabled>结束计时</button>
         </div>
       </div>
@@ -1375,7 +1375,7 @@
         <div class="menu-row">
           <span class="menu-label">训练模块</span>
           <nav class="training-switch" aria-label="训练模式">
-            <button class="training-button active" type="button" data-training="schulte">舒尔特方�?/button>
+            <button class="training-button active" type="button" data-training="schulte">舒尔特方格</button>
             <button class="training-button" type="button" data-training="stroop">斯特鲁普</button>
             <button class="training-button" type="button" data-training="idiom">成语训练</button>
             <button class="training-button" type="button" data-training="poem">古诗训练</button>
@@ -1410,7 +1410,7 @@
             <strong id="timeText">0.00</strong>
           </div>
           <div class="metric target">
-            <span id="targetLabel">下一个数�?/span>
+            <span id="targetLabel">下一个数字</span>
             <strong id="targetText">1</strong>
           </div>
           <div class="metric">
@@ -1429,7 +1429,7 @@
           <div class="poem-full is-hidden" id="poemFullText"></div>
           <div class="stroop-panel is-hidden" id="stroopPanel" aria-label="斯特鲁普效应训练">
             <div class="stroop-progress" id="stroopProgress">1 / 25</div>
-            <div class="stroop-word" id="stroopWord">�?/div>
+            <div class="stroop-word" id="stroopWord">字</div>
             <div class="color-choices" id="colorChoices"></div>
           </div>
           <div class="decode-panel is-hidden" id="decodePanel" aria-label="译码训练">
@@ -1442,7 +1442,7 @@
         <div class="toolbar">
           <div class="tool-group">
             <button class="tool-button primary" type="button" id="resetButton">重置方格</button>
-            <button class="tool-button primary is-hidden" type="button" id="memoryStartButton">开始记�?/button>
+            <button class="tool-button primary is-hidden" type="button" id="memoryStartButton">开始记忆</button>
             <button class="tool-button is-hidden" type="button" id="memoryReplayButton" disabled>复现</button>
             <button class="tool-button is-hidden" type="button" id="poemToggleButton" aria-expanded="false">显示全诗</button>
             <button class="tool-button" type="button" id="recordsButton">成绩面板</button>
@@ -1451,7 +1451,7 @@
           <div class="switch-group" aria-label="训练开关\">
             <label class="switch-label" id="hintWrap">
               <input type="checkbox" id="hintToggle">
-              <span>高亮下一�?/span>
+              <span>高亮下一个</span>
             </label>
             <label class="switch-label" id="reverseOrderWrap">
               <input type="checkbox" id="reverseOrderToggle">
@@ -1484,7 +1484,7 @@
       </div>
       <div class="summary-grid" id="resultSummary"></div>
       <div class="dialog-actions">
-        <button class="tool-button primary" type="button" id="againButton">再练一�?/button>
+        <button class="tool-button primary" type="button" id="againButton">再练一次</button>
       </div>
     </div>
   </dialog>
@@ -1510,7 +1510,7 @@
               <strong id="avgText">--</strong>
             </div>
             <div class="summary-item">
-              <span>最快用�?/span>
+              <span>最快用时</span>
               <strong id="fastText">--</strong>
             </div>
             <div class="summary-item">
@@ -1545,19 +1545,19 @@
           <div class="dialog-actions"><button class="tool-button" type="button" id="logoutUserButton">登出</button><button class="tool-button primary" type="button" id="saveUserButton">保存用户</button></div>
         </div>
         <div class="user-grid">
-          <label class="form-field">用户�?input id="usernameInput" type="text" maxlength="24" autocomplete="name"></label>
-          <label class="form-field">识别�?input id="identifierInput" type="text" maxlength="32" autocomplete="off" inputmode="latin" pattern="[A-Za-z0-9]+"></label>
+          <label class="form-field">用户名?input id="usernameInput" type="text" maxlength="24" autocomplete="name"></label>
+          <label class="form-field">识别码?input id="identifierInput" type="text" maxlength="32" autocomplete="off" inputmode="latin" pattern="[A-Za-z0-9]+"></label>
           <label class="form-field">出生日期<input id="birthDateInput" type="date"></label>
-          <label class="form-field">授权�?input id="authCodeInput" type="password" autocomplete="one-time-code"></label>
+          <label class="form-field">授权码?input id="authCodeInput" type="password" autocomplete="one-time-code"></label>
           <label class="form-field">注册/改密密码<input id="userPasswordInput" type="password" autocomplete="new-password"></label>
         </div>
         <div class="load-user-row">
-          <label class="form-field">通过识别码加载同步数�?input id="loadIdentifierInput" type="text" maxlength="32" autocomplete="off" inputmode="latin" pattern="[A-Za-z0-9]+"></label>
+          <label class="form-field">通过识别码加载同步数据?input id="loadIdentifierInput" type="text" maxlength="32" autocomplete="off" inputmode="latin" pattern="[A-Za-z0-9]+"></label>
           <label class="form-field">登录密码<input id="loginPasswordInput" type="password" autocomplete="current-password"></label>
           <button class="tool-button" type="button" id="loadUserButton">加载同步数据</button>
           <button class="tool-button primary" type="button" id="loginUserButton">密码登录</button>
         </div>
-        <div class="profile-meta" id="userStatusText">未创建用户时，网页训练与本地成绩仍可正常使用�?/div>
+        <div class="profile-meta" id="userStatusText">未创建用户时，网页训练与本地成绩仍可正常使用。</div>
         <div class="notice" id="userCenterNotice" aria-live="polite"></div>
       </section>
       <section class="panel task-panel subsection-header">
@@ -1568,7 +1568,7 @@
         <div class="task-config-grid">
           <label class="form-field">模块
             <select id="taskModuleSelect">
-              <option value="schulte">舒尔特方�?/option>
+              <option value="schulte">舒尔特方格</option>
               <option value="stroop">斯特鲁普</option>
               <option value="idiom">成语训练</option>
               <option value="poem">古诗训练</option>
@@ -1593,8 +1593,8 @@
           </label>
           <label class="form-field" id="taskColorWrap">颜色干扰
             <select id="taskColorSelect">
-              <option value="false">�?/option>
-              <option value="true">�?/option>
+              <option value="false">关</option>
+              <option value="true">开</option>
             </select>
           </label>
           <label class="form-field" id="taskIdiomWrap">成语数量
@@ -1607,14 +1607,14 @@
           </label>
           <label class="form-field" id="taskStroopAnswerWrap">答题规则
             <select id="taskStroopAnswerSelect">
-              <option value="false">按字色作�?/option>
-              <option value="true">按文字作�?/option>
+              <option value="false">按字色作答</option>
+              <option value="true">按文字作答</option>
             </select>
           </label>
           <label class="form-field" id="taskDecodeReverseWrap">译码方向
             <select id="taskDecodeReverseSelect">
-              <option value="false">符号 �?字母</option>
-              <option value="true">字母 �?符号</option>
+              <option value="false">符号 → 字母</option>
+              <option value="true">字母 → 符号</option>
             </select>
           </label>
           <label class="form-field">次数<input id="taskCountInput" type="number" min="1" max="50" value="1" inputmode="numeric"></label>
@@ -1638,7 +1638,7 @@
   <dialog class="dialog" id="adminLoginDialog">
     <div class="dialog-inner">
       <div class="panel-header">
-        <h2>管理员入�?/h2>
+        <h2>管理员入口</h2>
         <button class="icon-button" type="button" id="closeAdminLoginButton" aria-label="关闭">×</button>
       </div>
       <section class="panel task-panel">
@@ -1662,7 +1662,7 @@
           <label class="form-field">用户<select id="adminIdentifierInput"><option value="">正在加载用户...</option></select></label>
           <div class="dialog-actions">
             <button class="tool-button" type="button" id="adminLookupButton">查询用户</button>
-            <label class="form-field">新密�?input id="adminNewPasswordInput" type="password" autocomplete="new-password"></label>
+            <label class="form-field">新密码?input id="adminNewPasswordInput" type="password" autocomplete="new-password"></label>
             <button class="tool-button" type="button" id="adminResetPasswordButton">重置密码</button>
             <button class="tool-button primary" type="button" id="adminDeleteButton">删除用户数据</button>
           </div>
@@ -1782,12 +1782,12 @@
       const adminPanelNotice = document.getElementById("adminPanelNotice");
       const schulteDigitColors = ["#101719", "#d83b31", "#d8a100", "#21865a", "#2563eb", "#7c3aed"];
       const stroopColors = [
-        { key: "black", name: "黑\", value: "#101719" },
-        { key: "red", name: "红\", value: "#d83b31" },
-        { key: "green", name: "绿\", value: "#21865a" },
-        { key: "yellow", name: "黄\", value: "#d8a100" },
-        { key: "blue", name: "蓝\", value: "#2563eb" },
-        { key: "purple", name: "紫\", value: "#7c3aed" }
+        { key: "black", name: "黑", value: "#101719" },
+        { key: "red", name: "红", value: "#d83b31" },
+        { key: "green", name: "绿", value: "#21865a" },
+        { key: "yellow", name: "黄", value: "#d8a100" },
+        { key: "blue", name: "蓝", value: "#2563eb" },
+        { key: "purple", name: "紫", value: "#7c3aed" }
       ];
       const idiomList = "安居乐业|安分守己|按部就班|暗度陈仓|八面玲珑|八仙过海|白手起家|百发百中|百花齐放|百折不挠|百依百顺|半途而废|包罗万象|杯弓蛇影|背水一战|本末倒置|比比皆是|闭门思过|闭月羞花|变本加厉|标新立异|兵贵神速|兵荒马乱|兵强马壮|宾至如归|别出心裁|别具匠心|冰清玉洁|博大精深|博古通今|不耻下问|不辞而别|不动声色|不分彼此|不寒而栗|不慌不忙|不即不离|不计其数|不假思索|不进则退|不堪设想|不可思议|不劳而获|不露声色|不谋而合|不偏不倚|不屈不挠|不容置疑|不三不四|不声不响|不识抬举|不思进取|不痛不痒|不屑一顾|不言而喻|不遗余力|不约而同|不知不觉|不自量力|步步高升|步步为营|才高八斗|才华横溢|才疏学浅|残兵败将|沧海一粟|草木皆兵|插翅难飞|姹紫嫣红|长驱直入|畅所欲言|朝三暮四|车水马龙|乘风破浪|乘虚而入|称心如意|城门失火|承前启后|惩恶扬善|承上启下|趁火打劫|叱咤风云|迟疑不决|赤胆忠心|赤手空拳|出类拔萃|出其不意|出人头地|出神入化|处心积虑|触类旁通|川流不息|垂头丧气|春华秋实|唇枪舌剑|唇亡齿寒|从容不迫|粗枝大叶|错综复杂|大刀阔斧|大公无私|大惊失色|大快人心|大名鼎鼎|大器晚成|大同小异|大义灭亲|胆大包天|胆战心惊|当机立断|道听途说|得寸进尺|得过且过|登峰造极|等量齐观|滴水穿石|颠倒黑白|顶天立地|东山再起|斗志昂扬|独具匠心|独树一帜|独一无二|独占鳌头|短兵相接|对答如流|对牛弹琴|多此一举|多多益善|多管齐下|多姿多彩|额手称庆|耳濡目染|耳熟能详|翻山越岭|翻天覆地|返老还童|防微杜渐|飞黄腾达|飞沙走石|废寝忘食|分秒必争|奋不顾身|粉身碎骨|风吹草动|风和日丽|风平浪静|风起云涌|风轻云淡|风雨无阻|风雨同舟|锋芒毕露|峰回路转|否极泰来|付之一炬|付之一笑|改过自新|甘拜下风|感恩戴德|高瞻远瞩|高枕无忧|格格不入|各奔东西|各持己见|各抒己见|各有千秋|根深蒂固|功成名就|功德无量|功亏一篑|供不应求|孤军奋战|孤陋寡闻|古往今来|故步自封|固若金汤|顾此失彼|光彩夺目|光明磊落|光天化日|鬼斧神工|鬼哭狼嚎|国泰民安|海阔天空|海市蜃楼|含辛茹苦|含苞待放|汗流浃背|好高骛远|好景不长|好逸恶劳|和蔼可亲|和风细雨|鹤立鸡群|横冲直撞|横七竖八|横扫千军|轰轰烈烈|红红火火|后来居上|花好月圆|花团锦簇|话中有话|画龙点睛|画蛇添足|患得患失|欢天喜地|恍然大悟|挥金如土|挥洒自如|挥之不去|讳疾忌医|昏天黑地|浑然一体|豁然开朗|祸不单行|祸从口出|鸡飞蛋打|鸡毛蒜皮|鸡犬不宁|鸡犬升天|极目远眺|急功近利|急中生智|集思广益|假公济私|见多识广|见风使舵|见机行事|见义勇为|洁身自好|捷足先登|截然不同|竭尽全力|接二连三|接踵而至|金碧辉煌|金刚怒目|金科玉律|金枝玉叶|津津有味|筋疲力尽|锦上添花|谨小慎微|尽善尽美|尽心尽力|近水楼台|惊弓之鸟|惊涛骇浪|精兵简政|精神抖擞|精益求精|井然有序|迥然不同|久负盛名|久经考验|酒足饭饱|旧病复发|举世闻名|举一反三|居安思危|鞠躬尽瘁|据理力争|卷土重来|决一死战|绝处逢生|绝无仅有|君子好逑|开诚布公|开门见山|开天辟地|慷慨解囊|慷慨激昂|刻不容缓|刻舟求剑|空前绝后|空中楼阁|口碑载道|口干舌燥|口是心非|扣人心弦|夸夸其谈|快马加鞭|脍炙人口|溃不成军|困兽犹斗|滥竽充数|狼狈不堪|狼吞虎咽|劳苦功高|乐不可支|乐此不疲|乐不思蜀|冷若冰霜|理直气壮|里应外合|力不从心|力挽狂澜|历历在目|连绵不断|连篇累牍|两全其美|量力而行|了如指掌|聊胜于无|料事如神|临危不惧|淋漓尽致|琳琅满目|流连忘返|流芳百世|流言蜚语|龙飞凤舞|龙马精神|龙争虎斗|炉火纯青|路不拾遗|乱七八糟|洛阳纸贵|屡见不鲜|马到成功|马不停蹄|满城风雨|满腹经纶|满面春风|漫不经心|毛遂自荐|眉飞色舞|美不胜收|美轮美奂|门当户对|门庭若市|闷闷不乐|迷途知返|密不透风|名副其实|名列前茅|名正言顺|妙笔生花|妙手回春|明辨是非|明察秋毫|明目张胆|明争暗斗|摩拳擦掌|墨守成规|默默无闻|目不转睛|目瞪口呆|南辕北辙|难分难解|难能可贵|难舍难分|难言之隐|鸟语花香|宁缺毋滥|牛刀小试|牛头马面|呕心沥血|排山倒海|抛砖引玉|旁若无人|旁敲侧击|披荆斩棘|披星戴月|迫不及待|破釜沉舟|破镜重圆|破涕为笑|品学兼优|平步青云|平淡无奇|平心静气|平易近人|扑朔迷离|七嘴八舌|气喘吁吁|气急败坏|气势磅礴|气壮山河|千变万化|千差万别|千锤百炼|千方百计|千古绝唱|千军万马|千里迢迢|千载难逢|前车之鉴|前赴后继|前呼后拥|前所未有|潜移默化|强词夺理|强弩之末|锲而不舍|秦晋之好|青出于蓝|青黄不接|轻车熟路|轻而易举|轻歌曼舞|情不自禁|情同手足|情投意合|穷途末路|穷凶极恶|求同存异|取长补短|取而代之|曲高和寡|曲径通幽|全力以赴|全心全意|拳打脚踢|鹊巢鸠占|热火朝天|热泪盈眶|热血沸腾|人才辈出|人浮于事|人山人海|人声鼎沸|人心所向|忍气吞声|忍辱负重|任劳任怨|任重道远|如虎添翼|如履薄冰|如梦初醒|如日中天|如鱼得水|如坐针毡|若即若离|若无其事|塞翁失马|三长两短|三顾茅庐|三令五申|三思而行|三头六臂|三心二意|杀鸡儆猴|杀气腾腾|煞费苦心|山清水秀|山穷水尽|上行下效|舍己为人|舍近求远|深入浅出|身经百战|声东击西|生机勃勃|生龙活虎|生死攸关|生生不息|盛气凌人|失魂落魄|失之交臂|实事求是|拾金不昧|史无前例|始终如一|手到擒来|手忙脚乱|手无寸铁|手舞足蹈|守株待兔|首屈一指|首尾相连|鼠目寸光|数不胜数|水到渠成|水落石出|顺手牵羊|顺理成章|说三道四|说一不二|死里逃生|四面八方|随波逐流|随心所欲|随遇而安|所向披靡|索然无味|太平盛世|贪得无厌|贪生怕死|谈笑风生|谈天说地|滔滔不绝|桃李满门|挑肥拣瘦|铁石心肠|体贴入微|天长地久|天翻地覆|天寒地冻".split("|");
       const stroopTotal = 25;
@@ -1798,227 +1798,227 @@
       const memoryTotalRounds = 10;
       const memoryPreviewMs = 3000;
       const fallbackPoemSource = `村居
-�?高鼎
+?高鼎
 草长莺飞二月天，
 拂堤杨柳醉春烟。\n儿童散学归来早，
 忙趁东风放纸鸢。\n###***
 咏柳
-�?贺知章\n碧玉妆成一树高，\n万条垂下绿丝绦。\n不知细叶谁裁出，
+?贺知章\n碧玉妆成一树高，\n万条垂下绿丝绦。\n不知细叶谁裁出，
 二月春风似剪刀。\n###***
-赠汪伦\n�?李白
+赠汪伦\n?李白
 李白乘舟将欲行，
 忽闻岸上踏歌声。\n桃花潭水深千尺，
 不及汪伦送我情。\n###***
 小池
-�?杨万里\n泉眼无声惜细流，
+?杨万里\n泉眼无声惜细流，
 树阴照水爱晴柔。\n小荷才露尖尖角，
 早有蜻蜓立上头。\n###***
 山行
-�?杜牧
+?杜牧
 远上寒山石径斜，
 白云生处有人家。\n停车坐爱枫林晚，
 霜叶红于二月花。\n###***
 赠刘景文
-�?苏轼
+?苏轼
 荷尽已无擎雨盖，
 菊残犹有傲霜枝。\n一年好景君须记，\n正是橙黄橘绿时。\n###***
-夜书所见\n�?叶绍翁\n萧萧梧叶送寒声，
+夜书所见\n?叶绍翁\n萧萧梧叶送寒声，
 江上秋风动客情。\n知有儿童挑促织，
 夜深篱落一灯明。\n###***
 望庐山瀑布
-�?李白
+?李白
 日照香炉生紫烟，
 遥看瀑布挂前川。\n飞流直下三千尺，
 疑是银河落九天。\n###***
 晓出净慈寺送林子方
-�?杨万里\n毕竟西湖六月中，
+?杨万里\n毕竟西湖六月中，
 风光不与四时同。\n接天莲叶无穷碧，
 映日荷花别样红。\n###***
-绝句（两个黄鹂鸣翠柳）\n�?杜甫
+绝句（两个黄鹂鸣翠柳）\n?杜甫
 两个黄鹂鸣翠柳，
 一行白鹭上青天。\n窗含西岭千秋雪，
 门泊东吴万里船。\n###***
-绝句（迟日江山丽）\n�?杜甫
+绝句（迟日江山丽）\n?杜甫
 迟日江山丽，
 春风花草香。\n泥融飞燕子，
 沙暖睡鸳鸯。\n###***
-绝句（江碧鸟逾白）\n�?杜甫
+绝句（江碧鸟逾白）\n?杜甫
 江碧鸟逾白，\n山青花欲燃。\n今春看又过，
 何日是归年。\n###***
 春夜喜雨
-�?杜甫
+?杜甫
 好雨知时节，
 当春乃发生。\n随风潜入夜，
 润物细无声。\n野径云俱黑，
 江船火独明。\n晓看红湿处，
 花重锦官城。\n###***
-望洞庭\n�?刘禹锡\n湖光秋月两相和，
+望洞庭\n?刘禹锡\n湖光秋月两相和，
 潭面无风镜未磨。\n遥望洞庭山水翠，
 白银盘里一青螺。\n###***
 元日
-�?王安石\n爆竹声中一岁除，\n春风送暖入屠苏。\n千门万户曈曈日，
+?王安石\n爆竹声中一岁除，\n春风送暖入屠苏。\n千门万户曈曈日，
 总把新桃换旧符。\n###***
 清明
-�?杜牧
+?杜牧
 清明时节雨纷纷，
 路上行人欲断魂。\n借问酒家何处有，
 牧童遥指杏花村。\n###***
 寒食
-�?韩翃
+?韩翃
 春城无处不飞花，
 寒食东风御柳斜。\n日暮汉宫传蜡烛，
 轻烟散入五侯家。\n###***
 泊船瓜洲
-�?王安石\n京口瓜洲一水间，\n钟山只隔数重山。\n春风又绿江南岸，
+?王安石\n京口瓜洲一水间，\n钟山只隔数重山。\n春风又绿江南岸，
 明月何时照我还。\n###***
-秋思\n�?张籍
+秋思\n?张籍
 洛阳城里见秋风，
 欲作家书意万重。\n复恐匆匆说不尽，
 行人临发又开封。\n###***
 示儿
-�?陆游
+?陆游
 死去元知万事空，
 但悲不见九州同。\n王师北定中原日，
 家祭无忘告乃翁。\n###***
 夏日绝句
-�?李清照\n生当作人杰，
+?李清照\n生当作人杰，
 死亦为鬼雄。\n至今思项羽，
 不肯过江东。\n###***
-泊秦淮\n�?杜牧
+泊秦淮\n?杜牧
 烟笼寒水月笼沙，
 夜泊秦淮近酒家。\n商女不知亡国恨，
 隔江犹唱后庭花。\n###***
 赤壁
-�?杜牧
+?杜牧
 折戟沉沙铁未销，\n自将磨洗认前朝。\n东风不与周郎便，
 铜雀春深锁二乔。\n###***
 题乌衣巷
-�?刘禹锡\n朱雀桥边野草花，
+?刘禹锡\n朱雀桥边野草花，
 乌衣巷口夕阳斜。\n旧时王谢堂前燕，
 飞入寻常百姓家。\n###***
-金陵图\n�?韦庄
+金陵图\n?韦庄
 江雨霏霏江草齐，
 六朝如梦鸟空啼。\n无情最是台城柳，\n依旧烟笼十里堤。\n###***
-春宫曲\n�?王昌龄\n昨夜风开露井桃，
+春宫曲\n?王昌龄\n昨夜风开露井桃，
 未央前殿月轮高。\n平阳歌舞新承宠，
 帘外春寒赐锦袍。\n###***
-不第后赋菊\n�?黄巢
+不第后赋菊\n?黄巢
 待到秋来九月八，
 我花开后百花杀。\n冲天香阵透长安，
 满城尽带黄金甲。\n###***
-题菊花\n�?黄巢
+题菊花\n?黄巢
 飒飒西风满院栽，
 蕊寒香冷蝶难来。\n他年我若为青帝，
 报与桃花一处开。\n###***
 过华清宫绝句
-�?杜牧
+?杜牧
 长安回望绣成堆，
 山顶千门次第开。\n一骑红尘妃子笑，\n无人知是荔枝来。\n###***
 江南逢李龟年
-�?杜甫
+?杜甫
 岐王宅里寻常见，
 崔九堂前几度闻。\n正是江南好风景，
 落花时节又逢君。\n###***
 夜雨寄北
-�?李商隐\n君问归期未有期，
+?李商隐\n君问归期未有期，
 巴山夜雨涨秋池。\n何当共剪西窗烛，
 却话巴山夜雨时。\n###***
 秋夕
-�?杜牧
+?杜牧
 银烛秋光冷画屏，
 轻罗小扇扑流萤。\n天阶夜色凉如水，
 坐看牵牛织女星。\n###***
-题都城南庄\n�?崔护
+题都城南庄\n?崔护
 去年今日此门中，
 人面桃花相映红。\n人面不知何处去，
 桃花依旧笑春风。\n###***
-寄扬州韩绰判官\n�?杜牧
+寄扬州韩绰判官\n?杜牧
 青山隐隐水迢迢，
 秋尽江南草未凋。\n二十四桥明月夜，
 玉人何处教吹箫。\n###***
 题金陵渡
-�?张祜
+?张祜
 金陵津渡小山楼，
 一宿行人自可愁。\n潮落夜江斜月里，
 两三星火是瓜州。\n###***
 山亭夏日
-�?高骈
+?高骈
 绿树阴浓夏日长，
 楼台倒影入池塘。\n水晶帘动微风起，
 满架蔷薇一院香。\n###***
 从军行（青海长云暗雪山）
-�?王昌龄\n青海长云暗雪山，
+?王昌龄\n青海长云暗雪山，
 孤城遥望玉门关。\n黄沙百战穿金甲，
 不破楼兰终不还。\n###***
 从军行（琵琶起舞换新声）
-�?王昌龄\n琵琶起舞换新声，
+?王昌龄\n琵琶起舞换新声，
 总是关山旧别情。\n撩乱边愁听不尽，
 高高秋月照长城。\n###***
 凉州词（葡萄美酒夜光杯）
-�?王翰
+?王翰
 葡萄美酒夜光杯，
 欲饮琵琶马上催。\n醉卧沙场君莫笑，
 古来征战几人回。\n###***
 闻官军收河南河北
-�?杜甫
+?杜甫
 剑外忽传收蓟北，
 初闻涕泪满衣裳。\n却看妻子愁何在，
 漫卷诗书喜欲狂。\n白日放歌须纵酒，
 青春作伴好还乡。\n即从巴峡穿巫峡，
 便下襄阳向洛阳。\n###***
 春望
-�?杜甫
+?杜甫
 国破山河在，
 城春草木深。\n感时花溅泪，
 恨别鸟惊心。\n烽火连三月，
 家书抵万金。\n白头搔更短，
 浑欲不胜簪。\n###***
 登高
-�?杜甫
+?杜甫
 风急天高猿啸哀，\n渚清沙白鸟飞回。\n无边落木萧萧下，
 不尽长江滚滚来。\n万里悲秋常作客，
 百年多病独登台。\n艰难苦恨繁霜鬓，
 潦倒新停浊酒杯。\n###***
 客至
-�?杜甫
+?杜甫
 舍南舍北皆春水，
 但见群鸥日日来。\n花径不曾缘客扫，
 蓬门今始为君开。\n盘飧市远无兼味，
 樽酒家贫只旧醅。\n肯与邻翁相对饮，
 隔篱呼取尽余杯。\n###***
 旅夜书怀
-�?杜甫
+?杜甫
 细草微风岸，
 危樯独夜舟。\n星垂平野阔，
 月涌大江流。\n名岂文章著，
 官应老病休。\n飘飘何所似，
 天地一沙鸥。\n###***
-送友人\n�?李白
+送友人\n?李白
 青山横北郭，
 白水绕东城。\n此地一为别，\n孤蓬万里征。\n浮云游子意，
 落日故人情。\n挥手自兹去，
 萧萧班马鸣。\n###***
-黄鹤楼\n�?崔颢
+黄鹤楼\n?崔颢
 昔人已乘黄鹤去，
 此地空余黄鹤楼。\n黄鹤一去不复返，\n白云千载空悠悠。\n晴川历历汉阳树，
 芳草萋萋鹦鹉洲。\n日暮乡关何处是，
 烟波江上使人愁。\n###***
-送杜少府之任蜀州\n�?王勃
+送杜少府之任蜀州\n?王勃
 城阙辅三秦，
 风烟望五津。\n与君离别意，
 同是宦游人。\n海内存知己，
 天涯若比邻。\n无为在歧路，
 儿女共沾巾。\n###***
 送元二使安西
-�?王维
+?王维
 渭城朝雨浥轻尘，
 客舍青青柳色新。\n劝君更尽一杯酒，\n西出阳关无故人。\n###***
 逢入京使
-�?岑参
+?岑参
 故园东望路漫漫，
 双袖龙钟泪不干。\n马上相逢无纸笔，\n凭君传语报平安。\n###***
 闻王昌龄左迁龙标遥有此寄
-�?李白
+?李白
 杨花落尽子规啼，
 闻道龙标过五溪。\n我寄愁心与明月，
 随君直到夜郎西。`;
@@ -2249,7 +2249,7 @@
             }
           });
         } catch (error) {
-          throw new Error(`网络请求失败�?{error.message || "无法连接 Worker API"}`);
+          throw new Error(`网络请求失败${error.message || "无法连接 Worker API"}`);
         }
         const raw = await response.text();
         let payload = {};
@@ -2283,30 +2283,30 @@
         const age = calculateAge(birthDateInput.value);
         const path = identifier ? `/u/${identifier}` : "";
         if (!identifier) {
-          userStatusText.textContent = "未创建用户时，网页训练与本地成绩仍可正常使用。\";
+          userStatusText.textContent = "未创建用户时，网页训练与本地成绩仍可正常使用。";
         } else if (canWriteActiveUser()) {
-          userStatusText.textContent = `已登录用�?{age !== null ? `，当前年�?${age} 岁` : ""}${path ? `，成绩查询路�?${path}` : ""}`;
+          userStatusText.textContent = `已登录用${age !== null ? `，当前年龄?${age} 岁` : ""}${path ? `，成绩查询路径?${path}` : ""}`;
         } else {
-          userStatusText.textContent = `已加载识别码 ${identifier}${path ? `，成绩查询路�?${path}` : ""}；当前浏览器未保存该用户写入权限`;
+          userStatusText.textContent = `已加载识别码 ${identifier}${path ? `，成绩查询路?${path}` : ""}；当前浏览器未保存该用户写入权限`;
         }
       }
 
       const dailyTaskSpecs = {
         schulte: {
-          label: "舒尔特方格\",
+          label: "舒尔特方格",
           controls: [
             { key: "size", wrap: taskSizeWrap, input: taskSizeSelect, type: "number", defaultValue: 5 },
             { key: "reverse", wrap: taskReverseWrap, input: taskReverseSelect, type: "boolean", defaultValue: false },
             { key: "colorInterference", wrap: taskColorWrap, input: taskColorSelect, type: "boolean", defaultValue: false }
           ],
-          describe: (mode) => `${mode.size || 5}×${mode.size || 5} ${mode.reverse ? "倒序" : "正序"} ${mode.colorInterference ? "颜色干扰" : "无颜色干扰\"}`
+          describe: (mode) => `${mode.size || 5}×${mode.size || 5} ${mode.reverse ? "倒序" : "正序"} ${mode.colorInterference ? "颜色干扰" : "无颜色干扰"}`
         },
         stroop: {
           label: "斯特鲁普",
           controls: [
             { key: "textAnswer", wrap: taskStroopAnswerWrap, input: taskStroopAnswerSelect, type: "boolean", defaultValue: false }
           ],
-          describe: (mode) => mode.textAnswer ? "按文字作答\" : "按字色作答\"
+          describe: (mode) => mode.textAnswer ? "按文字作答" : "按字色作答"
         },
         idiom: {
           label: "成语训练",
@@ -2314,26 +2314,26 @@
             { key: "cols", wrap: taskIdiomWrap, input: taskIdiomSelect, type: "number", defaultValue: 4 },
             { key: "colorInterference", wrap: taskColorWrap, input: taskColorSelect, type: "boolean", defaultValue: false }
           ],
-          describe: (mode) => `4×${mode.cols || 4} ${mode.colorInterference ? "颜色干扰" : "无颜色干扰\"}`
+          describe: (mode) => `4×${mode.cols || 4} ${mode.colorInterference ? "颜色干扰" : "无颜色干扰"}`
         },
         poem: {
           label: "古诗训练",
           controls: [
             { key: "colorInterference", wrap: taskColorWrap, input: taskColorSelect, type: "boolean", defaultValue: false }
           ],
-          describe: (mode) => mode.colorInterference ? "颜色干扰" : "无颜色干扰\"
+          describe: (mode) => mode.colorInterference ? "颜色干扰" : "无颜色干扰"
         },
         memory: {
           label: "记忆训练",
           controls: [],
-          describe: () => "5×5 10轮\"
+          describe: () => "5×5 10轮"
         },
         decode: {
           label: "译码训练",
           controls: [
             { key: "reverse", wrap: taskDecodeReverseWrap, input: taskDecodeReverseSelect, type: "boolean", defaultValue: false }
           ],
-          describe: (mode) => mode.reverse ? "字母→符号\" : "符号→字母\"
+          describe: (mode) => mode.reverse ? "字母→符号" : "符号→字母"
         }
       };
       const dailyTaskControls = [taskSizeWrap, taskReverseWrap, taskColorWrap, taskIdiomWrap, taskStroopAnswerWrap, taskDecodeReverseWrap];
@@ -2421,7 +2421,7 @@
           const noticeButton = document.createElement("button");
           noticeButton.className = "title-task-item notice";
           noticeButton.type = "button";
-          noticeButton.textContent = "请设置用户\";
+          noticeButton.textContent = "请设置用户";
           noticeButton.addEventListener("click", openUserCenter);
           titleTaskStrip.append(noticeButton);
           return;
@@ -2440,7 +2440,7 @@
         if (nextIndex === -1) {
           const done = document.createElement("span");
           done.className = "title-task-item notice done";
-          done.textContent = "今日任务已全部完成\";
+          done.textContent = "今日任务已全部完成";
           titleTaskStrip.append(done);
           return;
         }
@@ -2449,10 +2449,10 @@
         const button = document.createElement("button");
         button.className = "title-task-item";
         button.type = "button";
-        button.title = "�?" + (nextIndex + 1) + " 项：" + taskModuleLabel(task.module) + " · " + describeTask(task) + "：\" + progress.count + "/" + progress.target;
+        button.title = "?" + (nextIndex + 1) + " 项：" + taskModuleLabel(task.module) + " · " + describeTask(task) + "：" + progress.count + "/" + progress.target;
         const main = document.createElement("span");
         main.className = "title-task-main";
-        main.textContent = "�?" + (nextIndex + 1) + " �?· " + taskModuleLabel(task.module) + " · " + describeTask(task);
+        main.textContent = "?" + (nextIndex + 1) + " ?· " + taskModuleLabel(task.module) + " · " + describeTask(task);
         const count = document.createElement("span");
         count.className = "title-task-count";
         count.textContent = progress.count + "/" + progress.target;
@@ -2511,19 +2511,19 @@
         scoreDateInput.value = date;
         const dayRecords = recordsForDate(date);
         if (!dayRecords.length) {
-          dailyScoreList.innerHTML = `<p class="empty">该日期暂无成绩记�?/p>`;
+          dailyScoreList.innerHTML = `<p class="empty">该日期暂无成绩记?/p>`;
           return;
         }
         const practiceSummary = document.createElement("div");
         practiceSummary.className = "notice";
-        practiceSummary.textContent = `当日累计练习时长�?{formatPracticeDuration(dailyPracticeMs(date))}`;
+        practiceSummary.textContent = `当日累计练习时长${formatPracticeDuration(dailyPracticeMs(date))}`;
         dailyScoreList.replaceChildren(practiceSummary, ...dayRecords.map((record) => {
           const node = createRecordNode(record);
           const rating = scoreSchulteRecord(record, birthDateInput.value);
           if (rating) {
             const ratingNode = document.createElement("div");
             ratingNode.className = "score-rating";
-            ratingNode.textContent = `评分�?{rating}`;
+            ratingNode.textContent = `评分${rating}`;
             node.append(ratingNode);
           }
           return node;
@@ -2549,7 +2549,7 @@
           }
           applyUserToForm(payload.user);
           dailyTasks = Array.isArray(payload.tasks) ? payload.tasks : [];
-          setNotice(userCenterNotice, canWriteActiveUser() ? "用户资料已加载\" : "已加载同步用户数据\");
+          setNotice(userCenterNotice, canWriteActiveUser() ? "用户资料已加载" : "已加载同步用户数据");
         } catch (error) {
           setNotice(userCenterNotice, error.message, true);
         }
@@ -2596,10 +2596,10 @@
           setNotice(
             userCenterNotice,
             loginPassword
-              ? "密码登录成功，新�?" + added + " 条成绩记录\"
+              ? "密码登录成功，新?" + added + " 条成绩记录"
               : isBoundUser
-                ? "同步数据已加载，新增 " + added + " 条成绩记录\"
-                : "已按识别码加载资料、任务与成绩，新�?" + added + " 条本地记录\"
+                ? "同步数据已加载，新增 " + added + " 条成绩记录"
+                : "已按识别码加载资料、任务与成绩，新?" + added + " 条本地记录"
           );
         } catch (error) {
           setNotice(userCenterNotice, error.message, true);
@@ -2649,7 +2649,7 @@
           return;
         }
         if (loadedUserIdentifier && !canWriteActiveUser()) {
-          setNotice(userCenterNotice, "当前载入识别码未绑定写入权限，不能保存用户资料\", true);
+          setNotice(userCenterNotice, "当前载入识别码未绑定写入权限，不能保存用户资料", true);
           return;
         }
         if (!cloudUser) {
@@ -2674,7 +2674,7 @@
             applyUserToForm(payload.user);
             renderTasks();
             renderDailyScores();
-            setNotice(userCenterNotice, "用户已创建，后续成绩会自动同步\");
+            setNotice(userCenterNotice, "用户已创建，后续成绩会自动同步");
           } catch (error) {
             setNotice(userCenterNotice, error.message, true);
           }
@@ -2695,7 +2695,7 @@
           });
           setNotice(recordsNotice, "已生成本次成绩记录，并同步到云端");
         } catch (error) {
-          setNotice(recordsNotice, `本地已保存，云端同步失败�?{error.message}`, true);
+          setNotice(recordsNotice, `本地已保存，云端同步失败${error.message}`, true);
         }
       }
 
@@ -2708,7 +2708,7 @@
         refreshScorePanel();
         renderTasks();
         if (scoreDateInput.value === todayKey()) renderDailyScores();
-        recordsNotice.textContent = "已生成本次成绩记录\";
+        recordsNotice.textContent = "已生成本次成绩记录";
         syncRecordToCloud(record);
       }
 
@@ -2737,7 +2737,7 @@
         users.forEach((user) => {
           const option = document.createElement("option");
           option.value = user.identifier;
-          option.textContent = `${user.username || "未命名\"}�?{user.identifier}）`;
+          option.textContent = `${user.username || "未命名"}${user.identifier}）`;
           adminIdentifierInput.append(option);
         });
       }
@@ -2749,7 +2749,7 @@
           const payload = await apiJson("/api/admin/users", { headers: adminAuthHeaders() });
           renderAdminUsers(payload.users || []);
           adminUserPreview.innerHTML = "";
-          setNotice(adminPanelNotice, payload.users && payload.users.length ? `已加�?${payload.users.length} 个用户` : "暂无可管理用户\");
+          setNotice(adminPanelNotice, payload.users && payload.users.length ? `已加?${payload.users.length} 个用户` : "暂无可管理用户");
           if (payload.users && payload.users.length) await adminLookup();
         } catch (error) {
           adminIdentifierInput.replaceChildren(new Option("用户加载失败", ""));
@@ -2768,8 +2768,8 @@
           const user = payload.user;
           adminUserPreview.innerHTML = `
             <article class="record">
-              <div class="mode">${user.username || "未命名\"}</div>
-              <div><strong>${user.identifier}</strong><time>出生日期�?{user.birthDate || "未填写\"} · 记录 ${payload.recordCount || 0} �?· 任务 ${payload.taskKeyCount || 0} �?/time></div>
+              <div class="mode">${user.username || "未命名"}</div>
+              <div><strong>${user.identifier}</strong><time>出生日期${user.birthDate || "未填写"} · 记录 ${payload.recordCount || 0} ?· 任务 ${payload.taskKeyCount || 0} ?/time></div>
               <div class="score">KV</div>
             </article>
           `;
@@ -2798,7 +2798,7 @@
             body: JSON.stringify({ newPassword })
           });
           adminNewPasswordInput.value = "";
-          setNotice(adminPanelNotice, "用户密码已重置\");
+          setNotice(adminPanelNotice, "用户密码已重置");
         } catch (error) {
           setNotice(adminPanelNotice, error.message, true);
         }
@@ -2810,7 +2810,7 @@
           setNotice(adminPanelNotice, "请输入合法识别码", true);
           return;
         }
-        if (!window.confirm(`确定永久删除 ${identifier} �?KV 用户数据吗？`)) return;
+        if (!window.confirm(`确定永久删除 ${identifier} ?KV 用户数据吗？`)) return;
         try {
           await apiJson(`/api/admin/users/${encodeURIComponent(identifier)}`, {
             method: "DELETE",
@@ -2819,7 +2819,7 @@
           });
           adminUserPreview.innerHTML = "";
           await loadAdminUsers();
-          setNotice(adminPanelNotice, "用户数据已删除\");
+          setNotice(adminPanelNotice, "用户数据已删除");
         } catch (error) {
           setNotice(adminPanelNotice, error.message, true);
         }
@@ -2846,7 +2846,7 @@
         if (totalSeconds < 60) return `${totalSeconds} 秒`;
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
-        return seconds ? `${minutes} �?${seconds} 秒` : `${minutes} 分钟`;
+        return seconds ? `${minutes} ?${seconds} 秒` : `${minutes} 分钟`;
       }
 
       function dailyPracticeMs(date) {
@@ -2876,17 +2876,16 @@
       function parsePoems(text) {
         return text
           .split("###***")
-          .map((block) => block.split(/\r?\
-/).map((line) => line.trim()).filter(Boolean))
+          .map((block) => block.split(/\r?\n/).map((line) => line.trim()).filter(Boolean))
           .filter((lines) => lines.length >= 3)
           .map((lines) => {
             const [title, authorLine, ...bodyLines] = lines;
             const [dynasty = "", ...authorParts] = authorLine.split(/\s+/);
             const body = bodyLines.join("\
 ");
-            const chars = [...body.replace(/[，。！？；：�?.!?;:\s《》（�?)“”\"‘�?·]/g, "")];
+            const chars = [...body.replace(/[，。！？；：?.!?;:\s《》（?)“”"‘?·]/g, "")];
             const lineLengths = bodyLines
-              .map((line) => [...line.replace(/[，。！？；：�?.!?;:\s《》（�?)“”\"‘�?·]/g, "")].length)
+              .map((line) => [...line.replace(/[，。！？；：?.!?;:\s《》（?)“”"‘?·]/g, "")].length)
               .filter((length) => length > 0);
             const meter = lineLengths.find((length) => length === 5 || length === 7) || 0;
             return {
@@ -2911,7 +2910,7 @@
             if (currentTraining === "poem") buildBoard();
           }
         } catch (error) {
-          console.warn("古诗.txt 读取失败，使用内置备用古诗。\", error);
+          console.warn("古诗.txt 读取失败，使用内置备用古诗。", error);
         }
       }
 
@@ -2933,7 +2932,7 @@
         boardShell.style.removeProperty("--board-max");
         memoryStartButton.classList.add("is-hidden");
         memoryStartButton.disabled = false;
-        memoryStartButton.textContent = "开始记忆\";
+        memoryStartButton.textContent = "开始记忆";
         memoryReplayButton.classList.add("is-hidden");
         memoryReplayButton.disabled = true;
         poemToggleButton.classList.add("is-hidden");
@@ -3236,11 +3235,11 @@
         memoryPreviewing = false;
         memoryReplayCount = 0;
         targetLabel.textContent = "轮次";
-        targetText.textContent = "待开始\";
+        targetText.textContent = "待开始";
         resetButton.textContent = "重置记忆";
         memoryStartButton.classList.remove("is-hidden");
         memoryStartButton.disabled = false;
-        memoryStartButton.textContent = "开始记忆\";
+        memoryStartButton.textContent = "开始记忆";
         memoryReplayButton.classList.remove("is-hidden");
         memoryReplayButton.disabled = true;
         sizeSwitch.classList.add("is-hidden");
@@ -3270,14 +3269,14 @@
           board.append(cell);
         }
 
-        notice.textContent = "点击开始记忆\";
+        notice.textContent = "点击开始记忆";
       }
 
       function startMemoryTraining() {
         if (currentTraining !== "memory" || memoryActive || finished) return;
         memoryActive = true;
         memoryStartButton.disabled = true;
-        memoryStartButton.textContent = "记忆中\";
+        memoryStartButton.textContent = "记忆中";
         if (!started) startTimer();
         addMemoryTarget();
         showMemoryPreview();
@@ -3622,7 +3621,7 @@
             memoryRound += 1;
             addMemoryTarget();
             memoryPreviewing = true;
-            notice.textContent = "准备下一轮\";
+            notice.textContent = "准备下一轮";
             window.clearTimeout(memoryPreviewTimer);
             memoryPreviewTimer = window.setTimeout(showMemoryPreview, 350);
           }
@@ -3726,7 +3725,7 @@
           rows: 4,
           colorInterference: colorInterferenceOn,
           idioms: currentIdioms,
-          idiom: currentIdioms.join("、\"),
+          idiom: currentIdioms.join("、"),
           timeMs: Math.round(elapsedMs),
           errors,
           accuracy: Math.round(((idiomCols * 4) / (idiomCols * 4 + errors)) * 1000) / 10,
@@ -3769,7 +3768,7 @@
         memoryActive = false;
         memoryReplayButton.disabled = true;
         memoryStartButton.disabled = false;
-        memoryStartButton.textContent = "开始记忆\";
+        memoryStartButton.textContent = "开始记忆";
         stopTimer();
         elapsedMs = performance.now() - startStamp;
         timeText.textContent = formatSeconds(elapsedMs);
@@ -3858,16 +3857,16 @@
         const type = record.type || "schulte";
         const label = type === "stroop" ? "斯特鲁普" : type === "decode" ? "\u8bd1\u7801\u8bad\u7ec3" : type === "idiom" ? `4×${record.cols}` : type === "poem" ? "古诗训练" : type === "memory" ? "记忆训练" : `${record.size}×${record.size}${record.reverse ? " 倒序" : ""}`;
         const detail = type === "stroop"
-          ? `${record.trials || stroopTotal}�?· �?${record.errors}`
+          ? `${record.trials || stroopTotal}?· ?${record.errors}`
           : type === "decode"
             ? `${record.trials || decodeTotal}\u9898 \u00b7 \u9519 ${record.errors}`
           : type === "idiom"
-            ? `${record.idioms?.length || record.cols || 1}个成�?· �?${record.errors}`
+            ? `${record.idioms?.length || record.cols || 1}个成?· ?${record.errors}`
             : type === "poem"
-              ? `${record.title || "古诗"} · ${record.chars || 0}�?· �?${record.errors}`
+              ? `${record.title || "古诗"} · ${record.chars || 0}?· ?${record.errors}`
               : type === "memory"
-                ? `${record.rounds || memoryTotalRounds}�?· �?${record.errors}${Number(record.replays || 0) > 0 ? ` · 复现 ${Number(record.replays || 0)} 次` : ""}`
-                : `�?${record.errors}`;
+                ? `${record.rounds || memoryTotalRounds}?· ?${record.errors}${Number(record.replays || 0) > 0 ? ` · 复现 ${Number(record.replays || 0)} 次` : ""}`
+                : `?${record.errors}`;
         node.innerHTML = `
           <div class="mode">${label}</div>
           <div>
@@ -3891,16 +3890,16 @@
       function showResult(record, isBest) {
         const type = record.type || "schulte";
         const label = type === "stroop" ? "斯特鲁普" : type === "decode" ? "\u8bd1\u7801\u8bad\u7ec3" : type === "idiom" ? `成语训练` : type === "poem" ? "古诗训练" : type === "memory" ? "记忆训练" : `${record.size}×${record.size}${record.reverse ? " 倒序" : ""}`;
-        const unit = type === "decode" ? `${record.trials || decodeTotal}\u9898` : type === "stroop" ? `${record.trials || stroopTotal}题` : type === "idiom" ? `${record.idioms?.length || record.cols || 1}个成�?· 4×${record.cols}` : type === "poem" ? `${record.title || "古诗"} · ${record.chars || 0}字` : type === "memory" ? `${record.rounds || memoryTotalRounds}�?· ${record.grid || "5×5"}` : record.reverse ? "倒序方格" : "方格";
+        const unit = type === "decode" ? `${record.trials || decodeTotal}\u9898` : type === "stroop" ? `${record.trials || stroopTotal}题` : type === "idiom" ? `${record.idioms?.length || record.cols || 1}个成?· 4×${record.cols}` : type === "poem" ? `${record.title || "古诗"} · ${record.chars || 0}字` : type === "memory" ? `${record.rounds || memoryTotalRounds}?· ${record.grid || "5×5"}` : record.reverse ? "倒序方格" : "方格";
         resultSummary.innerHTML = `
           <div class="summary-item"><span>模式</span><strong>${label}</strong></div>
           <div class="summary-item"><span>内容</span><strong>${unit}</strong></div>
           <div class="summary-item"><span>用时</span><strong>${formatSeconds(record.timeMs)}s</strong></div>
           <div class="summary-item"><span>错误</span><strong>${record.errors}</strong></div>
-          <div class="summary-item"><span>正确�?/span><strong>${record.accuracy}%</strong></div>
-          ${type === "memory" && Number(record.replays || 0) > 0 ? `<div class="summary-item"><span>复现</span><strong>${Number(record.replays || 0)}�?/strong></div>` : ""}
+          <div class="summary-item"><span>正确</span><strong>${record.accuracy}%</strong></div>
+          ${type === "memory" && Number(record.replays || 0) > 0 ? `<div class="summary-item"><span>复现</span><strong>${Number(record.replays || 0)}</strong></div>` : ""}
         `;
-        notice.textContent = isBest ? "刷新最快成绩\" : "";
+        notice.textContent = isBest ? "刷新最快成绩" : "";
         if (typeof resultDialog.showModal === "function") resultDialog.showModal();
       }
 
@@ -4002,12 +4001,12 @@
           recordsNotice.textContent = "暂无可清空的成绩记录";
           return;
         }
-        if (window.confirm("确定清空当前模式的所有成绩记录吗？\")) {
+        if (window.confirm("确定清空当前模式的所有成绩记录吗？")) {
           records = records.filter((record) => !current.includes(record));
           saveRecords();
           refreshScorePanel();
-          notice.textContent = "成绩记录已清空\";
-          recordsNotice.textContent = "全部成绩记录已清空\";
+          notice.textContent = "成绩记录已清空";
+          recordsNotice.textContent = "全部成绩记录已清空";
         }
       }
 
@@ -4052,7 +4051,7 @@
         saveCloudUser();
         saveLoadedUserIdentifier();
         loadUserCenter();
-        setNotice(userCenterNotice, "已登出\");
+        setNotice(userCenterNotice, "已登出");
       });
       loadUserButton.addEventListener("click", loadSyncedUserByIdentifier);
       loginUserButton.addEventListener("click", loadSyncedUserByIdentifier);
@@ -4090,7 +4089,7 @@
       adminLoginButton.addEventListener("click", () => {
         adminPassword = adminPasswordInput.value;
         if (!adminPassword) {
-          setNotice(adminLoginNotice, "请输入管理密码\", true);
+          setNotice(adminLoginNotice, "请输入管理密码", true);
           return;
         }
         adminLoginDialog.close();
