@@ -116,8 +116,8 @@ function getUser(identifier) {
 function createUser(identifier, userData) {
   const now = new Date().toISOString();
   db.run(
-    'INSERT INTO users (identifier, username, birth_date, created_at, updated_at) VALUES (?, ?, ?, ?, ?)',
-    [identifier, userData.username || '', userData.birthDate || '', now, now]
+    'INSERT INTO users (identifier, username, birth_date, password_hash, password_salt, password_hash_version, password_updated_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [identifier, userData.username || '', userData.birthDate || '', userData.passwordHash || '', userData.passwordSalt || '', userData.passwordHashVersion || '', userData.passwordUpdatedAt || '', now, now]
   );
   saveDb();
   return getUser(identifier);

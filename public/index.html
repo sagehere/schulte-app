@@ -60,9 +60,10 @@
 
     .title-row {
       display: grid;
-      grid-template-columns: auto minmax(220px, 1fr) auto;
+      grid-template-columns: auto auto auto;
       align-items: center;
       gap: 16px;
+      justify-content: start;
     }
 
     .title-task-strip {
@@ -1362,7 +1363,7 @@
   <main class="app">
     <header class="topbar">
       <div class="title-row">
-        <h1 id="appTitle" class="admin-trigger-title">专注力训练/h1>
+        <h1 id="appTitle" class="admin-trigger-title">专注力训练</h1>
         <div class="title-task-strip" id="titleTaskStrip" aria-live="polite"></div>
         <div class="global-timer" aria-label="训练计时">
           <span>训练时长</span>
