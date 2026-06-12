@@ -77,3 +77,21 @@
   - 待运行 `npm start` 进行功能验证
 - 后续风险：
   - verify-session 新增了网络开销（每次 init 和打开用户中心时多一次 POST 请求），建议用户量增大后考虑加缓存或合并进 GET /users/:identifier
+
+## 2026-06-12
+
+- 类型：修复 + 功能优化
+- 任务：将"保存用户"按钮改名为"保存修改"；修复 Docker EACCES 权限错误和 X-Forwarded-For 警告
+- 创建/更新文件：
+  - `public/index.html`：按钮文字"保存用户"→"保存修改"
+  - `src/index.js`：添加 `app.set('trust proxy', 1)` 修复 express-rate-limit X-Forwarded-For 警告
+  - `Dockerfile`：安装 `su-exec`，添加 `ENTRYPOINT` 脚本，移除 `USER app`（通过 entrypoint 降权）
+  - `docker-entrypoint.sh`：新建，运行时 chown /app/data 后 `su-exec app` 降权启动 node
+  - `docs/ai/FEATURE_INDEX.md`：更新"应用入口"和"Docker"功能单元的 P0 文件列表和调用链
+- 业务逻辑变更：
+  - 按钮改名：用户中心的"保存用户"改为"保存修改"，语义更清晰
+  - X-Forwarded-For：Express 启用 `trust proxy: 1`，消除 express-rate-limit 的 ValidationError 日志污染
+  - EACCES：容器启动时 entrypoint 以 root 身份执行 `chown -R app:app /app/data`（处理 bind mount 的 root 权限问题），然后通过 `su-exec app` 降权至 app 用户运行 node，保持最低权限原则
+- 验证：
+  - 运行 `node --check src/index.js`、`node --check src/routes.js`、`node --check src/db.js`、`node --check src/utils.js`、`node --check src/html.js` 语法检查全部通过
+  - 待运行 `docker-compose up -d` 验证容器无 EACCES/ValidationError 错误

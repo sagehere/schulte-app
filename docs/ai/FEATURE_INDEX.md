@@ -31,7 +31,7 @@
 
 P0：必须读取文件
 
-- `src/index.js`
+- `src/index.js`（含 `app.set('trust proxy', 1)`）
 - `src/db.js`：`initDb`、`pruneAllOldRecords`、`getSetting`、`setSetting`
 
 P1：按需读取文件
@@ -458,6 +458,7 @@ P0：必须读取文件
 
 - `Dockerfile`
 - `docker-compose.yml`
+- `docker-entrypoint.sh`
 - `.env.example`
 
 P1：按需读取文件
@@ -470,7 +471,7 @@ P2：谨慎读取文件
 - `package-lock.json`：依赖锁调查时读取
 - `README.md`：部署说明可能乱码，仅参考
 
-主要调用链：Docker build -> `npm ci --omit=dev` -> `node src/index.js`；Compose -> 挂载 `./data:/app/data` -> `/health` 健康检查。
+主要调用链：Docker build -> `npm ci --omit=dev` -> `docker-entrypoint.sh`（chown /app/data）-> `su-exec app node src/index.js`；Compose -> 挂载 `./data:/app/data` -> `/health` 健康检查。
 
 相关状态：`PORT`、`ADMIN_PASSWORD`、`USER_CREATE_CODE`、`DB_PATH`、`NODE_ENV`。
 
