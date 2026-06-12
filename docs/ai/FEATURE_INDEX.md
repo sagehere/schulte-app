@@ -351,14 +351,14 @@ P2：谨慎读取文件
 
 ## 管理员面板与系统设置
 
-功能说明：点击标题 5 次打开管理员登录，管理员可查看用户列表、查询用户、重置密码、删除用户、设置系统时区。
+功能说明：点击标题 5 次打开管理员登录，输入密码后通过 `POST /api/admin/verify` 服务端校验，校验通过后进入管理面板，可查看用户列表、重置密码、删除用户、设置系统时区。
 
-用户入口：主页标题连续点击 5 次 -> 管理员登录弹窗 -> 管理面板。
+用户入口：主页标题连续点击 5 次 -> 管理员登录弹窗 -> 输入密码 -> 服务端验证 -> 管理面板。
 
 P0：必须读取文件
 
-- `public/index.html`：`adminClickCount`、`adminAuthHeaders`、`loadAdminUsers`、`adminLookup`、`adminResetPassword`、`adminDeleteUser`、`loadAdminSettings`、`saveAdminSettings`
-- `src/routes.js`：`hasAdminAccess`、`GET /admin/users`、`GET /admin/users/:identifier`、`POST /admin/users/:identifier/password`、`DELETE /admin/users/:identifier`、`GET /settings`、`PUT /admin/settings`
+- `public/index.html`：`adminClickCount`、`adminAuthHeaders`、`loadAdminUsers`、`adminLookup`、`adminResetPassword`、`adminDeleteUser`、`loadAdminSettings`、`saveAdminSettings`、`adminLoginButton` click handler（先调 verify 再开面板）
+- `src/routes.js`：`hasAdminAccess`、`GET /admin/users`、`GET /admin/users/:identifier`、`POST /admin/users/:identifier/password`、`DELETE /admin/users/:identifier`、`GET /settings`、`PUT /admin/settings`、`POST /admin/verify`
 
 P1：按需读取文件
 
@@ -370,13 +370,13 @@ P2：谨慎读取文件
 - `.env.example`
 - `docker-compose.yml`：确认生产环境变量时读取
 
-主要调用链：标题点击 -> 管理登录弹窗 -> 保存 `adminPassword` -> `loadAdminUsers()` / `loadAdminSettings()` -> 管理 API；重置密码链为 `adminResetPassword()` -> `POST /api/admin/users/:id/password` -> `db.updateUser()`。
+主要调用链：标题点击 -> 管理登录弹窗 -> 输入密码 -> `adminLoginButton.click` -> `POST /api/admin/verify` -> 成功则 `showModal()` 并 `loadAdminUsers()`/`loadAdminSettings()`，失败则显示错误（不打开面板）；重置密码链为 `adminResetPassword()` -> `POST /api/admin/users/:id/password` -> `db.updateUser()`（camelCase 字段已修复）。
 
 相关状态：`adminPassword`、`adminClickCount`、`settings.timezone`。
 
-相关接口：`GET /api/admin/users`、`GET /api/admin/users/:identifier`、`POST /api/admin/users/:identifier/password`、`DELETE /api/admin/users/:identifier`、`GET /api/settings`、`PUT /api/admin/settings`。
+相关接口：`GET /api/admin/users`、`GET /api/admin/users/:identifier`、`POST /api/admin/users/:identifier/password`、`DELETE /api/admin/users/:identifier`、`GET /api/settings`、`PUT /api/admin/settings`、`POST /api/admin/verify`。
 
-修改注意事项：管理员鉴权当前依赖环境变量 `ADMIN_PASSWORD`；接口受 `/api/admin` rate limit 保护，修改路径时同步限流挂载。
+修改注意事项：管理员鉴权当前依赖环境变量 `ADMIN_PASSWORD`；接口受 `/api/admin` rate limit 保护，修改路径时同步限流挂载。`updateUser()` 的字段匹配同时支持 snake_case 和 camelCase 键名。
 
 最近更新时间：2026-06-12
 

@@ -1774,7 +1774,6 @@
         <div class="admin-grid">
           <label class="form-field">用户<select id="adminIdentifierInput"><option value="">正在加载用户...</option></select></label>
           <div class="user-actions">
-            <button class="tool-button" type="button" id="adminLookupButton">查询用户</button>
             <input id="adminNewPasswordInput" type="password" placeholder="新密码" autocomplete="new-password">
             <button class="tool-button" type="button" id="adminResetPasswordButton">重置密码</button>
             <button class="tool-button primary" type="button" id="adminDeleteButton">删除用户</button>
@@ -1896,7 +1895,7 @@
       const adminLoginButton = document.getElementById("adminLoginButton");
       const adminLoginNotice = document.getElementById("adminLoginNotice");
       const adminIdentifierInput = document.getElementById("adminIdentifierInput");
-      const adminLookupButton = document.getElementById("adminLookupButton");
+
       const adminDeleteButton = document.getElementById("adminDeleteButton");
       const adminNewPasswordInput = document.getElementById("adminNewPasswordInput");
       const adminResetPasswordButton = document.getElementById("adminResetPasswordButton");
@@ -4358,21 +4357,31 @@
           if (typeof adminLoginDialog.showModal === "function") adminLoginDialog.showModal();
         }
       });
-      adminLoginButton.addEventListener("click", () => {
+      adminLoginButton.addEventListener("click", async () => {
         adminPassword = adminPasswordInput.value;
         if (!adminPassword) {
           setNotice(adminLoginNotice, "请输入管理密码", true);
           return;
         }
-        adminLoginDialog.close();
-        setNotice(adminPanelNotice, "");
-        adminUserPreview.innerHTML = "";
-        if (typeof adminPanelDialog.showModal === "function") adminPanelDialog.showModal();
-        loadAdminUsers();
-        loadAdminSettings();
+        setNotice(adminLoginNotice, "正在验证...");
+        try {
+          const res = await apiJson("/api/admin/verify", {
+            method: "POST",
+            body: { password: adminPassword }
+          });
+          if (!res.ok) throw new Error(res.error || "管理密码不正确");
+          adminLoginDialog.close();
+          setNotice(adminPanelNotice, "");
+          adminUserPreview.innerHTML = "";
+          if (typeof adminPanelDialog.showModal === "function") adminPanelDialog.showModal();
+          loadAdminUsers();
+          loadAdminSettings();
+        } catch (e) {
+          setNotice(adminLoginNotice, e.message || "管理密码不正确", true);
+        }
       });
       adminIdentifierInput.addEventListener("change", adminLookup);
-      adminLookupButton.addEventListener("click", adminLookup);
+
       adminResetPasswordButton.addEventListener("click", adminResetPassword);
       adminDeleteButton.addEventListener("click", adminDeleteUser);
       adminSaveSettingsButton.addEventListener("click", saveAdminSettings);

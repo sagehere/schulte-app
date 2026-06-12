@@ -114,3 +114,27 @@
 - 验证：
   - 运行 `node --check src/db.js`、`node --check src/index.js`、`node --check src/routes.js`、`node --check src/utils.js`、`node --check src/html.js` 语法检查全部通过
   - 待运行 `docker-compose up -d` 后创建用户并重启容器，验证数据不丢失
+
+## 2026-06-12
+
+- 类型：修复
+- 任务：修复三个管理面板问题 — (1) 错误管理密码不应打开面板；(2) 删除冗余"查询用户"按钮；(3) 管理面板修改密码不生效
+- 创建/更新文件：
+  - `src/routes.js`：新增 `POST /admin/verify` 端点，供前端登录前校验管理密码
+  - `src/db.js`：`updateUser()` 的 `fields` 数组添加 camelCase 别名（`passwordHash`、`passwordSalt`、`passwordHashVersion`、`passwordUpdatedAt` 等），使管理员重置密码时传入的 `makePasswordRecord()` camelCase 字段能被正确匹配写入
+  - `public/index.html`：
+    - `adminLoginButton` click handler 改为先调 `POST /api/admin/verify` 服务端校验，成功才开面板；失败则显示错误不关弹窗
+    - 删除"查询用户"按钮 HTML（`id="adminLookupButton"`）
+    - 删除 `adminLookupButton` 变量声明和事件绑定
+  - `docs/ai/FEATURE_INDEX.md`：更新"管理员面板与系统设置"功能单元
+- 业务逻辑变更：
+  - 面板打开：必须服务端校验密码通过，不再仅靠前端空字符串检查
+  - 面板 UI：移除冗余"查询用户"按钮（`<select>` change 已触发相同 `adminLookup()`）
+  - 修改密码：`updateUser()` 现在能正确匹配 `passwordHash`、`passwordSalt`、`passwordHashVersion`、`passwordUpdatedAt` 字段并写入数据库
+- 根因说明（修改密码不生效）：
+  - `updateUser()` 用 snake_case 字段名（`password_hash`）在 `data` 对象中查找
+  - 管理员重置密码时传入 `...makePasswordRecord()` 返回 camelCase 键（`passwordHash`）
+  - 所有密码字段被静默跳过，只有 `session_token_hash` 被清空
+- 验证：
+  - 运行 `node --check src/db.js`、`node --check src/routes.js` 语法检查通过
+  - 待运行 `npm start` 后用浏览器验证三个修复点

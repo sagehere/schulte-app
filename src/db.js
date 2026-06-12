@@ -178,9 +178,17 @@ function updateUser(identifier, data) {
   const values = [];
 
   const fields = [
-    'username', 'birth_date', 'password_hash', 'password_salt', 'password_hash_version',
-    'password_updated_at', 'session_token_hash', 'session_token_created_at',
-    'owner_token_hash', 'manager_token_hash', 'manager_token_created_at', 'updated_at'
+    'username', 'birth_date', 'birthDate',
+    'password_hash', 'passwordHash',
+    'password_salt', 'passwordSalt',
+    'password_hash_version', 'passwordHashVersion',
+    'password_updated_at', 'passwordUpdatedAt',
+    'session_token_hash', 'sessionTokenHash',
+    'session_token_created_at', 'sessionTokenCreatedAt',
+    'owner_token_hash', 'ownerTokenHash',
+    'manager_token_hash', 'managerTokenHash',
+    'manager_token_created_at', 'managerTokenCreatedAt',
+    'updated_at', 'updatedAt'
   ];
 
   for (const field of fields) {
