@@ -4367,7 +4367,7 @@
         try {
           const res = await apiJson("/api/admin/verify", {
             method: "POST",
-            body: { password: adminPassword }
+            body: JSON.stringify({ password: adminPassword })
           });
           if (!res.ok) throw new Error(res.error || "管理密码不正确");
           adminLoginDialog.close();
