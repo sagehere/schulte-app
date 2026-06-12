@@ -55,3 +55,25 @@
 - 验证：
   - 运行 `node --check src/routes.js`、`node --check src/utils.js`、`node --check src/db.js` 语法检查通过
   - 待运行 `npm start` 进行功能验证
+
+## 2026-06-12
+
+- 类型：修复 + 重构
+- 任务：修复已存在用户不用密码即可登录问题；收口建立用户组件到"注册用户"按钮；用户同步数据包含每日任务和练习记录。
+- 创建/更新文件：
+  - `src/routes.js`：新增 `POST /api/users/:identifier/verify-session` 端点，用于前端校验 session 有效性
+  - `public/index.html`：
+    - `loadUserCenter()` 添加 session 有效性验证（Task 1），session 过期后自动清除本地登录状态
+    - `loadUserCenter()` 添加云端记录同步（Task 3），自动下载并合并远程记录
+    - `applyUserToForm()` 添加用户资料编辑字段可见性控制（Task 2），无用户时隐藏编辑字段和保存/登出按钮
+    - 给 `.user-grid` 添加 `id="userProfileFields"` 用于 DOM 操作
+  - `docs/ai/FEATURE_INDEX.md`：更新"用户中心、登录与云端同步"功能单元
+- 业务逻辑变更：
+  - Task 1：页面初始化或打开用户中心时，若有保存的 sessionToken，先请求 `verify-session` 校验其有效性；若无效则清除本地登录状态并提示重新登录
+  - Task 2：未创建/登录用户时，用户中心的"用户资料"字段、保存和登出按钮自动隐藏，仅保留"注册用户"按钮作为入口；点击"注册用户"打开独立注册弹窗
+  - Task 3：`loadUserCenter()` 中，当有写入权限时额外调用 `GET /api/users/:identifier/public` 下载云端记录并合并到本地
+- 验证：
+  - 运行 `node --check src/routes.js`、`node --check src/utils.js`、`node --check src/db.js`、`node --check src/index.js`、`node --check src/html.js` 语法检查全部通过
+  - 待运行 `npm start` 进行功能验证
+- 后续风险：
+  - verify-session 新增了网络开销（每次 init 和打开用户中心时多一次 POST 请求），建议用户量增大后考虑加缓存或合并进 GET /users/:identifier

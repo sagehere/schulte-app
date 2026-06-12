@@ -227,6 +227,20 @@ router.post('/users/:identifier/login', loginLimiter, async (req, res) => {
   res.json({ ok: true, user: publicCloudUser(session.stored), sessionToken: session.sessionToken, date, tasks });
 });
 
+// Verify session
+router.post('/users/:identifier/verify-session', async (req, res) => {
+  const { identifier } = req.params;
+  if (!validIdentifier(identifier)) return res.status(400).json({ ok: false, error: '识别码仅可输入数字与字母' });
+
+  const body = req.body;
+  if (!body) return res.status(400).json({ ok: false, error: '请求体不是有效 JSON' });
+
+  const owned = await requireSession(identifier, body.sessionToken);
+  if (owned.error) return res.json({ ok: true, valid: false });
+
+  res.json({ ok: true, valid: true });
+});
+
 // Post record
 router.post('/users/:identifier/records', async (req, res) => {
   const { identifier } = req.params;

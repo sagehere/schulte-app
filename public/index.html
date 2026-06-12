@@ -1600,7 +1600,7 @@
           <h2>用户资料</h2>
           <div class="dialog-actions"><button class="tool-button" type="button" id="registerUserButton">注册用户</button><button class="tool-button" type="button" id="logoutUserButton">登出</button><button class="tool-button primary" type="button" id="saveUserButton">保存用户</button></div>
         </div>
-        <div class="user-grid">
+        <div class="user-grid" id="userProfileFields">
           <label class="form-field">用户名：<input id="usernameInput" type="text" maxlength="24" autocomplete="name"></label>
           <label class="form-field">识别码：<input id="identifierInput" type="text" maxlength="32" autocomplete="off" inputmode="latin" pattern="[A-Za-z0-9]+"></label>
           <label class="form-field">出生日期<input id="birthDateInput" type="date"></label>
@@ -1850,6 +1850,7 @@
       const saveUserButton = document.getElementById("saveUserButton");
       const logoutUserButton = document.getElementById("logoutUserButton");
       const usernameInput = document.getElementById("usernameInput");
+      const userProfileFields = document.getElementById("userProfileFields");
       const identifierInput = document.getElementById("identifierInput");
       const birthDateInput = document.getElementById("birthDateInput");
       const loadIdentifierInput = document.getElementById("loadIdentifierInput");
@@ -2420,11 +2421,20 @@
         const age = calculateAge(birthDateInput.value);
         const path = identifier ? `/u/${identifier}` : "";
         if (!identifier) {
-          userStatusText.textContent = "未创建用户时，网页训练与本地成绩仍可正常使用。";
-        } else if (canWriteActiveUser()) {
-          userStatusText.textContent = `已登录用${age !== null ? `，当前年龄：${age} 岁` : ""}${path ? `，成绩查询路径：${path}` : ""}`;
+          userStatusText.textContent = "未创建用户时，网页训练与本地成绩仍可正常使用，点击上方「注册用户」创建账号。";
+          userProfileFields.classList.add("is-hidden");
+          logoutUserButton.classList.add("is-hidden");
+          saveUserButton.classList.add("is-hidden");
         } else {
-          userStatusText.textContent = `已加载识别码 ${identifier}${path ? `，成绩查询路径${path}` : ""}；当前浏览器未保存该用户写入权限`;
+          userProfileFields.classList.remove("is-hidden");
+          logoutUserButton.classList.remove("is-hidden");
+          if (canWriteActiveUser()) {
+            saveUserButton.classList.remove("is-hidden");
+            userStatusText.textContent = `已登录用${age !== null ? `，当前年龄：${age} 岁` : ""}${path ? `，成绩查询路径：${path}` : ""}`;
+          } else {
+            saveUserButton.classList.add("is-hidden");
+            userStatusText.textContent = `已加载识别码 ${identifier}${path ? `，成绩查询路径${path}` : ""}；当前浏览器未保存该用户写入权限`;
+          }
         }
       }
 
@@ -2678,6 +2688,24 @@
           renderDailyScores();
           return;
         }
+        if (canWriteActiveUser()) {
+          try {
+            const verifyResult = await apiJson(`/api/users/${encodeURIComponent(identifier)}/verify-session`, {
+              method: "POST",
+              body: JSON.stringify({ sessionToken: cloudUser.sessionToken })
+            });
+            if (!verifyResult.valid) {
+              cloudUser = null;
+              saveCloudUser();
+              applyUserToForm(null);
+              renderTasks();
+              renderTitleTasks();
+              renderDailyScores();
+              setNotice(userCenterNotice, "会话已过期，请重新登录", true);
+              return;
+            }
+          } catch { /* network error, skip session check */ }
+        }
         try {
           const payload = await apiJson(`/api/users/${encodeURIComponent(identifier)}?date=${todayKey()}`);
           if (canWriteActiveUser()) {
@@ -2686,7 +2714,15 @@
           }
           applyUserToForm(payload.user);
           dailyTasks = Array.isArray(payload.tasks) ? payload.tasks : [];
-          setNotice(userCenterNotice, canWriteActiveUser() ? "用户资料已加载" : "已加载同步用户数据");
+          if (canWriteActiveUser()) {
+            try {
+              const publicPayload = await apiJson(`/api/users/${encodeURIComponent(identifier)}/public`);
+              const added = mergeSyncedRecords(publicPayload.records);
+              setNotice(userCenterNotice, added > 0 ? `资料已加载，同步了 ${added} 条新记录` : "用户资料已加载");
+            } catch { /* silent */ }
+          } else {
+            setNotice(userCenterNotice, "已加载同步用户数据");
+          }
         } catch (error) {
           setNotice(userCenterNotice, error.message, true);
         }

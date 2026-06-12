@@ -271,7 +271,7 @@ P2：谨慎读取文件
 
 - 数据库文件或 `data/` 目录：涉及生产数据，默认不要读取
 
-主要调用链：训练完成 -> `addRecord(record)` -> `saveRecords()` -> `syncRecordToCloud(record)` -> `POST /api/users/:identifier/records` -> `db.putRecord()`；统计链为 `refreshScorePanel()` -> `refreshStats()` + `renderFullRecords()`。
+主要调用链：训练完成 -> `addRecord(record)` -> `saveRecords()` -> `syncRecordToCloud(record)` -> `POST /api/users/:identifier/records` -> `db.putRecord()`；下载链为 `loadUserCenter()` -> `GET /api/users/:identifier/public` -> `mergeSyncedRecords()`；统计链为 `refreshScorePanel()` -> `refreshStats()` + `renderFullRecords()`。
 
 相关状态：`records`、localStorage 成绩键、云端 `records` 表。
 
@@ -289,10 +289,10 @@ P2：谨慎读取文件
 
 用户入口：顶部"用户中心"按钮；用户中心内"注册用户"按钮；用户中心内"登录并同步数据"按钮。
 
-P0：必须读取文件
+  P0：必须读取文件
 
-- `public/index.html`：`openUserCenter`、`loadUserCenter`、`loadSyncedUserByIdentifier`、`persistUserCenter`、`saveUserProfile`、`openRegisterDialog`、`registerUser`、`loadCloudUser`、`saveCloudUser`、`loadLoadedUserIdentifier`、`saveLoadedUserIdentifier`、`apiJson`
-- `src/routes.js`：`POST /users`、`GET /users/:identifier`、`PUT /users/:identifier`、`DELETE /users/:identifier`、`POST /users/:identifier/login`
+- `public/index.html`：`openUserCenter`、`loadUserCenter`、`loadSyncedUserByIdentifier`、`persistUserCenter`、`saveUserProfile`、`openRegisterDialog`、`registerUser`、`loadCloudUser`、`saveCloudUser`、`loadLoadedUserIdentifier`、`saveLoadedUserIdentifier`、`apiJson`、`applyUserToForm`
+- `src/routes.js`：`POST /users`、`GET /users/:identifier`、`PUT /users/:identifier`、`DELETE /users/:identifier`、`POST /users/:identifier/login`、`POST /users/:identifier/verify-session`
 - `src/utils.js`：`normalizeCloudUser`、`validIdentifier`、`validPassword`、`makePasswordRecord`、`verifyPassword`、`sessionTokenHash`
 
 P1：按需读取文件
@@ -304,13 +304,13 @@ P2：谨慎读取文件
 - `.env.example`：确认授权码/管理员密码说明时读取
 - `README.md`：历史说明可能乱码
 
-主要调用链：用户中心打开 -> `loadUserCenter()`；注册 -> `openRegisterDialog()` -> `registerUser()` -> `POST /api/users`；登录 -> `loadSyncedUserByIdentifier()` -> `POST /api/users/:id/login` -> 同步每日任务和练习记录；保存 -> `saveUserProfile()` -> `persistUserCenter()` -> `PUT /api/users/:id`。
+主要调用链：用户中心打开 -> `loadUserCenter()`（自动验证 sessionToken 有效性，若无效清除登录状态）；注册 -> `openRegisterDialog()` -> `registerUser()` -> `POST /api/users`；登录 -> `loadSyncedUserByIdentifier()` -> `POST /api/users/:id/login` -> 同步每日任务和练习记录；保存 -> `saveUserProfile()` -> `persistUserCenter()` -> `PUT /api/users/:id`。
 
 相关状态：`cloudUser`、`loadedUserIdentifier`、`dailyTasks`、sessionToken、localStorage 用户键。
 
-相关接口：`POST /api/users`、`GET /api/users/:identifier`、`PUT /api/users/:identifier`、`DELETE /api/users/:identifier`、`POST /api/users/:identifier/login`。
+相关接口：`POST /api/users`、`GET /api/users/:identifier`、`PUT /api/users/:identifier`、`DELETE /api/users/:identifier`、`POST /api/users/:identifier/login`、`POST /api/users/:identifier/verify-session`。
 
-修改注意事项：不要把明文密码或 session hash 返回给前端；修改识别码时必须保持用户、任务、成绩表同步迁移；登录接口必须验证密码后才返回 sessionToken。
+修改注意事项：不要把明文密码或 session hash 返回给前端；修改识别码时必须保持用户、任务、成绩表同步迁移；登录接口必须验证密码后才返回 sessionToken；verify-session 端点只做 token 校验，不应返回敏感信息；`applyUserToForm` 控制用户资料编辑字段的可见性。
 
 最近更新时间：2026-06-12
 
