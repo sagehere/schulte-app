@@ -118,6 +118,19 @@
 ## 2026-06-12
 
 - 类型：修复
+- 任务：修复重置密码时报 `no such column: passwordHash` — `updateUser()` 中 camelCase 字段名未转为 snake_case 列名
+- 修改文件：
+  - `src/db.js`：`updateUser()` 中新增 `camelToSnake()` 辅助函数，生成 SQL SET 列名时将 camelCase 映射为 snake_case（如 `passwordHash` → `password_hash`）
+- 根因说明：
+  - 上一次修复（本日第 3 条）在 `fields` 数组中添加了 camelCase 别名使 `data` 匹配成功，但 `sets.push(\`${field} = ?\`)` 直接将 `passwordHash` 作为列名写入 SQL，与数据库表列名 `password_hash` 不匹配
+- 验证：
+  - 运行 `node --check src/db.js`、`src/routes.js`、`src/utils.js` 语法检查通过
+  - 待启动 `npm start` 后用管理员重置密码功能验证
+- 后续风险：`camelToSnake` 是简单正则转换，只处理单层大写字母（如 `passwordHash` → `password_hash`），如果有全大写缩写（如 `DBName` → `d_b_name` 而非 `db_name`），需改用白名单映射
+
+## 2026-06-12
+
+- 类型：修复
 - 任务：修复三个管理面板问题 — (1) 错误管理密码不应打开面板；(2) 删除冗余"查询用户"按钮；(3) 管理面板修改密码不生效
 - 创建/更新文件：
   - `src/routes.js`：新增 `POST /admin/verify` 端点，供前端登录前校验管理密码

@@ -173,6 +173,10 @@ function createUser(identifier, userData) {
   return getUser(identifier);
 }
 
+function camelToSnake(str) {
+  return str.replace(/[A-Z]/g, (c) => '_' + c.toLowerCase());
+}
+
 function updateUser(identifier, data) {
   const sets = [];
   const values = [];
@@ -193,7 +197,8 @@ function updateUser(identifier, data) {
 
   for (const field of fields) {
     if (data[field] !== undefined) {
-      sets.push(`${field} = ?`);
+      const column = field.includes('_') ? field : camelToSnake(field);
+      sets.push(`${column} = ?`);
       values.push(data[field]);
     }
   }

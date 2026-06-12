@@ -376,7 +376,7 @@ P2：谨慎读取文件
 
 相关接口：`GET /api/admin/users`、`GET /api/admin/users/:identifier`、`POST /api/admin/users/:identifier/password`、`DELETE /api/admin/users/:identifier`、`GET /api/settings`、`PUT /api/admin/settings`、`POST /api/admin/verify`。
 
-修改注意事项：管理员鉴权当前依赖环境变量 `ADMIN_PASSWORD`；接口受 `/api/admin` rate limit 保护，修改路径时同步限流挂载。`updateUser()` 的字段匹配同时支持 snake_case 和 camelCase 键名。
+修改注意事项：管理员鉴权当前依赖环境变量 `ADMIN_PASSWORD`；接口受 `/api/admin` rate limit 保护，修改路径时同步限流挂载。`updateUser()` 支持传入 camelCase 或 snake_case 键名，但生成 SQL 时会统一映射为 snake_case 列名；新增数据库列时必须同步更新 `fields` 数组。
 
 最近更新时间：2026-06-12
 
