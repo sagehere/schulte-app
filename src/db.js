@@ -51,6 +51,17 @@ function saveDbImmediate() {
   });
 }
 
+function flushDbSync() {
+  if (!db) return;
+  if (savePending) {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    savePending = false;
+  }
+  const data = db.export();
+  fs.writeFileSync(DB_PATH, Buffer.from(data));
+}
+
 function saveDb() {
   if (!db) return;
   savePending = true;
@@ -349,6 +360,7 @@ module.exports = {
   initDb,
   getDb,
   saveDb,
+  flushDbSync,
   getUser,
   createUser,
   updateUser,

@@ -31,7 +31,7 @@
 
 P0：必须读取文件
 
-- `src/index.js`（含 `app.set('trust proxy', 1)`）
+- `src/index.js`（含 `app.set('trust proxy', 1)`、`SIGTERM`/`SIGINT` 处理器）
 - `src/db.js`：`initDb`、`pruneAllOldRecords`、`getSetting`、`setSetting`
 
 P1：按需读取文件
@@ -45,7 +45,7 @@ P2：谨慎读取文件
 - `docker-compose.yml`
 - `README.md`：当前文本可能乱码，仅作历史参考
 
-主要调用链：`start()` -> `db.initDb()` -> `db.setSetting('timezone')` -> `db.pruneAllOldRecords()` -> `app.listen()`；请求链为 `app.use('/api', apiRoutes)` 或页面路由处理。
+主要调用链：`start()` -> `db.initDb()` -> `db.setSetting('timezone')` -> `db.pruneAllOldRecords()` -> `app.listen()`；请求链为 `app.use('/api', apiRoutes)` 或页面路由处理；关闭链为 `SIGTERM`/`SIGINT` -> `gracefulShutdown()` -> `db.flushDbSync()` -> `process.exit(0)`。
 
 相关状态：环境变量 `PORT`、`ADMIN_PASSWORD`、`USER_CREATE_CODE`、`DB_PATH`；数据库 `settings.timezone`。
 
@@ -426,6 +426,7 @@ P0：必须读取文件
 - `src/db.js`
 - `src/utils.js`：密码/session、归一化、校验和公开字段过滤函数
 - `src/routes.js`：`requireSession`、`issueSession`、`hasAdminAccess`
+- `src/index.js`：`gracefulShutdown`、`SIGTERM`/`SIGINT` 注册
 
 P1：按需读取文件
 
@@ -436,7 +437,7 @@ P2：谨慎读取文件
 - `data/`：生产/本地数据库，默认不要读取
 - `package-lock.json`：仅依赖调查时读取
 
-主要调用链：`db.initDb()` -> `initTables()`；用户接口 -> `makePasswordRecord()` / `verifyPassword()` / `sessionTokenHash()`；训练记录 -> `normalizeCloudRecord()` -> `db.putRecord()`。
+主要调用链：`db.initDb()` -> `initTables()`；用户接口 -> `makePasswordRecord()` / `verifyPassword()` / `sessionTokenHash()`；训练记录 -> `normalizeCloudRecord()` -> `db.putRecord()`；关闭流程 -> `SIGTERM` -> `db.flushDbSync()`（同步刷盘）。
 
 相关状态：SQLite 表 `users`、`tasks`、`records`、`settings`；`saveTimer`、`savePending`。
 

@@ -123,6 +123,20 @@ async function start() {
   });
 }
 
+function gracefulShutdown() {
+  console.log('Shutting down gracefully, flushing database...');
+  try {
+    db.flushDbSync();
+    console.log('Database flushed.');
+  } catch (e) {
+    console.error('Failed to flush database:', e);
+  }
+  process.exit(0);
+}
+
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
+
 start().catch(err => {
   console.error('Failed to start server:', err);
   process.exit(1);

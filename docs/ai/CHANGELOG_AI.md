@@ -95,3 +95,22 @@
 - 验证：
   - 运行 `node --check src/index.js`、`node --check src/routes.js`、`node --check src/db.js`、`node --check src/utils.js`、`node --check src/html.js` 语法检查全部通过
   - 待运行 `docker-compose up -d` 验证容器无 EACCES/ValidationError 错误
+
+## 2026-06-12
+
+- 类型：修复
+- 任务：修复 Docker 容器重启时用户数据丢失（"恢复成古早版本"的问题）
+- 创建/更新文件：
+  - `src/db.js`：新增 `flushDbSync()` 同步刷盘函数（取消待写定时器，用 `fs.writeFileSync` 确保落盘后再退出），并导出
+  - `src/index.js`：导入 `flushDbSync`，添加 `gracefulShutdown()` 函数，注册 `SIGTERM`/`SIGINT` 信号处理器
+  - `docs/ai/FEATURE_INDEX.md`：更新"应用入口"和"数据存储"功能单元的 P0 文件、调用链
+- 业务逻辑变更：
+  - 新增 `db.flushDbSync()`：运行时同步将内存 SQLite 写入磁盘文件
+  - 新增信号处理器：`SIGTERM`/`SIGINT` 触发时先同步刷盘再退出，确保 `docker-compose up -d` 重启时不丢失倒数 100ms 内未落盘的数据
+- 根因说明：
+  - `saveDb()` 使用 100ms 防抖 + `fs.writeFile`（异步回调），进程退出时定时器和回调都不会执行
+  - 新用户/记录的数据仅存在于内存，从未写入磁盘文件
+  - 容器重新启动后加载的是上一次成功写入的"古早版本"数据库
+- 验证：
+  - 运行 `node --check src/db.js`、`node --check src/index.js`、`node --check src/routes.js`、`node --check src/utils.js`、`node --check src/html.js` 语法检查全部通过
+  - 待运行 `docker-compose up -d` 后创建用户并重启容器，验证数据不丢失
