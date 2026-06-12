@@ -1598,20 +1598,17 @@
       <section class="panel task-panel">
         <div class="panel-header">
           <h2>用户资料</h2>
-          <div class="dialog-actions"><button class="tool-button" type="button" id="logoutUserButton">登出</button><button class="tool-button primary" type="button" id="saveUserButton">保存用户</button></div>
+          <div class="dialog-actions"><button class="tool-button" type="button" id="registerUserButton">注册用户</button><button class="tool-button" type="button" id="logoutUserButton">登出</button><button class="tool-button primary" type="button" id="saveUserButton">保存用户</button></div>
         </div>
         <div class="user-grid">
           <label class="form-field">用户名：<input id="usernameInput" type="text" maxlength="24" autocomplete="name"></label>
           <label class="form-field">识别码：<input id="identifierInput" type="text" maxlength="32" autocomplete="off" inputmode="latin" pattern="[A-Za-z0-9]+"></label>
           <label class="form-field">出生日期<input id="birthDateInput" type="date"></label>
-          <label class="form-field">授权码：<input id="authCodeInput" type="password" autocomplete="one-time-code"></label>
-          <label class="form-field">注册/改密密码<input id="userPasswordInput" type="password" autocomplete="new-password"></label>
         </div>
         <div class="load-user-row">
-          <label class="form-field">通过识别码加载同步数据：<input id="loadIdentifierInput" type="text" maxlength="32" autocomplete="off" inputmode="latin" pattern="[A-Za-z0-9]+"></label>
-          <label class="form-field">登录密码<input id="loginPasswordInput" type="password" autocomplete="current-password"></label>
-          <button class="tool-button" type="button" id="loadUserButton">加载同步数据</button>
-          <button class="tool-button primary" type="button" id="loginUserButton">密码登录</button>
+          <label class="form-field">识别码：<input id="loadIdentifierInput" type="text" maxlength="32" autocomplete="off" inputmode="latin" pattern="[A-Za-z0-9]+"></label>
+          <label class="form-field">密码：<input id="loginPasswordInput" type="password" autocomplete="current-password"></label>
+          <button class="tool-button primary" type="button" id="loginUserButton">登录并同步数据</button>
         </div>
         <div class="profile-meta" id="userStatusText">未创建用户时，网页训练与本地成绩仍可正常使用。</div>
         <div class="notice" id="userCenterNotice" aria-live="polite"></div>
@@ -1687,6 +1684,28 @@
           </div>
         </div>
         <div class="daily-score-list" id="dailyScoreList"></div>
+      </section>
+    </div>
+  </dialog>
+
+  <dialog class="dialog" id="registerDialog">
+    <div class="dialog-inner">
+      <div class="panel-header">
+        <h2>注册用户</h2>
+        <button class="icon-button" type="button" id="closeRegisterButton" aria-label="关闭">×</button>
+      </div>
+      <section class="panel task-panel">
+        <div class="user-grid">
+          <label class="form-field">用户名：<input id="regUsernameInput" type="text" maxlength="24" autocomplete="name"></label>
+          <label class="form-field">识别码：<input id="regIdentifierInput" type="text" maxlength="32" autocomplete="off" inputmode="latin" pattern="[A-Za-z0-9]+"></label>
+          <label class="form-field">出生日期<input id="regBirthDateInput" type="date"></label>
+          <label class="form-field">授权码：<input id="regAuthCodeInput" type="password" autocomplete="one-time-code"></label>
+          <label class="form-field">密码：<input id="regPasswordInput" type="password" autocomplete="new-password"></label>
+        </div>
+        <div class="dialog-actions">
+          <button class="tool-button primary" type="button" id="registerButton">注册</button>
+        </div>
+        <div class="notice" id="registerNotice" aria-live="polite"></div>
       </section>
     </div>
   </dialog>
@@ -1833,14 +1852,21 @@
       const usernameInput = document.getElementById("usernameInput");
       const identifierInput = document.getElementById("identifierInput");
       const birthDateInput = document.getElementById("birthDateInput");
-      const authCodeInput = document.getElementById("authCodeInput");
-      const userPasswordInput = document.getElementById("userPasswordInput");
       const loadIdentifierInput = document.getElementById("loadIdentifierInput");
-      const loadUserButton = document.getElementById("loadUserButton");
       const loginPasswordInput = document.getElementById("loginPasswordInput");
       const loginUserButton = document.getElementById("loginUserButton");
       const userStatusText = document.getElementById("userStatusText");
       const userCenterNotice = document.getElementById("userCenterNotice");
+      const registerDialog = document.getElementById("registerDialog");
+      const closeRegisterButton = document.getElementById("closeRegisterButton");
+      const registerButton = document.getElementById("registerButton");
+      const registerUserButton = document.getElementById("registerUserButton");
+      const regUsernameInput = document.getElementById("regUsernameInput");
+      const regIdentifierInput = document.getElementById("regIdentifierInput");
+      const regBirthDateInput = document.getElementById("regBirthDateInput");
+      const regAuthCodeInput = document.getElementById("regAuthCodeInput");
+      const regPasswordInput = document.getElementById("regPasswordInput");
+      const registerNotice = document.getElementById("registerNotice");
       const taskDateText = document.getElementById("taskDateText");
       const taskModuleSelect = document.getElementById("taskModuleSelect");
       const taskSizeWrap = document.getElementById("taskSizeWrap");
@@ -2391,7 +2417,6 @@
         loadIdentifierInput.value = identifier || loadIdentifierInput.value || "";
         birthDateInput.value = user?.birthDate || "";
         identifierInput.readOnly = false;
-        authCodeInput.disabled = Boolean(cloudUser);
         const age = calculateAge(birthDateInput.value);
         const path = identifier ? `/u/${identifier}` : "";
         if (!identifier) {
@@ -2676,43 +2701,39 @@
           setNotice(userCenterNotice, "请输入合法识别码", true);
           return;
         }
+        
+        const loginPassword = loginPasswordInput.value.trim();
+        
+        // 必须输入密码才能登录并同步数据
+        if (!loginPassword) {
+          setNotice(userCenterNotice, "请输入密码以登录并同步数据", true);
+          return;
+        }
+        
         try {
-          const loginPassword = loginPasswordInput.value.trim();
           const [userPayload, publicPayload] = await Promise.all([
-            loginPassword
-              ? apiJson("/api/users/" + encodeURIComponent(identifier) + "/login", { method: "POST", body: JSON.stringify({ password: loginPassword, date: todayKey() }) })
-              : apiJson("/api/users/" + encodeURIComponent(identifier) + "?date=" + todayKey()),
+            apiJson("/api/users/" + encodeURIComponent(identifier) + "/login", { 
+              method: "POST", 
+              body: JSON.stringify({ password: loginPassword, date: todayKey() }) 
+            }),
             apiJson("/api/users/" + encodeURIComponent(identifier) + "/public")
           ]);
+          
           const loadedUser = userPayload.user || publicPayload.user;
-          const isBoundUser = Boolean(cloudUser && loadedUser && cloudUser.identifier === loadedUser.identifier);
-          if (loginPassword) {
-            cloudUser = { identifier: loadedUser.identifier, sessionToken: userPayload.sessionToken };
-            loadedUserIdentifier = "";
-            loginPasswordInput.value = "";
-            saveCloudUser();
-          } else {
-            loadedUserIdentifier = isBoundUser ? "" : loadedUser.identifier;
-          }
+          cloudUser = { identifier: loadedUser.identifier, sessionToken: userPayload.sessionToken };
+          loadedUserIdentifier = "";
+          loginPasswordInput.value = "";
+          saveCloudUser();
           saveLoadedUserIdentifier();
-          if (isBoundUser && cloudUser) {
-            cloudUser.identifier = loadedUser.identifier;
-            saveCloudUser();
-          }
+          
           applyUserToForm(loadedUser);
           dailyTasks = Array.isArray(userPayload.tasks) ? userPayload.tasks : [];
           const added = mergeSyncedRecords(publicPayload.records);
           renderTasks();
           renderTitleTasks();
           renderDailyScores();
-          setNotice(
-            userCenterNotice,
-            loginPassword
-              ? "密码登录成功，新增" + added + " 条成绩记录"
-              : isBoundUser
-                ? "同步数据已加载，新增 " + added + " 条成绩记录"
-                : "已按识别码加载资料、任务与成绩，新增" + added + " 条本地记录"
-          );
+          
+          setNotice(userCenterNotice, "密码登录成功，新增" + added + " 条成绩记录");
         } catch (error) {
           setNotice(userCenterNotice, error.message, true);
         }
@@ -2755,44 +2776,73 @@
       }
 
       async function saveUserProfile() {
+        if (!canWriteActiveUser()) {
+          setNotice(userCenterNotice, "请先登录后再保存用户资料", true);
+          return;
+        }
         const user = userPayloadFromForm();
         if (!validIdentifier(user.identifier)) {
           setNotice(userCenterNotice, "识别码仅可输入数字与字母", true);
           return;
         }
-        if (loadedUserIdentifier && !canWriteActiveUser()) {
-          setNotice(userCenterNotice, "当前载入识别码未绑定写入权限，不能保存用户资料", true);
-          return;
-        }
-        if (!cloudUser) {
-          try {
-            const payload = await apiJson("/api/users", {
-              method: "POST",
-              body: JSON.stringify({
-                authCode: authCodeInput.value,
-                password: userPasswordInput.value,
-                user,
-                date: todayKey(),
-                tasks: dailyTasks
-              })
-            });
-            cloudUser = { identifier: payload.user.identifier, sessionToken: payload.sessionToken };
-            loadedUserIdentifier = "";
-            saveCloudUser();
-            saveLoadedUserIdentifier();
-            authCodeInput.value = "";
-            userPasswordInput.value = "";
-            dailyTasks = payload.tasks || dailyTasks;
-            applyUserToForm(payload.user);
-            renderTasks();
-            renderDailyScores();
-            setNotice(userCenterNotice, "用户已创建，后续成绩会自动同步");
-          } catch (error) {
-            setNotice(userCenterNotice, error.message, true);
-          }
-          return;
-        }
         await persistUserCenter();
+      }
+
+      function openRegisterDialog() {
+        setNotice(registerNotice, "");
+        regUsernameInput.value = "";
+        regIdentifierInput.value = "";
+        regBirthDateInput.value = "";
+        regAuthCodeInput.value = "";
+        regPasswordInput.value = "";
+        if (typeof registerDialog.showModal === "function") registerDialog.showModal();
+      }
+
+      async function registerUser() {
+        const user = {
+          username: regUsernameInput.value.trim(),
+          identifier: cleanIdentifier(regIdentifierInput.value),
+          birthDate: regBirthDateInput.value
+        };
+
+        if (!validIdentifier(user.identifier)) {
+          setNotice(registerNotice, "识别码仅可输入数字与字母", true);
+          return;
+        }
+
+        if (!regPasswordInput.value || regPasswordInput.value.length < 4) {
+          setNotice(registerNotice, "密码长度需为 4-128 个字符", true);
+          return;
+        }
+
+        try {
+          const payload = await apiJson("/api/users", {
+            method: "POST",
+            body: JSON.stringify({
+              authCode: regAuthCodeInput.value,
+              password: regPasswordInput.value,
+              user,
+              date: todayKey(),
+              tasks: []
+            })
+          });
+
+          cloudUser = { identifier: payload.user.identifier, sessionToken: payload.sessionToken };
+          loadedUserIdentifier = "";
+          saveCloudUser();
+          saveLoadedUserIdentifier();
+
+          registerDialog.close();
+          applyUserToForm(payload.user);
+          dailyTasks = payload.tasks || [];
+          renderTasks();
+          renderTitleTasks();
+          renderDailyScores();
+
+          setNotice(userCenterNotice, "用户已创建，后续成绩会自动同步");
+        } catch (error) {
+          setNotice(registerNotice, error.message, true);
+        }
       }
 
       async function syncRecordToCloud(record) {
@@ -4228,6 +4278,7 @@
       userCenterButton.addEventListener("click", openUserCenter);
       closeUserCenterButton.addEventListener("click", () => userCenterDialog.close());
       saveUserButton.addEventListener("click", saveUserProfile);
+      registerUserButton.addEventListener("click", openRegisterDialog);
       logoutUserButton.addEventListener("click", () => {
         cloudUser = null;
         loadedUserIdentifier = "";
@@ -4237,8 +4288,9 @@
         loadUserCenter();
         setNotice(userCenterNotice, "已登出");
       });
-      loadUserButton.addEventListener("click", loadSyncedUserByIdentifier);
       loginUserButton.addEventListener("click", loadSyncedUserByIdentifier);
+      closeRegisterButton.addEventListener("click", () => registerDialog.close());
+      registerButton.addEventListener("click", registerUser);
       birthDateInput.addEventListener("change", () => {
         applyUserToForm(userPayloadFromForm());
         renderDailyScores();
