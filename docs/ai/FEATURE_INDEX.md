@@ -318,34 +318,34 @@ P2：谨慎读取文件
 
 ## 每日任务
 
-功能说明：用户/管理员可为用户配置当天训练任务，顶部任务条展示进度，点击任务可切换到对应训练配置；任务进度由当天训练记录匹配计算。
+功能说明：用户/管理员可为用户配置当天训练任务，顶部任务条展示进度，点击任务可切换到对应训练配置；任务进度由当天训练记录匹配计算。服务端保存"任务模板"，每天 0:00（管理员时区）自动从模板生成当天任务，无需手动重复设置。
 
-用户入口：用户中心“每日任务”配置；顶部任务条；公开成绩页的任务进度。
+用户入口：用户中心"每日任务"配置；顶部任务条；公开成绩页的任务进度。
 
 P0：必须读取文件
 
 - `public/index.html`：`dailyTaskSpecs`、`buildTaskMode`、`buildTaskFromControls`、`describeTask`、`recordMatchesTask`、`taskProgress`、`renderTitleTasks`、`renderTasks`、`activateTask`
 - `src/utils.js`：`SERVER_TASK_MATCH_FIELDS`、`normalizeCloudTasks`、`recordCompletesCloudTask`、`applyCloudTrainingCompletionToTasks`、`cloudTaskText`
-- `src/routes.js`：`GET /users/:identifier`、`PUT /users/:identifier`
+- `src/routes.js`：`GET /users/:identifier`、`PUT /users/:identifier`、`POST /users`
+- `src/db.js`：`getTasks`、`putTasks`、`getTaskTemplate`、`setTaskTemplate`、`deleteTaskTemplate`
 
 P1：按需读取文件
 
-- `src/db.js`：`getTasks`、`putTasks`
 - `src/html.js`：公开页任务渲染
 
 P2：谨慎读取文件
 
 - 完整 `public/index.html`
 
-主要调用链：用户中心添加任务 -> `buildTaskFromControls()` -> `persistUserCenter()` -> `PUT /api/users/:id` -> `db.putTasks()`；进度链为 `recordsForDate()` -> `taskProgress()` / 服务端 `applyCloudTrainingCompletionToTasks()`。
+主要调用链：用户中心添加任务 -> `buildTaskFromControls()` -> `persistUserCenter()` -> `PUT /api/users/:id` -> `db.putTasks()` + `db.setTaskTemplate()`；进度链为 `recordsForDate()` -> `taskProgress()` / 服务端 `applyCloudTrainingCompletionToTasks()`；自动重置链为 `GET /users/:identifier` / `GET /u/:identifier` -> `!tasks` -> `db.getTaskTemplate()` -> `db.putTasks()`。
 
-相关状态：`dailyTasks`、当天日期 `todayKey()`、任务字段 `module/mode/targetCount/completedCount`。
+相关状态：`dailyTasks`、当天日期 `todayKey()`、任务字段 `module/mode/targetCount/completedCount`、数据库 `task_templates` 表。
 
-相关接口：`GET /api/users/:identifier?date=YYYY-MM-DD`、`PUT /api/users/:identifier`、`GET /u/:identifier`。
+相关接口：`GET /api/users/:identifier?date=YYYY-MM-DD`、`PUT /api/users/:identifier`、`POST /api/users`、`GET /u/:identifier`。
 
-修改注意事项：新增训练模式或任务字段时必须同时更新前端 `dailyTaskSpecs` 和后端 `SERVER_TASK_MATCH_FIELDS`。
+修改注意事项：新增训练模式或任务字段时必须同时更新前端 `dailyTaskSpecs` 和后端 `SERVER_TASK_MATCH_FIELDS`；模板自动生成机制依赖 `task_templates` 表，删除用户时需同步清理。
 
-最近更新时间：2026-06-12
+最近更新时间：2026-06-13
 
 ---
 
@@ -439,7 +439,7 @@ P2：谨慎读取文件
 
 主要调用链：`db.initDb()` -> `initTables()`；用户接口 -> `makePasswordRecord()` / `verifyPassword()` / `sessionTokenHash()`；训练记录 -> `normalizeCloudRecord()` -> `db.putRecord()`；关闭流程 -> `SIGTERM` -> `db.flushDbSync()`（同步刷盘）。
 
-相关状态：SQLite 表 `users`、`tasks`、`records`、`settings`；`saveTimer`、`savePending`。
+相关状态：SQLite 表 `users`、`tasks`、`records`、`settings`、`task_templates`；`saveTimer`、`savePending`。
 
 相关接口：所有 `/api/users/*`、`/api/admin/*`、`/api/settings`、`/u/:identifier`。
 

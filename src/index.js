@@ -67,7 +67,16 @@ app.get('/u/:identifier', (req, res) => {
   const timeZone = loadTimeZone();
   const today = todayDateKey(timeZone);
   const records = db.getRecords(identifier);
-  let tasks = db.getTasks(identifier, today) || [];
+  let tasks = db.getTasks(identifier, today);
+  if (!tasks) {
+    const template = db.getTaskTemplate(identifier);
+    if (template && template.length > 0) {
+      tasks = normalizeCloudTasks(template);
+      db.putTasks(identifier, today, tasks);
+    } else {
+      tasks = [];
+    }
+  }
   tasks = normalizeCloudTasks(tasks);
   const todayRecords = records.filter((r) => {
     const d = String(r.date || '').slice(0, 10);

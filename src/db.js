@@ -121,6 +121,13 @@ function initTables() {
     )
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS task_templates (
+      user_id TEXT PRIMARY KEY,
+      tasks_json TEXT DEFAULT '[]'
+    )
+  `);
+
   db.run('CREATE INDEX IF NOT EXISTS idx_records_user_date ON records(user_id, date)');
   db.run('CREATE INDEX IF NOT EXISTS idx_records_user_created ON records(user_id, created_at)');
 }
@@ -139,6 +146,28 @@ function getSetting(key) {
 
 function setSetting(key, value) {
   db.run('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', [key, String(value)]);
+  saveDb();
+}
+
+function getTaskTemplate(userId) {
+  const stmt = db.prepare('SELECT tasks_json FROM task_templates WHERE user_id = ?');
+  stmt.bind([userId]);
+  if (stmt.step()) {
+    const json = stmt.get()[0];
+    stmt.free();
+    try { return JSON.parse(json); } catch { return null; }
+  }
+  stmt.free();
+  return null;
+}
+
+function setTaskTemplate(userId, tasks) {
+  db.run('INSERT OR REPLACE INTO task_templates (user_id, tasks_json) VALUES (?, ?)', [userId, JSON.stringify(tasks)]);
+  saveDb();
+}
+
+function deleteTaskTemplate(userId) {
+  db.run('DELETE FROM task_templates WHERE user_id = ?', [userId]);
   saveDb();
 }
 
@@ -219,6 +248,7 @@ function deleteUser(identifier) {
     db.run('DELETE FROM users WHERE identifier = ?', [identifier]);
     db.run('DELETE FROM tasks WHERE user_id = ?', [identifier]);
     db.run('DELETE FROM records WHERE user_id = ?', [identifier]);
+    db.run('DELETE FROM task_templates WHERE user_id = ?', [identifier]);
     db.run('COMMIT');
   } catch (e) {
     db.run('ROLLBACK');
@@ -389,5 +419,8 @@ module.exports = {
   deleteRecords,
   pruneAllOldRecords,
   getSetting,
-  setSetting
+  setSetting,
+  getTaskTemplate,
+  setTaskTemplate,
+  deleteTaskTemplate
 };

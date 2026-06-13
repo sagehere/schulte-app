@@ -2,6 +2,28 @@
 
 本文件记录 AI 对仓库的维护历史。每次 AI 修改后追加一条，最新记录放在顶部或底部均可，但保持格式一致。
 
+## 2026-06-13
+
+- 类型：功能优化
+- 任务：每日任务自动重置 — 在管理员时区 0:00 自动从模板生成当天任务，无需手动每日设置。
+- 创建/更新文件：
+  - `src/db.js`：新增 `task_templates` 表（`CREATE TABLE IF NOT EXISTS`），新增 `getTaskTemplate()`、`setTaskTemplate()`、`deleteTaskTemplate()` 函数；`deleteUser()` 增加 `task_templates` 清理。
+  - `src/routes.js`：
+    - `POST /users`：保存任务时同时写入模板。
+    - `GET /users/:identifier`：当天无任务时自动从模板生成并写入 `tasks` 表。
+    - `PUT /users/:identifier`：保存当天任务同时写入模板；空任务则清除模板。
+  - `src/index.js`：`GET /u/:identifier`：公开页同样支持自动从模板生成。
+  - `docs/ai/FEATURE_INDEX.md`：更新"每日任务"和"数据存储"功能单元。
+  - `docs/ai/PROJECT_INDEX.md`：更新时间戳。
+- 业务逻辑变更：
+  - 用户/管理员设置每日任务后，服务端自动保存为模板。
+  - 新的一天首次获取任务（`GET /users` 或 `GET /u/`）时，若当天尚无任务，自动从模板复制并写入当天日期，实现"每日 0:00 自动重置"效果。
+  - 用户删除所有任务并保存后，模板也被清除，后续不再自动生成。
+  - 删除用户时同步清理模板数据。
+- 验证：
+  - 运行 `node --check src/db.js`、`src/routes.js`、`src/index.js`、`src/utils.js`、`src/html.js` 语法检查全部通过。
+  - 待运行 `npm start` 进行功能验证。
+
 ## 2026-06-12
 
 - 类型：初始化 AI 维护文档

@@ -127,6 +127,9 @@ router.post('/users', createLimiter, async (req, res) => {
   const session = await issueSession(identifier, db.getUser(identifier));
   const tasks = normalizeCloudTasks(body.tasks);
   db.putTasks(identifier, todayDateKey(getTZ()), tasks);
+  if (tasks.length > 0) {
+    db.setTaskTemplate(identifier, tasks);
+  }
 
   res.json({ ok: true, user, sessionToken: session.sessionToken, tasks });
 });
@@ -141,7 +144,15 @@ router.get('/users/:identifier', (req, res) => {
 
   const date = isDateKey(req.query.date) ? req.query.date : todayDateKey(getTZ());
   let tasks = db.getTasks(identifier, date);
-  if (!tasks) tasks = [];
+  if (!tasks) {
+    const template = db.getTaskTemplate(identifier);
+    if (template && template.length > 0) {
+      tasks = normalizeCloudTasks(template);
+      db.putTasks(identifier, date, tasks);
+    } else {
+      tasks = [];
+    }
+  }
   tasks = normalizeCloudTasks(tasks);
 
   res.json({ ok: true, user: publicCloudUser(stored), date, tasks });
@@ -175,6 +186,11 @@ router.put('/users/:identifier', async (req, res) => {
   const date = isDateKey(body.date) ? body.date : todayDateKey(getTZ());
   const tasks = normalizeCloudTasks(body.tasks);
   db.putTasks(nextIdentifier, date, tasks);
+  if (tasks.length > 0) {
+    db.setTaskTemplate(nextIdentifier, tasks);
+  } else {
+    db.deleteTaskTemplate(nextIdentifier);
+  }
 
   res.json({ ok: true, user: publicCloudUser(db.getUser(nextIdentifier)), sessionToken: body.sessionToken, date, tasks });
 });
