@@ -294,6 +294,7 @@ P2：谨慎读取文件
 - `public/index.html`：`openUserCenter`、`loadUserCenter`、`loadSyncedUserByIdentifier`、`persistUserCenter`、`saveUserProfile`、`openRegisterDialog`、`registerUser`、`loadCloudUser`、`saveCloudUser`、`loadLoadedUserIdentifier`、`saveLoadedUserIdentifier`、`apiJson`、`applyUserToForm`
 - `src/routes.js`：`POST /users`、`GET /users/:identifier`、`PUT /users/:identifier`、`DELETE /users/:identifier`、`POST /users/:identifier/login`、`POST /users/:identifier/verify-session`
 - `src/utils.js`：`normalizeCloudUser`、`validIdentifier`、`validPassword`、`makePasswordRecord`、`verifyPassword`、`sessionTokenHash`
+- session storage: session_token_hash stores multiple hashes as JSON and accepts old single-hash values.
 
 P1：按需读取文件
 
@@ -481,4 +482,3 @@ P2：谨慎读取文件
 修改注意事项：不要随意升级 Node 或依赖；变更数据路径/用户权限时必须验证容器能写入数据库。
 
 最近更新时间：2026-06-12
-

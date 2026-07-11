@@ -308,7 +308,22 @@ async function verifyPassword(password, stored) {
 }
 
 async function sessionTokenHash(sessionToken) {
-  return sha256(`session:${sessionToken}`);
+  return sha256('session:' + sessionToken);
+}
+
+function sessionTokenHashes(value) {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) return parsed.filter((item) => typeof item === 'string' && item);
+  } catch {}
+  return typeof value === 'string' ? [value] : [];
+}
+
+function appendSessionTokenHash(value, hash, limit = 20) {
+  const hashes = sessionTokenHashes(value).filter((item) => item !== hash);
+  hashes.push(hash);
+  return JSON.stringify(hashes.slice(-limit));
 }
 
 function randomToken(byteLength = 32) {
@@ -371,6 +386,8 @@ module.exports = {
   makePasswordRecord,
   verifyPassword,
   sessionTokenHash,
+  sessionTokenHashes,
+  appendSessionTokenHash,
   randomToken,
   publicCloudUser,
   publicCloudUserSummary

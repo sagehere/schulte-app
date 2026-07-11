@@ -19,6 +19,8 @@ const {
   makePasswordRecord,
   verifyPassword,
   sessionTokenHash,
+  sessionTokenHashes,
+  appendSessionTokenHash,
   randomToken,
 
   formatPracticeMs,
@@ -85,16 +87,18 @@ async function requireSession(identifier, sessionToken) {
   if (!stored.passwordHash) return { error: { ok: false, error: '该用户尚未设置密码，请联系管理员重置密码', status: 403 } };
   if (sessionToken && stored.sessionTokenHash) {
     const computedHash = await sessionTokenHash(sessionToken);
-    if (safeEqual(computedHash, stored.sessionTokenHash)) return { stored };
+    if (sessionTokenHashes(stored.sessionTokenHash).some((hash) => safeEqual(computedHash, hash))) return { stored };
   }
   return { error: { ok: false, error: '没有写入权限', status: 403 } };
 }
 
 async function issueSession(identifier, stored) {
   const sessionToken = randomToken(32);
+  const now = new Date().toISOString();
+  const hash = await sessionTokenHash(sessionToken);
   db.updateUser(identifier, {
-    session_token_hash: await sessionTokenHash(sessionToken),
-    session_token_created_at: new Date().toISOString()
+    session_token_hash: appendSessionTokenHash(stored && stored.sessionTokenHash, hash),
+    session_token_created_at: now
   });
   return { sessionToken, stored: db.getUser(identifier) };
 }

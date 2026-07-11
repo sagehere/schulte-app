@@ -2,6 +2,20 @@
 
 本文件记录 AI 对仓库的维护历史。每次 AI 修改后追加一条，最新记录放在顶部或底部均可，但保持格式一致。
 
+## 2026-07-09
+
+- 类型：功能优化
+- 任务：允许同一用户多客户端同时登录，并保持记住我长期有效。
+- 修改文件：
+  - src/utils.js：新增 session token 列表解析与追加 helper，兼容旧单 hash。
+  - src/routes.js：登录/注册追加 session hash，校验时接受任一有效 token。
+  - test/session-tokens.test.js：新增无依赖 assert 测试。
+  - docs/ai/FEATURE_INDEX.md：更新用户中心登录同步说明。
+- 验证：
+  - node --check src/utils.js、node --check src/routes.js、node --check test/session-tokens.test.js 通过。
+  - node test/session-tokens.test.js 通过。
+
+
 ## 2026-06-13
 
 - 类型：功能优化
