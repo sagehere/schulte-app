@@ -40,6 +40,34 @@ function getTZ() {
   catch { return 'Asia/Shanghai'; }
 }
 
+const TRAINING_NAVIGATION_SETTING = 'training_navigation';
+const DEFAULT_TRAINING_NAVIGATION = [
+  'schulte', 'stroop', 'idiom', 'poem', 'memory', 'decode', 'mindfulness'
+].map((id) => ({ id, visible: true }));
+
+function getTrainingNavigation() {
+  try {
+    const stored = db.getSetting(TRAINING_NAVIGATION_SETTING);
+    const navigation = stored && validateTrainingNavigation(JSON.parse(stored));
+    return navigation || DEFAULT_TRAINING_NAVIGATION;
+  } catch {
+    return DEFAULT_TRAINING_NAVIGATION;
+  }
+}
+
+function validateTrainingNavigation(value) {
+  if (!Array.isArray(value) || value.length !== DEFAULT_TRAINING_NAVIGATION.length) return null;
+  const expectedIds = new Set(DEFAULT_TRAINING_NAVIGATION.map((item) => item.id));
+  const ids = new Set();
+  const navigation = [];
+  for (const item of value) {
+    if (!item || typeof item !== 'object' || !expectedIds.has(item.id) || ids.has(item.id) || typeof item.visible !== 'boolean') return null;
+    ids.add(item.id);
+    navigation.push({ id: item.id, visible: item.visible });
+  }
+  return ids.size === expectedIds.size && navigation.some((item) => item.visible) ? navigation : null;
+}
+
 function safeEqual(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
   const bufA = Buffer.from(a, 'utf8');
@@ -368,7 +396,7 @@ router.get('/users/:identifier/public', (req, res) => {
 
 // Settings
 router.get('/settings', (req, res) => {
-  res.json({ ok: true, timezone: getTZ() });
+  res.json({ ok: true, timezone: getTZ(), trainingNavigation: getTrainingNavigation() });
 });
 
 router.put('/admin/settings', (req, res) => {
@@ -377,15 +405,27 @@ router.put('/admin/settings', (req, res) => {
   const body = req.body;
   if (!body) return res.status(400).json({ ok: false, error: '请求体不是有效 JSON' });
 
-  if (body.timezone) {
+  let timezone;
+  if (Object.prototype.hasOwnProperty.call(body, 'timezone')) {
     const tz = String(body.timezone).trim();
-    if (!isValidTimeZone(tz)) {
+    if (!tz || !isValidTimeZone(tz)) {
       return res.status(400).json({ ok: false, error: '无效的时区值' });
     }
-    db.setSetting('timezone', tz);
+    timezone = tz;
   }
 
-  res.json({ ok: true, timezone: getTZ() });
+  let trainingNavigation;
+  if (Object.prototype.hasOwnProperty.call(body, 'trainingNavigation')) {
+    trainingNavigation = validateTrainingNavigation(body.trainingNavigation);
+    if (!trainingNavigation) {
+      return res.status(400).json({ ok: false, error: '训练导航必须包含全部模式、不可重复，且至少显示一个模式' });
+    }
+  }
+
+  if (timezone) db.setSetting('timezone', timezone);
+  if (trainingNavigation) db.setSetting(TRAINING_NAVIGATION_SETTING, JSON.stringify(trainingNavigation));
+
+  res.json({ ok: true, timezone: getTZ(), trainingNavigation: getTrainingNavigation() });
 });
 
 // Admin: list users

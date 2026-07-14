@@ -5,6 +5,18 @@
 ## 2026-07-14
 
 - 类型：功能新增
+- 任务：管理员可设置训练模式导航的显示状态与拖拽顺序。
+- 修改文件：
+  - `public/index.html`：新增导航配置列表、触屏/鼠标拖拽、键盘方向键排序和即时应用逻辑。
+  - `src/routes.js`：`GET /api/settings` 返回 `trainingNavigation`；`PUT /api/admin/settings` 校验并保存完整配置。
+  - `test/settings-api.test.js`：覆盖默认值、管理员鉴权、保存与非法配置拒绝。
+  - `docs/ai/FEATURE_INDEX.md`：更新管理员面板功能单元。
+- 验证：`node --check src/routes.js` 与 `node --test test/settings-api.test.js test/frontend-syntax.test.js` 通过。
+- 后续风险：拖拽区域仅有 7 项，未实现长列表自动滚动；若未来扩展大量模式再补充。
+
+## 2026-07-14
+
+- 类型：功能新增
 - 任务：新增正念练习、MP3 引导音频管理与对应记录/计时/每日任务支持。
 - 修改文件：
   - `src/audio-guides.js`：新增默认音频初始化、MP3 校验、文件 CRUD；存储目录为数据库同级 `audio/`。

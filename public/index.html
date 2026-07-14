@@ -237,6 +237,47 @@
       color: #ffffff;
     }
 
+    .admin-navigation-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .admin-navigation-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+    }
+
+    .admin-navigation-row.is-dragging {
+      opacity: 0.55;
+      pointer-events: none;
+    }
+
+    .admin-navigation-handle {
+      min-width: 36px;
+      min-height: 36px;
+      padding: 0;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .admin-navigation-handle:active {
+      cursor: grabbing;
+    }
+
+    .admin-navigation-visible {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+    }
+
     .workspace {
       display: grid;
       grid-template-columns: minmax(0, 1fr);
@@ -1453,7 +1494,7 @@
       <div class="training-menu" aria-label="训练菜单">
         <div class="menu-row">
           <span class="menu-label">训练模块</span>
-          <nav class="training-switch" aria-label="训练模式">
+          <nav class="training-switch" id="trainingSwitch" aria-label="训练模式">
             <button class="training-button active" type="button" data-training="schulte">舒尔特方格</button>
             <button class="training-button" type="button" data-training="stroop">斯特鲁普</button>
             <button class="training-button" type="button" data-training="idiom">成语训练</button>
@@ -1802,6 +1843,13 @@
           <button class="tool-button" type="button" id="adminSaveSettingsButton">保存时区</button>
         </div>
         <hr class="subsection-divider">
+        <div>
+          <strong>模式导航</strong>
+          <div class="profile-meta">拖动手柄调整顺序；取消勾选可隐藏顶部入口。</div>
+          <div class="admin-navigation-list" id="adminTrainingNavigationList" aria-label="训练模式导航设置"></div>
+          <button class="tool-button" type="button" id="adminSaveTrainingNavigationButton">保存模式导航</button>
+        </div>
+        <hr class="subsection-divider">
         <div class="admin-grid">
           <label class="form-field">引导音频<input id="adminAudioFileInput" type="file" accept="audio/mpeg,.mp3"></label>
           <div class="user-actions">
@@ -1830,7 +1878,7 @@
       const storageKey = "schulte.records.v1";
       const cloudUserStorageKey = "schulte.cloudUser.v1";
       const loadedUserStorageKey = "schulte.loadedUser.v1";
-      const appSettings = { timezone: "Asia/Shanghai" };
+      const appSettings = { timezone: "Asia/Shanghai", trainingNavigation: [] };
       const board = document.getElementById("board");
       const boardShell = document.getElementById("boardShell");
       const stroopPanel = document.getElementById("stroopPanel");
@@ -1887,7 +1935,10 @@
       const idiomText = document.getElementById("idiomText");
       const poemMeta = document.getElementById("poemMeta");
       const poemFullText = document.getElementById("poemFullText");
+      const trainingSwitch = document.getElementById("trainingSwitch");
       const trainingButtons = [...document.querySelectorAll(".training-button")];
+      const defaultTrainingNavigation = trainingButtons.map((button) => ({ id: button.dataset.training, visible: true }));
+      appSettings.trainingNavigation = defaultTrainingNavigation.map((item) => ({ ...item }));
       const modeButtons = [...document.querySelectorAll(".mode-button")];
       const idiomModeButtons = [...document.querySelectorAll("[data-idiom-cols]")];
       const appTitle = document.getElementById("appTitle");
@@ -1952,6 +2003,8 @@
       const adminPanelNotice = document.getElementById("adminPanelNotice");
       const adminTimezoneInput = document.getElementById("adminTimezoneInput");
       const adminSaveSettingsButton = document.getElementById("adminSaveSettingsButton");
+      const adminTrainingNavigationList = document.getElementById("adminTrainingNavigationList");
+      const adminSaveTrainingNavigationButton = document.getElementById("adminSaveTrainingNavigationButton");
       const adminAudioFileInput = document.getElementById("adminAudioFileInput");
       const adminAudioNameInput = document.getElementById("adminAudioNameInput");
       const adminUploadAudioButton = document.getElementById("adminUploadAudioButton");
@@ -2299,6 +2352,7 @@
       let adminPassword = "";
       let adminClickCount = 0;
       let adminClickTimer = 0;
+      let adminNavigationDrag = null;
 
       function loadCloudUser() {
         try {
@@ -2423,10 +2477,117 @@
         return "需努力";
       }
 
+      function normalizeTrainingNavigation(navigation) {
+        const expectedIds = new Set(defaultTrainingNavigation.map((item) => item.id));
+        if (!Array.isArray(navigation) || navigation.length !== defaultTrainingNavigation.length) {
+          return defaultTrainingNavigation.map((item) => ({ ...item }));
+        }
+        const ids = new Set();
+        const normalized = [];
+        for (const item of navigation) {
+          if (!item || !expectedIds.has(item.id) || ids.has(item.id) || typeof item.visible !== "boolean") {
+            return defaultTrainingNavigation.map((entry) => ({ ...entry }));
+          }
+          ids.add(item.id);
+          normalized.push({ id: item.id, visible: item.visible });
+        }
+        return normalized.some((item) => item.visible) ? normalized : defaultTrainingNavigation.map((item) => ({ ...item }));
+      }
+
+      function applyTrainingNavigation(navigation) {
+        const normalized = normalizeTrainingNavigation(navigation);
+        appSettings.trainingNavigation = normalized;
+        const buttonsById = new Map(trainingButtons.map((button) => [button.dataset.training, button]));
+        normalized.forEach((item) => {
+          const button = buttonsById.get(item.id);
+          button.hidden = !item.visible;
+          trainingSwitch.append(button);
+        });
+        if (!normalized.some((item) => item.id === currentTraining && item.visible)) {
+          setTraining(normalized.find((item) => item.visible).id);
+        }
+      }
+
+      function moveAdminNavigationRow(row, direction) {
+        const sibling = direction < 0 ? row.previousElementSibling : row.nextElementSibling;
+        if (!sibling) return;
+        if (direction < 0) sibling.before(row);
+        else sibling.after(row);
+        row.querySelector(".admin-navigation-handle").focus();
+      }
+
+      function finishAdminNavigationDrag(event) {
+        if (!adminNavigationDrag || event.pointerId !== adminNavigationDrag.pointerId) return;
+        const { handle, row } = adminNavigationDrag;
+        if (handle.hasPointerCapture(event.pointerId)) handle.releasePointerCapture(event.pointerId);
+        row.classList.remove("is-dragging");
+        adminNavigationDrag = null;
+      }
+
+      function renderAdminTrainingNavigation(navigation = appSettings.trainingNavigation) {
+        adminTrainingNavigationList.replaceChildren();
+        const labels = new Map(trainingButtons.map((button) => [button.dataset.training, button.textContent]));
+        normalizeTrainingNavigation(navigation).forEach((item) => {
+          const row = document.createElement("div");
+          row.className = "admin-navigation-row";
+          row.dataset.training = item.id;
+          const handle = document.createElement("button");
+          handle.className = "icon-button admin-navigation-handle";
+          handle.type = "button";
+          handle.textContent = "⋮⋮";
+          handle.title = "拖动排序；可用方向键调整";
+          handle.setAttribute("aria-label", `调整${labels.get(item.id)}顺序`);
+          handle.addEventListener("pointerdown", (event) => {
+            if (event.button !== 0) return;
+            event.preventDefault();
+            adminNavigationDrag = { row, handle, pointerId: event.pointerId };
+            handle.setPointerCapture(event.pointerId);
+            row.classList.add("is-dragging");
+          });
+          handle.addEventListener("keydown", (event) => {
+            if (event.key === "ArrowUp") moveAdminNavigationRow(row, -1);
+            else if (event.key === "ArrowDown") moveAdminNavigationRow(row, 1);
+            else return;
+            event.preventDefault();
+          });
+          const label = document.createElement("span");
+          label.textContent = labels.get(item.id);
+          const visible = document.createElement("label");
+          visible.className = "admin-navigation-visible";
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.checked = item.visible;
+          checkbox.setAttribute("aria-label", `显示${labels.get(item.id)}顶部入口`);
+          visible.append(checkbox, document.createTextNode("显示"));
+          row.append(handle, label, visible);
+          adminTrainingNavigationList.append(row);
+        });
+      }
+
+      function adminTrainingNavigationValue() {
+        return [...adminTrainingNavigationList.children].map((row) => ({
+          id: row.dataset.training,
+          visible: row.querySelector('input[type="checkbox"]').checked
+        }));
+      }
+
+      document.addEventListener("pointermove", (event) => {
+        if (!adminNavigationDrag || event.pointerId !== adminNavigationDrag.pointerId) return;
+        const target = document.elementFromPoint(event.clientX, event.clientY)?.closest(".admin-navigation-row");
+        const { row } = adminNavigationDrag;
+        if (!target || target === row || target.parentElement !== adminTrainingNavigationList) return;
+        const bounds = target.getBoundingClientRect();
+        if (event.clientY < bounds.top + bounds.height / 2) target.before(row);
+        else target.after(row);
+      });
+      document.addEventListener("pointerup", finishAdminNavigationDrag);
+      document.addEventListener("pointercancel", finishAdminNavigationDrag);
+
       async function loadSettings() {
         try {
           const payload = await apiJson("/api/settings");
           if (payload.timezone) appSettings.timezone = payload.timezone;
+          if (payload.trainingNavigation) applyTrainingNavigation(payload.trainingNavigation);
         } catch {}
       }
 
@@ -3098,6 +3259,10 @@
               adminTimezoneInput.value = "Asia/Shanghai";
             }
           }
+          if (payload.trainingNavigation) {
+            applyTrainingNavigation(payload.trainingNavigation);
+          }
+          renderAdminTrainingNavigation(appSettings.trainingNavigation);
         } catch (error) {
           setNotice(adminPanelNotice, error.message, true);
         }
@@ -3118,6 +3283,26 @@
           appSettings.timezone = payload.timezone;
           adminTimezoneInput.value = payload.timezone;
           setNotice(adminPanelNotice, "时区设置已保存");
+        } catch (error) {
+          setNotice(adminPanelNotice, error.message, true);
+        }
+      }
+
+      async function saveAdminTrainingNavigation() {
+        const trainingNavigation = adminTrainingNavigationValue();
+        if (!trainingNavigation.some((item) => item.visible)) {
+          setNotice(adminPanelNotice, "请至少显示一个训练模式", true);
+          return;
+        }
+        try {
+          const payload = await apiJson("/api/admin/settings", {
+            method: "PUT",
+            headers: adminAuthHeaders(),
+            body: JSON.stringify({ trainingNavigation })
+          });
+          applyTrainingNavigation(payload.trainingNavigation);
+          renderAdminTrainingNavigation(payload.trainingNavigation);
+          setNotice(adminPanelNotice, "模式导航已保存");
         } catch (error) {
           setNotice(adminPanelNotice, error.message, true);
         }
@@ -4716,6 +4901,7 @@
       adminResetPasswordButton.addEventListener("click", adminResetPassword);
       adminDeleteButton.addEventListener("click", adminDeleteUser);
       adminSaveSettingsButton.addEventListener("click", saveAdminSettings);
+      adminSaveTrainingNavigationButton.addEventListener("click", saveAdminTrainingNavigation);
       adminAudioFileInput.addEventListener("change", () => {
         const file = adminAudioFileInput.files && adminAudioFileInput.files[0];
         if (file && !adminAudioNameInput.value.trim()) adminAudioNameInput.value = file.name.replace(/\.mp3$/i, "");

@@ -385,14 +385,14 @@ P2：谨慎读取文件
 
 ## 管理员面板与系统设置
 
-功能说明：点击标题 5 次打开管理员登录，输入密码后通过 `POST /api/admin/verify` 服务端校验，校验通过后进入管理面板，可查看用户列表、管理引导音频、重置密码、删除用户、设置系统时区。
+功能说明：点击标题 5 次打开管理员登录，输入密码后通过 `POST /api/admin/verify` 服务端校验，校验通过后进入管理面板，可查看用户列表、管理引导音频、重置密码、删除用户、设置系统时区，以及拖拽配置训练模式导航的显示与顺序。
 
 用户入口：主页标题连续点击 5 次 -> 管理员登录弹窗 -> 输入密码 -> 服务端验证 -> 管理面板。
 
 P0：必须读取文件
 
-- `public/index.html`：`adminClickCount`、`adminAuthHeaders`、用户管理函数、`loadAdminAudioGuides`、`adminUploadAudio`、`adminRenameAudio`、`adminDeleteAudio`、管理员登录处理
-- `src/routes.js`：`hasAdminAccess`、用户管理接口、`POST/PUT/DELETE /admin/audio-guides`、`GET /settings`、`PUT /admin/settings`、`POST /admin/verify`
+- `public/index.html`：`adminClickCount`、`adminAuthHeaders`、`applyTrainingNavigation`、`renderAdminTrainingNavigation`、用户管理函数、`loadAdminAudioGuides`、管理员登录处理
+- `src/routes.js`：`getTrainingNavigation`、`validateTrainingNavigation`、用户管理接口、`POST/PUT/DELETE /admin/audio-guides`、`GET /settings`、`PUT /admin/settings`、`POST /admin/verify`
 
 P1：按需读取文件
 
@@ -404,13 +404,13 @@ P2：谨慎读取文件
 - `.env.example`
 - `docker-compose.yml`：确认生产环境变量时读取
 
-主要调用链：标题点击 -> 管理登录弹窗 -> `POST /api/admin/verify` -> 成功则打开面板并加载用户、设置、音频；音频管理 -> Bearer 管理密码 -> `/api/admin/audio-guides`；重置密码链保持 `adminResetPassword()` -> `db.updateUser()`。
+主要调用链：标题点击 -> 管理登录弹窗 -> `POST /api/admin/verify` -> 成功则打开面板并加载用户、设置、音频；模式导航 -> `GET /api/settings` -> `renderAdminTrainingNavigation()` -> 拖拽/勾选 -> `PUT /api/admin/settings` -> `settings.training_navigation` -> `applyTrainingNavigation()`；音频管理 -> Bearer 管理密码 -> `/api/admin/audio-guides`。
 
-相关状态：`adminPassword`、`adminClickCount`、`settings.timezone`。
+相关状态：`adminPassword`、`adminClickCount`、`settings.timezone`、`settings.training_navigation`、前端 `appSettings.trainingNavigation`。
 
 相关接口：`GET /api/admin/users`、`GET /api/admin/users/:identifier`、`POST /api/admin/users/:identifier/password`、`DELETE /api/admin/users/:identifier`、`GET /api/settings`、`PUT /api/admin/settings`、`POST /api/admin/verify`。
 
-修改注意事项：管理员鉴权当前依赖环境变量 `ADMIN_PASSWORD`；接口受 `/api/admin` rate limit 保护，修改路径时同步限流挂载。`updateUser()` 支持传入 camelCase 或 snake_case 键名，但生成 SQL 时会统一映射为 snake_case 列名；新增数据库列时必须同步更新 `fields` 数组。
+修改注意事项：管理员鉴权当前依赖环境变量 `ADMIN_PASSWORD`；接口受 `/api/admin` rate limit 保护。导航配置必须包含 7 个已知模式、无重复且至少一个可见；隐藏仅影响顶部导航，不影响每日任务配置和跳转。
 
 最近更新时间：2026-07-14
 
