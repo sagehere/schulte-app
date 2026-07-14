@@ -337,6 +337,29 @@
       --board-max: 346px;
     }
 
+    .board-shell[data-training="mindfulness"] {
+      --board-max: min(520px, calc(100vw - 20px));
+    }
+
+    .mindfulness-panel {
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      border: 1px solid var(--soft-line);
+      border-radius: var(--radius);
+      background: #fbf7ee;
+    }
+
+    .mindfulness-panel audio {
+      width: 100%;
+    }
+
+    .mindfulness-panel p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
     .board {
       display: grid;
       width: 100%;
@@ -1437,6 +1460,7 @@
             <button class="training-button" type="button" data-training="poem">古诗训练</button>
             <button class="training-button" type="button" data-training="memory">记忆训练</button>
             <button class="training-button" type="button" data-training="decode">译码训练</button>
+            <button class="training-button" type="button" data-training="mindfulness">正念练习</button>
           </nav>
         </div>
         <div class="menu-row mode-row">
@@ -1493,6 +1517,11 @@
             <div class="decode-questions" id="decodeQuestions"></div>
             <div class="decode-answer-row" id="decodeAnswerPad"></div>
           </div>
+          <div class="mindfulness-panel is-hidden" id="mindfulnessPanel" aria-label="正念练习">
+            <label class="form-field">引导音频<select id="mindfulnessAudioSelect" disabled><option value="">正在加载音频...</option></select></label>
+            <audio id="mindfulnessAudio" controls preload="metadata"></audio>
+            <p id="mindfulnessAudioHint" aria-live="polite">选择引导音频后开始练习。</p>
+          </div>
         </section>
 
         <div class="toolbar">
@@ -1501,6 +1530,7 @@
             <button class="tool-button primary is-hidden" type="button" id="memoryStartButton">开始记忆</button>
             <button class="tool-button is-hidden" type="button" id="memoryReplayButton" disabled>复现</button>
             <button class="tool-button is-hidden" type="button" id="poemToggleButton" aria-expanded="false">显示全诗</button>
+            <button class="tool-button primary is-hidden" type="button" id="mindfulnessFinishButton" disabled>结束并记录</button>
             <button class="tool-button" type="button" id="recordsButton">成绩面板</button>
             <button class="tool-button" type="button" id="userCenterButton">用户中心</button>
           </div>
@@ -1558,19 +1588,19 @@
           </div>
           <div class="summary-grid">
             <div class="summary-item">
-              <span>练习次数</span>
+              <span id="countLabel">练习次数</span>
               <strong id="countText">0</strong>
             </div>
             <div class="summary-item">
-              <span>平均用时</span>
+              <span id="avgLabel">平均用时</span>
               <strong id="avgText">--</strong>
             </div>
             <div class="summary-item">
-              <span>最快用时</span>
+              <span id="fastLabel">最快用时</span>
               <strong id="fastText">--</strong>
             </div>
             <div class="summary-item">
-              <span>平均错误</span>
+              <span id="avgErrorLabel">平均错误</span>
               <strong id="avgErrorText">--</strong>
             </div>
           </div>
@@ -1627,6 +1657,7 @@
               <option value="poem">古诗训练</option>
               <option value="memory">记忆训练</option>
               <option value="decode">译码训练</option>
+              <option value="mindfulness">正念练习</option>
             </select>
           </label>
           <label class="form-field" id="taskSizeWrap">规格
@@ -1772,6 +1803,15 @@
         </div>
         <hr class="subsection-divider">
         <div class="admin-grid">
+          <label class="form-field">引导音频<input id="adminAudioFileInput" type="file" accept="audio/mpeg,.mp3"></label>
+          <div class="user-actions">
+            <input id="adminAudioNameInput" type="text" maxlength="80" placeholder="音频名称">
+            <button class="tool-button" type="button" id="adminUploadAudioButton">上传 MP3</button>
+          </div>
+        </div>
+        <div class="full-records" id="adminAudioList"></div>
+        <hr class="subsection-divider">
+        <div class="admin-grid">
           <label class="form-field">用户<select id="adminIdentifierInput"><option value="">正在加载用户...</option></select></label>
           <div class="user-actions">
             <input id="adminNewPasswordInput" type="password" placeholder="新密码" autocomplete="new-password">
@@ -1801,6 +1841,10 @@
       const decodeKey = document.getElementById("decodeKey");
       const decodeQuestions = document.getElementById("decodeQuestions");
       const decodeAnswerPad = document.getElementById("decodeAnswerPad");
+      const mindfulnessPanel = document.getElementById("mindfulnessPanel");
+      const mindfulnessAudioSelect = document.getElementById("mindfulnessAudioSelect");
+      const mindfulnessAudio = document.getElementById("mindfulnessAudio");
+      const mindfulnessAudioHint = document.getElementById("mindfulnessAudioHint");
       const timeText = document.getElementById("timeText");
       const targetLabel = document.getElementById("targetLabel");
       const targetText = document.getElementById("targetText");
@@ -1809,6 +1853,10 @@
       const avgText = document.getElementById("avgText");
       const fastText = document.getElementById("fastText");
       const avgErrorText = document.getElementById("avgErrorText");
+      const countLabel = document.getElementById("countLabel");
+      const avgLabel = document.getElementById("avgLabel");
+      const fastLabel = document.getElementById("fastLabel");
+      const avgErrorLabel = document.getElementById("avgErrorLabel");
       const fullRecords = document.getElementById("fullRecords");
       const notice = document.getElementById("notice");
       const recordsNotice = document.getElementById("recordsNotice");
@@ -1832,6 +1880,7 @@
       const memoryStartButton = document.getElementById("memoryStartButton");
       const memoryReplayButton = document.getElementById("memoryReplayButton");
       const poemToggleButton = document.getElementById("poemToggleButton");
+      const mindfulnessFinishButton = document.getElementById("mindfulnessFinishButton");
       const sizeSwitch = document.getElementById("sizeSwitch");
       const idiomSizeSwitch = document.getElementById("idiomSizeSwitch");
       const idiomTarget = document.getElementById("idiomTarget");
@@ -1903,6 +1952,10 @@
       const adminPanelNotice = document.getElementById("adminPanelNotice");
       const adminTimezoneInput = document.getElementById("adminTimezoneInput");
       const adminSaveSettingsButton = document.getElementById("adminSaveSettingsButton");
+      const adminAudioFileInput = document.getElementById("adminAudioFileInput");
+      const adminAudioNameInput = document.getElementById("adminAudioNameInput");
+      const adminUploadAudioButton = document.getElementById("adminUploadAudioButton");
+      const adminAudioList = document.getElementById("adminAudioList");
       const schulteDigitColors = ["#101719", "#d83b31", "#d8a100", "#21865a", "#2563eb", "#7c3aed"];
       const stroopColors = [
         { key: "black", name: "黑", value: "#101719" },
@@ -2188,6 +2241,7 @@
       let currentPoem = null;
       let poemChars = [];
       let poemNextIndex = 0;
+      let mindfulnessAudios = [];
 
       function loadRecords() {
         try {
@@ -2480,6 +2534,11 @@
             { key: "reverse", wrap: taskDecodeReverseWrap, input: taskDecodeReverseSelect, type: "boolean", defaultValue: false }
           ],
           describe: (mode) => mode.reverse ? "字母→符号" : "符号→字母"
+        },
+        mindfulness: {
+          label: "正念练习",
+          controls: [],
+          describe: () => "任意引导音频"
         }
       };
       const dailyTaskControls = [taskSizeWrap, taskReverseWrap, taskColorWrap, taskIdiomWrap, taskStroopAnswerWrap, taskDecodeReverseWrap];
@@ -3064,6 +3123,109 @@
         }
       }
 
+      function renderAdminAudioList(audios) {
+        adminAudioList.replaceChildren();
+        if (!audios.length) {
+          adminAudioList.innerHTML = `<p class="empty">暂无引导音频</p>`;
+          return;
+        }
+        audios.forEach((audio) => {
+          const row = document.createElement("article");
+          row.className = "record";
+          const mode = document.createElement("div");
+          mode.className = "mode";
+          mode.textContent = audio.name;
+          const info = document.createElement("div");
+          info.className = "user-actions";
+          const rename = document.createElement("button");
+          rename.className = "tool-button";
+          rename.type = "button";
+          rename.textContent = "重命名";
+          rename.addEventListener("click", () => adminRenameAudio(audio));
+          const remove = document.createElement("button");
+          remove.className = "tool-button primary";
+          remove.type = "button";
+          remove.textContent = "删除";
+          remove.addEventListener("click", () => adminDeleteAudio(audio));
+          info.append(rename, remove);
+          row.append(mode, info);
+          adminAudioList.append(row);
+        });
+      }
+
+      async function loadAdminAudioGuides() {
+        try {
+          const payload = await apiJson("/api/audio-guides");
+          renderAdminAudioList(payload.audios || []);
+        } catch (error) {
+          adminAudioList.innerHTML = "";
+          setNotice(adminPanelNotice, error.message, true);
+        }
+      }
+
+      async function refreshAudioGuides() {
+        await Promise.all([loadMindfulnessAudios(), loadAdminAudioGuides()]);
+      }
+
+      async function adminUploadAudio() {
+        const file = adminAudioFileInput.files && adminAudioFileInput.files[0];
+        const name = adminAudioNameInput.value.trim() || (file && file.name.replace(/\.mp3$/i, ""));
+        if (!file || !name) {
+          setNotice(adminPanelNotice, "请选择 MP3 文件并填写名称", true);
+          return;
+        }
+        if (file.size > 50 * 1024 * 1024) {
+          setNotice(adminPanelNotice, "音频文件不能超过 50MB", true);
+          return;
+        }
+        adminUploadAudioButton.disabled = true;
+        try {
+          await apiJson(`/api/admin/audio-guides?name=${encodeURIComponent(name)}`, {
+            method: "POST",
+            headers: { ...adminAuthHeaders(), "content-type": "audio/mpeg" },
+            body: file
+          });
+          adminAudioFileInput.value = "";
+          adminAudioNameInput.value = "";
+          await refreshAudioGuides();
+          setNotice(adminPanelNotice, "引导音频已上传");
+        } catch (error) {
+          setNotice(adminPanelNotice, error.message, true);
+        } finally {
+          adminUploadAudioButton.disabled = false;
+        }
+      }
+
+      async function adminRenameAudio(audio) {
+        const name = window.prompt("输入新的音频名称", audio.name);
+        if (name === null || name.trim() === audio.name) return;
+        try {
+          await apiJson(`/api/admin/audio-guides/${encodeURIComponent(audio.id)}`, {
+            method: "PUT",
+            headers: adminAuthHeaders(),
+            body: JSON.stringify({ name: name.trim() })
+          });
+          await refreshAudioGuides();
+          setNotice(adminPanelNotice, "引导音频已重命名");
+        } catch (error) {
+          setNotice(adminPanelNotice, error.message, true);
+        }
+      }
+
+      async function adminDeleteAudio(audio) {
+        if (!window.confirm(`确定删除引导音频“${audio.name}”？`)) return;
+        try {
+          await apiJson(`/api/admin/audio-guides/${encodeURIComponent(audio.id)}`, {
+            method: "DELETE",
+            headers: adminAuthHeaders()
+          });
+          await refreshAudioGuides();
+          setNotice(adminPanelNotice, "引导音频已删除");
+        } catch (error) {
+          setNotice(adminPanelNotice, error.message, true);
+        }
+      }
+
       function formatSeconds(ms) {
         return (ms / 1000).toFixed(2);
       }
@@ -3167,6 +3329,9 @@
         memoryReplayCount = 0;
         errors = 0;
         elapsedMs = 0;
+        mindfulnessAudio.pause();
+        mindfulnessAudio.currentTime = 0;
+        mindfulnessAudioSelect.disabled = false;
         timeText.textContent = "0.00";
         errorText.textContent = "0";
         notice.textContent = "";
@@ -3181,6 +3346,9 @@
         poemToggleButton.classList.add("is-hidden");
         poemToggleButton.setAttribute("aria-expanded", "false");
         poemToggleButton.textContent = "显示全诗";
+        mindfulnessFinishButton.classList.add("is-hidden");
+        mindfulnessFinishButton.disabled = true;
+        mindfulnessPanel.classList.add("is-hidden");
         poemFullText.classList.add("is-hidden");
         poemFullText.textContent = "";
         poemMeta.classList.add("is-hidden");
@@ -3222,8 +3390,82 @@
           return;
         }
 
+        if (currentTraining === "mindfulness") {
+          buildMindfulness();
+          refreshStats();
+          return;
+        }
+
         buildSchulte();
         refreshStats();
+      }
+
+      async function loadMindfulnessAudios() {
+        const previousId = mindfulnessAudioSelect.value;
+        try {
+          const payload = await apiJson("/api/audio-guides");
+          mindfulnessAudios = Array.isArray(payload.audios) ? payload.audios : [];
+          renderMindfulnessAudioOptions(previousId);
+        } catch (error) {
+          mindfulnessAudios = [];
+          renderMindfulnessAudioOptions("");
+          mindfulnessAudioHint.textContent = `音频加载失败${error.message}`;
+        }
+      }
+
+      function renderMindfulnessAudioOptions(previousId = "") {
+        mindfulnessAudioSelect.replaceChildren();
+        if (!mindfulnessAudios.length) {
+          mindfulnessAudioSelect.append(new Option("暂无可用引导音频", ""));
+          mindfulnessAudioSelect.disabled = true;
+          mindfulnessAudio.removeAttribute("src");
+          mindfulnessAudio.load();
+          mindfulnessAudio.dataset.audioId = "";
+          mindfulnessAudioHint.textContent = "暂无引导音频，请联系管理员上传 MP3。";
+          if (currentTraining === "mindfulness") targetText.textContent = "暂无音频";
+          return;
+        }
+        mindfulnessAudios.forEach((audio) => mindfulnessAudioSelect.append(new Option(audio.name, audio.id)));
+        mindfulnessAudioSelect.value = mindfulnessAudios.some((audio) => audio.id === previousId) ? previousId : mindfulnessAudios[0].id;
+        mindfulnessAudioSelect.disabled = false;
+        setMindfulnessAudioSource();
+      }
+
+      function selectedMindfulnessAudio() {
+        return mindfulnessAudios.find((audio) => audio.id === mindfulnessAudioSelect.value) || null;
+      }
+
+      function setMindfulnessAudioSource() {
+        const audio = selectedMindfulnessAudio();
+        if (!audio) return;
+        if (mindfulnessAudio.dataset.audioId !== audio.id) {
+          mindfulnessAudio.pause();
+          mindfulnessAudio.src = audio.url;
+          mindfulnessAudio.dataset.audioId = audio.id;
+          mindfulnessAudio.load();
+        }
+        if (currentTraining === "mindfulness") targetText.textContent = audio.name;
+        mindfulnessAudioHint.textContent = "播放时开始计时；暂停不计时，播完会自动记录。";
+      }
+
+      function buildMindfulness() {
+        resetButton.textContent = "重新开始";
+        sizeSwitch.classList.add("is-hidden");
+        idiomSizeSwitch.classList.add("is-hidden");
+        hintWrap.classList.add("is-hidden");
+        reverseOrderWrap.classList.add("is-hidden");
+        colorInterferenceWrap.classList.add("is-hidden");
+        stroopPanel.classList.add("is-hidden");
+        decodePanel.classList.add("is-hidden");
+        idiomTarget.classList.add("is-hidden");
+        board.classList.add("is-hidden");
+        targetLabel.textContent = "引导音频";
+        targetText.textContent = "正在加载";
+        mindfulnessPanel.classList.remove("is-hidden");
+        mindfulnessFinishButton.classList.remove("is-hidden");
+        mindfulnessFinishButton.disabled = true;
+        if (mindfulnessAudios.length) setMindfulnessAudioSource();
+        else loadMindfulnessAudios();
       }
 
       function buildSchulte() {
@@ -3647,6 +3889,7 @@
       }
 
       function startTimer() {
+        if (timerId) return;
         startSessionTimer();
         started = true;
         startStamp = performance.now() - elapsedMs;
@@ -3662,6 +3905,12 @@
           window.clearInterval(timerId);
           timerId = 0;
         }
+      }
+
+      function pauseTimer() {
+        if (timerId) elapsedMs = performance.now() - startStamp;
+        stopTimer();
+        timeText.textContent = formatSeconds(elapsedMs);
       }
 
       function refreshSessionTimer() {
@@ -4036,6 +4285,39 @@
         showResult(record, !previousBest || record.timeMs < previousBest.timeMs);
       }
 
+      function completeMindfulnessRound(audioCompleted) {
+        if (finished || currentTraining !== "mindfulness") return;
+        if (timerId) elapsedMs = performance.now() - startStamp;
+        if (elapsedMs <= 0) {
+          notice.textContent = "请先播放引导音频";
+          return;
+        }
+        const audio = selectedMindfulnessAudio();
+        if (!audio) {
+          notice.textContent = "请先选择引导音频";
+          return;
+        }
+        finished = true;
+        mindfulnessAudio.pause();
+        stopTimer();
+        elapsedMs = Math.round(elapsedMs);
+        timeText.textContent = formatSeconds(elapsedMs);
+        targetText.textContent = audioCompleted ? "完成" : "已结束";
+        mindfulnessFinishButton.disabled = true;
+        mindfulnessAudioSelect.disabled = false;
+        const record = {
+          id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+          type: "mindfulness",
+          audioName: audio.name,
+          audioCompleted: Boolean(audioCompleted),
+          timeMs: elapsedMs,
+          practiceMs: elapsedMs,
+          date: new Date().toISOString()
+        };
+        addRecord(record);
+        showResult(record, false);
+      }
+
       function bestForSize(targetSize) {
         return records
           .filter((record) => recordMatchesTraining(record, "schulte") && record.size === targetSize && Boolean(record.reverse) === reverseOrderOn)
@@ -4062,7 +4344,23 @@
 
       function refreshStats() {
         const current = recordsForCurrentTraining();
+        if (currentTraining === "mindfulness") {
+          const total = current.reduce((sum, record) => sum + recordPracticeMs(record), 0);
+          countLabel.textContent = "练习次数";
+          avgLabel.textContent = "累计时长";
+          fastLabel.textContent = "平均时长";
+          avgErrorLabel.textContent = "完整播放";
+          countText.textContent = String(current.length);
+          avgText.textContent = current.length ? formatPracticeDuration(total) : "--";
+          fastText.textContent = current.length ? formatPracticeDuration(total / current.length) : "--";
+          avgErrorText.textContent = String(current.filter((record) => record.audioCompleted).length);
+          return;
+        }
         const best = bestForCurrentTraining();
+        countLabel.textContent = "练习次数";
+        avgLabel.textContent = "平均用时";
+        fastLabel.textContent = "最快用时";
+        avgErrorLabel.textContent = "平均错误";
         countText.textContent = String(current.length);
         fastText.textContent = best ? `${formatSeconds(best.timeMs)}s` : "--";
         avgText.textContent = current.length
@@ -4098,7 +4396,7 @@
         const node = document.createElement("article");
         node.className = "record";
         const type = record.type || "schulte";
-        const label = type === "stroop" ? "斯特鲁普" : type === "decode" ? "\u8bd1\u7801\u8bad\u7ec3" : type === "idiom" ? `4×${record.cols}` : type === "poem" ? "古诗训练" : type === "memory" ? "记忆训练" : `${record.size}×${record.size}${record.reverse ? " 倒序" : ""}`;
+        const label = type === "stroop" ? "斯特鲁普" : type === "decode" ? "\u8bd1\u7801\u8bad\u7ec3" : type === "idiom" ? `4×${record.cols}` : type === "poem" ? "古诗训练" : type === "memory" ? "记忆训练" : type === "mindfulness" ? "正念练习" : `${record.size}×${record.size}${record.reverse ? " 倒序" : ""}`;
         const detail = type === "stroop"
           ? `${record.trials || stroopTotal}题· 错${record.errors}`
           : type === "decode"
@@ -4109,6 +4407,8 @@
               ? `${record.title || "古诗"} · ${record.chars || 0}字· 错${record.errors}`
               : type === "memory"
                 ? `${record.rounds || memoryTotalRounds}轮· 错${record.errors}${Number(record.replays || 0) > 0 ? ` · 复现 ${Number(record.replays || 0)} 次` : ""}`
+                : type === "mindfulness"
+                  ? `${record.audioName || "引导音频"} · ${record.audioCompleted ? "完整播放" : "提前结束"}`
                 : `错${record.errors}`;
 
         const modeDiv = document.createElement("div");
@@ -4117,7 +4417,7 @@
 
         const infoDiv = document.createElement("div");
         const strong = document.createElement("strong");
-        strong.textContent = `${record.accuracy}%`;
+        strong.textContent = type === "mindfulness" ? (record.audioCompleted ? "完整" : "已结束") : `${record.accuracy}%`;
         const time = document.createElement("time");
         time.setAttribute("datetime", record.date || "");
         time.textContent = `${formatShortDate(record.date)} · ${detail}`;
@@ -4142,11 +4442,17 @@
 
       function showResult(record, isBest) {
         const type = record.type || "schulte";
-        const label = type === "stroop" ? "斯特鲁普" : type === "decode" ? "\u8bd1\u7801\u8bad\u7ec3" : type === "idiom" ? `成语训练` : type === "poem" ? "古诗训练" : type === "memory" ? "记忆训练" : `${record.size}×${record.size}${record.reverse ? " 倒序" : ""}`;
-        const unit = type === "decode" ? `${record.trials || decodeTotal}\u9898` : type === "stroop" ? `${record.trials || stroopTotal}题` : type === "idiom" ? `${record.idioms?.length || record.cols || 1}个成绩· 4×${record.cols}` : type === "poem" ? `${record.title || "古诗"} · ${record.chars || 0}字` : type === "memory" ? `${record.rounds || memoryTotalRounds}轮· ${record.grid || "5×5"}` : record.reverse ? "倒序方格" : "方格";
+        const label = type === "stroop" ? "斯特鲁普" : type === "decode" ? "\u8bd1\u7801\u8bad\u7ec3" : type === "idiom" ? `成语训练` : type === "poem" ? "古诗训练" : type === "memory" ? "记忆训练" : type === "mindfulness" ? "正念练习" : `${record.size}×${record.size}${record.reverse ? " 倒序" : ""}`;
+        const unit = type === "decode" ? `${record.trials || decodeTotal}\u9898` : type === "stroop" ? `${record.trials || stroopTotal}题` : type === "idiom" ? `${record.idioms?.length || record.cols || 1}个成绩· 4×${record.cols}` : type === "poem" ? `${record.title || "古诗"} · ${record.chars || 0}字` : type === "memory" ? `${record.rounds || memoryTotalRounds}轮· ${record.grid || "5×5"}` : type === "mindfulness" ? record.audioName || "引导音频" : record.reverse ? "倒序方格" : "方格";
 
         resultSummary.replaceChildren();
-        const items = [
+        const items = type === "mindfulness" ? [
+          ["模式", label],
+          ["音频", unit],
+          ["练习时长", formatPracticeDuration(recordPracticeMs(record))],
+          ["完成方式", record.audioCompleted ? "完整播放" : "提前结束"],
+          ["日期", formatShortDate(record.date)]
+        ] : [
           ["模式", label],
           ["内容", unit],
           ["用时", `${formatSeconds(record.timeMs)}s`],
@@ -4245,6 +4551,30 @@
       document.getElementById("resetButton").addEventListener("click", buildBoard);
       memoryStartButton.addEventListener("click", startMemoryTraining);
       memoryReplayButton.addEventListener("click", replayMemoryPreview);
+      mindfulnessAudioSelect.addEventListener("change", setMindfulnessAudioSource);
+      mindfulnessAudio.addEventListener("play", () => {
+        if (currentTraining !== "mindfulness") {
+          mindfulnessAudio.pause();
+          return;
+        }
+        if (finished) {
+          mindfulnessAudio.pause();
+          notice.textContent = "本次练习已记录，请重新开始。";
+          return;
+        }
+        startTimer();
+        mindfulnessAudioSelect.disabled = true;
+        mindfulnessFinishButton.disabled = false;
+        notice.textContent = "正在播放引导音频";
+      });
+      mindfulnessAudio.addEventListener("pause", () => {
+        if (currentTraining === "mindfulness" && !finished && !mindfulnessAudio.ended && started) {
+          pauseTimer();
+          notice.textContent = "已暂停，继续播放后会继续计时。";
+        }
+      });
+      mindfulnessAudio.addEventListener("ended", () => completeMindfulnessRound(true));
+      mindfulnessFinishButton.addEventListener("click", () => completeMindfulnessRound(false));
       poemToggleButton.addEventListener("click", () => {
         const expanded = poemToggleButton.getAttribute("aria-expanded") === "true";
         poemToggleButton.setAttribute("aria-expanded", String(!expanded));
@@ -4376,6 +4706,7 @@
           if (typeof adminPanelDialog.showModal === "function") adminPanelDialog.showModal();
           loadAdminUsers();
           loadAdminSettings();
+          loadAdminAudioGuides();
         } catch (e) {
           setNotice(adminLoginNotice, e.message || "管理密码不正确", true);
         }
@@ -4385,11 +4716,17 @@
       adminResetPasswordButton.addEventListener("click", adminResetPassword);
       adminDeleteButton.addEventListener("click", adminDeleteUser);
       adminSaveSettingsButton.addEventListener("click", saveAdminSettings);
+      adminAudioFileInput.addEventListener("change", () => {
+        const file = adminAudioFileInput.files && adminAudioFileInput.files[0];
+        if (file && !adminAudioNameInput.value.trim()) adminAudioNameInput.value = file.name.replace(/\.mp3$/i, "");
+      });
+      adminUploadAudioButton.addEventListener("click", adminUploadAudio);
       loadSettings();
       renderTitleTasks();
       updateTaskConfigVisibility();
       loadUserCenter();
       loadPoems();
+      loadMindfulnessAudios();
       buildBoard();
     })();
   </script>

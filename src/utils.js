@@ -51,7 +51,8 @@ const SERVER_TASK_MATCH_FIELDS = {
   ],
   poem: [{ key: 'colorInterference', type: 'boolean', defaultValue: false }],
   memory: [],
-  decode: [{ key: 'reverse', type: 'boolean', defaultValue: false }]
+  decode: [{ key: 'reverse', type: 'boolean', defaultValue: false }],
+  mindfulness: []
 };
 
 function ageBucket(age) {
@@ -116,6 +117,7 @@ function trainingLabel(record) {
   if (type === 'poem') return '古诗训练';
   if (type === 'memory') return '记忆训练';
   if (type === 'decode') return '译码训练';
+  if (type === 'mindfulness') return '正念练习';
   const size = Number(record.size || 5);
   return `${size}×${size}${record.reverse ? ' 倒序' : ''}`;
 }
@@ -212,6 +214,8 @@ function normalizeCloudRecord(input) {
     replays: Math.max(0, Math.round(Number(record.replays || 0))),
     trials: Number(record.trials || 0),
     title: String(record.title || '').slice(0, 40),
+    audioName: String(record.audioName || '').slice(0, 80),
+    audioCompleted: Boolean(record.audioCompleted),
     date: String(record.date || new Date().toISOString()),
     syncedAt: new Date().toISOString()
   };

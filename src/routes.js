@@ -2,6 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const rateLimit = require('express-rate-limit');
 const db = require('./db');
+const audioGuides = require('./audio-guides');
 const {
   normalizeCloudUser,
   normalizeCloudTasks,
@@ -57,6 +58,7 @@ function isValidTimeZone(tz) {
 }
 
 const router = express.Router();
+const mp3Body = express.raw({ type: ['audio/mpeg', 'audio/mp3'], limit: audioGuides.MAX_AUDIO_BYTES });
 
 const loginLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -81,6 +83,25 @@ function hasAdminAccess(req) {
   return Boolean(process.env.ADMIN_PASSWORD && token === process.env.ADMIN_PASSWORD);
 }
 
+function sendAudioError(res, error) {
+  return res.status(error.status || 500).json({ ok: false, error: error.message || '音频处理失败' });
+}
+
+function requireAdmin(req, res, next) {
+  if (!hasAdminAccess(req)) return res.status(403).json({ ok: false, error: '管理密码不正确' });
+  next();
+}
+
+function parseMp3(req, res, next) {
+  mp3Body(req, res, (error) => {
+    if (error) {
+      const status = error.type === 'entity.too.large' ? 413 : 400;
+      return res.status(status).json({ ok: false, error: status === 413 ? '音频文件不能超过 50MB' : 'MP3 上传内容无效' });
+    }
+    next();
+  });
+}
+
 async function requireSession(identifier, sessionToken) {
   const stored = db.getUser(identifier);
   if (!stored) return { error: { ok: false, error: '用户不存在', status: 404 } };
@@ -102,6 +123,61 @@ async function issueSession(identifier, stored) {
   });
   return { sessionToken, stored: db.getUser(identifier) };
 }
+
+// Public audio guides
+router.get('/audio-guides', (req, res) => {
+  try {
+    const audios = audioGuides.listAudioGuides().map((audio) => ({
+      ...audio,
+      url: `/api/audio-guides/${encodeURIComponent(audio.id)}/file`
+    }));
+    res.json({ ok: true, audios });
+  } catch (error) {
+    sendAudioError(res, error);
+  }
+});
+
+router.get('/audio-guides/:id/file', (req, res) => {
+  try {
+    const filePath = audioGuides.resolveAudioPath(req.params.id);
+    res.type('audio/mpeg');
+    res.setHeader('cache-control', 'no-store');
+    res.sendFile(filePath, { acceptRanges: true, cacheControl: false }, (error) => {
+      if (error && !res.headersSent) sendAudioError(res, error);
+    });
+  } catch (error) {
+    sendAudioError(res, error);
+  }
+});
+
+// Admin: audio guide management
+router.post('/admin/audio-guides', requireAdmin, parseMp3, (req, res) => {
+  if (!req.is(['audio/mpeg', 'audio/mp3'])) return res.status(415).json({ ok: false, error: '仅支持 MP3 音频' });
+  try {
+    const audio = audioGuides.createAudioGuide(req.query.name, req.body);
+    res.status(201).json({ ok: true, audio: { ...audio, url: `/api/audio-guides/${encodeURIComponent(audio.id)}/file` } });
+  } catch (error) {
+    sendAudioError(res, error);
+  }
+});
+
+router.put('/admin/audio-guides/:id', requireAdmin, (req, res) => {
+  try {
+    const audio = audioGuides.renameAudioGuide(req.params.id, req.body && req.body.name);
+    res.json({ ok: true, audio: { ...audio, url: `/api/audio-guides/${encodeURIComponent(audio.id)}/file` } });
+  } catch (error) {
+    sendAudioError(res, error);
+  }
+});
+
+router.delete('/admin/audio-guides/:id', requireAdmin, (req, res) => {
+  try {
+    audioGuides.deleteAudioGuide(req.params.id);
+    res.json({ ok: true });
+  } catch (error) {
+    sendAudioError(res, error);
+  }
+});
 
 // Create user
 router.post('/users', createLimiter, async (req, res) => {

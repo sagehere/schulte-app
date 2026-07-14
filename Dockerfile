@@ -10,6 +10,7 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 COPY src/ ./src/
 COPY public/ ./public/
+COPY bgm1.mp3 ./bgm1.mp3
 
 RUN mkdir -p /app/data && \
     addgroup -S app && \

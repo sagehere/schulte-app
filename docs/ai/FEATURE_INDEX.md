@@ -1,6 +1,6 @@
 # Feature Index
 
-最近更新时间：2026-06-12
+最近更新时间：2026-07-14
 
 说明：P0 是默认必读文件；P1 是跨功能或后端联动时按需读取；P2 是大文件、部署文件、锁文件或历史说明，读取前应说明原因。`public/index.html` 是单文件前端，读取时优先按下列函数/DOM 锚点定向读取。
 
@@ -13,6 +13,7 @@
 - 古诗训练
 - 记忆训练
 - 译码训练
+- 正念练习与引导音频
 - 成绩记录与统计
 - 用户中心、登录与云端同步
 - 每日任务
@@ -250,9 +251,41 @@ P2：谨慎读取文件
 
 ---
 
+## 正念练习与引导音频
+
+功能说明：用户通过原生 `<audio>` 播放 MP3 引导音频；播放/暂停驱动练习计时，播完自动记录，也可提前结束并记录。管理员可上传、重命名、删除引导音频。
+
+用户入口：训练模块“正念练习”；管理员面板“引导音频”。
+
+P0：必须读取文件
+
+- `public/index.html`：`buildMindfulness`、`loadMindfulnessAudios`、`setMindfulnessAudioSource`、`completeMindfulnessRound`、音频事件与管理员音频管理函数
+- `src/audio-guides.js`：`ensureAudioDir`、`listAudioGuides`、`createAudioGuide`、`renameAudioGuide`、`deleteAudioGuide`
+- `src/routes.js`：`GET /audio-guides`、`GET /audio-guides/:id/file`、`POST/PUT/DELETE /admin/audio-guides`
+- `src/utils.js`：`SERVER_TASK_MATCH_FIELDS.mindfulness`、`normalizeCloudRecord`、`trainingLabel`
+
+P1：按需读取文件
+
+- `src/html.js`：公开成绩页的正念记录展示
+
+P2：谨慎读取文件
+
+- `Dockerfile`：默认 `bgm1.mp3` 打包入镜像
+- `data/audio/`：生产上传音频，默认不要读取
+
+主要调用链：进入模式 -> `GET /api/audio-guides` -> `<audio>` play/pause/ended -> `completeMindfulnessRound()` -> `addRecord()` -> 云端同步；管理链为管理员验证 -> `POST/PUT/DELETE /api/admin/audio-guides` -> `src/audio-guides.js` 文件操作。
+
+相关状态：`mindfulnessAudios`、`mindfulnessAudio`、`records[].audioName`、`records[].audioCompleted`、`path.dirname(DB_PATH)/audio`。
+
+修改注意事项：仅接受不超过 50MB 的 MP3；音频目录首次创建时复制 `bgm1.mp3`，之后删除不会自动恢复；每日任务不绑定具体音频，提前结束记录也计次。
+
+最近更新时间：2026-07-14
+
+---
+
 ## 成绩记录与统计
 
-功能说明：本地记录每次训练成绩，展示当前模式的次数、最快、平均、平均错误，并可清空当前模式记录；登录用户会同步记录到云端。
+功能说明：本地记录每次训练成绩，展示当前模式统计并可清空当前模式记录；正念模式展示累计/平均时长与完整播放次数；登录用户会同步记录到云端。
 
 用户入口：完成训练结果弹窗；“成绩记录”按钮；“清空当前模式”按钮；公开成绩页。
 
@@ -277,9 +310,9 @@ P2：谨慎读取文件
 
 相关接口：`POST /api/users/:identifier/records`、`GET /api/users/:identifier/public`、`GET /u/:identifier`。
 
-修改注意事项：本地和云端记录字段必须兼容；服务器只保留近 90 天记录清理逻辑在启动时执行。
+修改注意事项：本地和云端记录字段必须兼容；正念记录使用 `audioName`、`audioCompleted` 且不展示错误率；服务器只保留近 90 天记录清理逻辑在启动时执行。
 
-最近更新时间：2026-06-12
+最近更新时间：2026-07-14
 
 ---
 
@@ -344,22 +377,22 @@ P2：谨慎读取文件
 
 相关接口：`GET /api/users/:identifier?date=YYYY-MM-DD`、`PUT /api/users/:identifier`、`POST /api/users`、`GET /u/:identifier`。
 
-修改注意事项：新增训练模式或任务字段时必须同时更新前端 `dailyTaskSpecs` 和后端 `SERVER_TASK_MATCH_FIELDS`；模板自动生成机制依赖 `task_templates` 表，删除用户时需同步清理。
+修改注意事项：新增训练模式或任务字段时必须同时更新前端 `dailyTaskSpecs` 和后端 `SERVER_TASK_MATCH_FIELDS`；正念任务不绑定音频，任意正念记录均计次；模板自动生成机制依赖 `task_templates` 表，删除用户时需同步清理。
 
-最近更新时间：2026-06-13
+最近更新时间：2026-07-14
 
 ---
 
 ## 管理员面板与系统设置
 
-功能说明：点击标题 5 次打开管理员登录，输入密码后通过 `POST /api/admin/verify` 服务端校验，校验通过后进入管理面板，可查看用户列表、重置密码、删除用户、设置系统时区。
+功能说明：点击标题 5 次打开管理员登录，输入密码后通过 `POST /api/admin/verify` 服务端校验，校验通过后进入管理面板，可查看用户列表、管理引导音频、重置密码、删除用户、设置系统时区。
 
 用户入口：主页标题连续点击 5 次 -> 管理员登录弹窗 -> 输入密码 -> 服务端验证 -> 管理面板。
 
 P0：必须读取文件
 
-- `public/index.html`：`adminClickCount`、`adminAuthHeaders`、`loadAdminUsers`、`adminLookup`、`adminResetPassword`、`adminDeleteUser`、`loadAdminSettings`、`saveAdminSettings`、`adminLoginButton` click handler（先调 verify 再开面板）
-- `src/routes.js`：`hasAdminAccess`、`GET /admin/users`、`GET /admin/users/:identifier`、`POST /admin/users/:identifier/password`、`DELETE /admin/users/:identifier`、`GET /settings`、`PUT /admin/settings`、`POST /admin/verify`
+- `public/index.html`：`adminClickCount`、`adminAuthHeaders`、用户管理函数、`loadAdminAudioGuides`、`adminUploadAudio`、`adminRenameAudio`、`adminDeleteAudio`、管理员登录处理
+- `src/routes.js`：`hasAdminAccess`、用户管理接口、`POST/PUT/DELETE /admin/audio-guides`、`GET /settings`、`PUT /admin/settings`、`POST /admin/verify`
 
 P1：按需读取文件
 
@@ -371,7 +404,7 @@ P2：谨慎读取文件
 - `.env.example`
 - `docker-compose.yml`：确认生产环境变量时读取
 
-主要调用链：标题点击 -> 管理登录弹窗 -> 输入密码 -> `adminLoginButton.click` -> `POST /api/admin/verify` -> 成功则 `showModal()` 并 `loadAdminUsers()`/`loadAdminSettings()`，失败则显示错误（不打开面板）；重置密码链为 `adminResetPassword()` -> `POST /api/admin/users/:id/password` -> `db.updateUser()`（camelCase 字段已修复）。
+主要调用链：标题点击 -> 管理登录弹窗 -> `POST /api/admin/verify` -> 成功则打开面板并加载用户、设置、音频；音频管理 -> Bearer 管理密码 -> `/api/admin/audio-guides`；重置密码链保持 `adminResetPassword()` -> `db.updateUser()`。
 
 相关状态：`adminPassword`、`adminClickCount`、`settings.timezone`。
 
@@ -379,7 +412,7 @@ P2：谨慎读取文件
 
 修改注意事项：管理员鉴权当前依赖环境变量 `ADMIN_PASSWORD`；接口受 `/api/admin` rate limit 保护，修改路径时同步限流挂载。`updateUser()` 支持传入 camelCase 或 snake_case 键名，但生成 SQL 时会统一映射为 snake_case 列名；新增数据库列时必须同步更新 `fields` 数组。
 
-最近更新时间：2026-06-12
+最近更新时间：2026-07-14
 
 ---
 
@@ -427,6 +460,7 @@ P0：必须读取文件
 - `src/db.js`
 - `src/utils.js`：密码/session、归一化、校验和公开字段过滤函数
 - `src/routes.js`：`requireSession`、`issueSession`、`hasAdminAccess`
+- `src/audio-guides.js`：MP3 名称校验、文件头校验与 `data/audio` CRUD
 - `src/index.js`：`gracefulShutdown`、`SIGTERM`/`SIGINT` 注册
 
 P1：按需读取文件
@@ -444,9 +478,9 @@ P2：谨慎读取文件
 
 相关接口：所有 `/api/users/*`、`/api/admin/*`、`/api/settings`、`/u/:identifier`。
 
-修改注意事项：表结构变更需考虑已有 sql.js 文件兼容；不要返回敏感字段；数据库保存是异步延迟写入，关键写入验证要留意落盘时机。
+修改注意事项：表结构变更需考虑已有 sql.js 文件兼容；上传音频不写入数据库，必须校验名称和文件头且防止路径穿越；不要返回敏感字段；数据库保存是异步延迟写入，关键写入验证要留意落盘时机。
 
-最近更新时间：2026-06-12
+最近更新时间：2026-07-14
 
 ---
 
@@ -473,7 +507,7 @@ P2：谨慎读取文件
 - `package-lock.json`：依赖锁调查时读取
 - `README.md`：部署说明可能乱码，仅参考
 
-主要调用链：Docker build -> `npm ci --omit=dev` -> `docker-entrypoint.sh`（chown /app/data）-> `su-exec app node src/index.js`；Compose -> 挂载 `./data:/app/data` -> `/health` 健康检查。
+主要调用链：Docker build -> `npm ci --omit=dev` + 复制 `bgm1.mp3` -> `docker-entrypoint.sh`（chown /app/data）-> `su-exec app node src/index.js`；Compose -> 挂载 `./data:/app/data`（含 `audio/`）-> `/health` 健康检查。
 
 相关状态：`PORT`、`ADMIN_PASSWORD`、`USER_CREATE_CODE`、`DB_PATH`、`NODE_ENV`。
 
@@ -481,4 +515,4 @@ P2：谨慎读取文件
 
 修改注意事项：不要随意升级 Node 或依赖；变更数据路径/用户权限时必须验证容器能写入数据库。
 
-最近更新时间：2026-06-12
+最近更新时间：2026-07-14

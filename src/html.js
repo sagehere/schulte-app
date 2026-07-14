@@ -52,10 +52,13 @@ function renderPublicUserPage(stored, todayRecords, tasks, records, timeZone) {
         const rating = scoreCloudSchulte(record, stored.birthDate);
         const label = trainingLabel(record);
         const rt = formatRecordTime(record.date, timeZone);
+        const detail = (record.type || 'schulte') === 'mindfulness'
+          ? `音频 ${escapeHtml(record.audioName || '引导音频')} · 练习 ${escapeHtml(formatPracticeMs(record.practiceMs || record.timeMs))} · ${record.audioCompleted ? '完整播放' : '提前结束'}`
+          : `${formatSeconds(record.timeMs)}s · 练习 ${escapeHtml(formatPracticeMs(record.practiceMs || record.timeMs))} · 错 ${record.errors} · 正确率 ${record.accuracy}%${escapeHtml(memoryReplaySuffix(record).replace(/^，/, " · "))}${rating ? ` · 评分：${escapeHtml(rating)}` : ""}`;
         return `<article class="record">
           <time>${rt || '--:--'}</time>
           <strong>${escapeHtml(label)}</strong>
-          <span>${formatSeconds(record.timeMs)}s · 练习 ${escapeHtml(formatPracticeMs(record.practiceMs || record.timeMs))} · 错 ${record.errors} · 正确率 ${record.accuracy}%${escapeHtml(memoryReplaySuffix(record).replace(/^，/, " · "))}${rating ? ` · 评分：${escapeHtml(rating)}` : ""}</span>
+          <span>${detail}</span>
         </article>`;
       }).join("")}
     </section>

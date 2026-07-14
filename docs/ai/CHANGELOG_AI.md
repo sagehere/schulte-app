@@ -2,6 +2,24 @@
 
 本文件记录 AI 对仓库的维护历史。每次 AI 修改后追加一条，最新记录放在顶部或底部均可，但保持格式一致。
 
+## 2026-07-14
+
+- 类型：功能新增
+- 任务：新增正念练习、MP3 引导音频管理与对应记录/计时/每日任务支持。
+- 修改文件：
+  - `src/audio-guides.js`：新增默认音频初始化、MP3 校验、文件 CRUD；存储目录为数据库同级 `audio/`。
+  - `src/routes.js`：新增公共音频列表/播放接口和管理员上传、重命名、删除接口。
+  - `public/index.html`：新增正念模式、音频播放计时、成绩展示、每日任务选项及管理员音频管理 UI。
+  - `src/utils.js`、`src/html.js`：保留并展示 `audioName`、`audioCompleted`，正念记录不显示错误率。
+  - `Dockerfile`、`bgm1.mp3`：默认音频打包进镜像，首次运行复制到持久化目录。
+  - `test/audio-guides.test.js`、`test/audio-guide-api.test.js`、`test/frontend-syntax.test.js`、`test/mindfulness-records.test.js`：新增文件生命周期、接口、前端语法、公开页与每日任务匹配测试；`package.json` 新增 `npm test`。
+  - `docs/ai/PROJECT_INDEX.md`、`docs/ai/FEATURE_INDEX.md`：更新功能索引。
+- 验证：
+  - `npm test` 通过（5 项）；覆盖默认音频、Range 播放、管理员鉴权、上传、重命名、删除、前端脚本编译、公开页与每日任务匹配。
+  - `node --check src/audio-guides.js src/routes.js src/utils.js src/html.js src/index.js` 通过。
+- 后续风险：
+  - 上传为单请求内存缓冲，50MB 上限适合小型管理员面板；若未来需要更大文件或断点续传，应改为受控流式上传。
+
 ## 2026-07-09
 
 - 类型：功能优化
