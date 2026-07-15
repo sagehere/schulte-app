@@ -6,6 +6,7 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const db = require('./db');
+const audioGuides = require('./audio-guides');
 const apiRoutes = require('./routes');
 const { getIndexHtml, renderPublicUserPage } = require('./html');
 const {
@@ -82,11 +83,12 @@ app.get('/u/:identifier', (req, res) => {
     const d = String(r.date || '').slice(0, 10);
     return d === today;
   });
-  tasks = applyCloudTrainingCompletionToTasks(tasks, todayRecords);
+  const audioNames = new Map(audioGuides.listAudioGuides().map((audio) => [audio.id, audio.name]));
+  tasks = applyCloudTrainingCompletionToTasks(tasks, todayRecords, (id) => audioNames.has(id));
 
   res.setHeader('content-type', 'text/html; charset=UTF-8');
   res.setHeader('cache-control', 'no-store');
-  res.send(renderPublicUserPage(stored, todayRecords, tasks, records, timeZone));
+  res.send(renderPublicUserPage(stored, todayRecords, tasks, records, timeZone, (id) => audioNames.get(id)));
 });
 
 // Poem text file

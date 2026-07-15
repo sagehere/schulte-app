@@ -133,17 +133,21 @@ function taskFieldValue(value, rule) {
   return value ?? rule.defaultValue ?? '';
 }
 
-function recordCompletesCloudTask(record, task) {
+function recordCompletesCloudTask(record, task, audioExists) {
   if (!task || !task.mode || !task.mode.type) return false;
   const type = task.mode.type;
   const matchFields = SERVER_TASK_MATCH_FIELDS[type];
   if ((record.type || 'schulte') !== type || !matchFields) return false;
+  if (type === 'mindfulness') {
+    const audioId = String(task.mode.audioId || '');
+    return !audioId || ((!audioExists || audioExists(audioId)) && String(record.audioId || '') === audioId);
+  }
   return matchFields.every((rule) => taskFieldValue(record[rule.key], rule) === taskFieldValue(task.mode[rule.key], rule));
 }
 
-function applyCloudTrainingCompletionToTasks(tasks, trainingRecords) {
+function applyCloudTrainingCompletionToTasks(tasks, trainingRecords, audioExists) {
   return tasks.map((task) => {
-    const completedCount = trainingRecords.filter((record) => recordCompletesCloudTask(record, task)).length;
+    const completedCount = trainingRecords.filter((record) => recordCompletesCloudTask(record, task, audioExists)).length;
     return {
       ...task,
       completedCount,
@@ -152,8 +156,12 @@ function applyCloudTrainingCompletionToTasks(tasks, trainingRecords) {
   });
 }
 
-function cloudTaskText(task) {
+function cloudTaskText(task, audioNameForId) {
   const mode = task && task.mode || {};
+  if ((mode.type || task.module) === 'mindfulness') {
+    if (!mode.audioId) return '正念练习 · 任意引导音频';
+    return `正念练习 · ${audioNameForId && audioNameForId(mode.audioId) || '音频已删除'}`;
+  }
   return trainingLabel({
     type: mode.type || task.module,
     size: mode.size,
@@ -189,7 +197,8 @@ function normalizeCloudTasks(input) {
         reverse: Boolean(mode.reverse),
         textAnswer: Boolean(mode.textAnswer),
         colorInterference: Boolean(mode.colorInterference),
-        cols: mode.cols ? Number(mode.cols) : null
+        cols: mode.cols ? Number(mode.cols) : null,
+        audioId: String(mode.audioId || '').slice(0, 100)
       },
       targetCount: Math.min(50, Math.max(1, Math.round(Number(task && task.targetCount || 1)) || 1)),
       completed: false
@@ -214,6 +223,7 @@ function normalizeCloudRecord(input) {
     replays: Math.max(0, Math.round(Number(record.replays || 0))),
     trials: Number(record.trials || 0),
     title: String(record.title || '').slice(0, 40),
+    audioId: String(record.audioId || '').slice(0, 100),
     audioName: String(record.audioName || '').slice(0, 80),
     audioCompleted: Boolean(record.audioCompleted),
     date: String(record.date || new Date().toISOString()),

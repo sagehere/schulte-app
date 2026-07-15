@@ -189,6 +189,18 @@ router.post('/admin/audio-guides', requireAdmin, parseMp3, (req, res) => {
   }
 });
 
+router.put('/admin/audio-guides/order', requireAdmin, (req, res) => {
+  try {
+    const audios = audioGuides.reorderAudioGuides(req.body && req.body.ids).map((audio) => ({
+      ...audio,
+      url: `/api/audio-guides/${encodeURIComponent(audio.id)}/file`
+    }));
+    res.json({ ok: true, audios });
+  } catch (error) {
+    sendAudioError(res, error);
+  }
+});
+
 router.put('/admin/audio-guides/:id', requireAdmin, (req, res) => {
   try {
     const audio = audioGuides.renameAudioGuide(req.params.id, req.body && req.body.name);

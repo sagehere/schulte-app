@@ -2,6 +2,19 @@
 
 本文件记录 AI 对仓库的维护历史。每次 AI 修改后追加一条，最新记录放在顶部或底部均可，但保持格式一致。
 
+## 2026-07-15
+
+- 类型：功能新增
+- 任务：正念每日任务可绑定指定音频；管理员可排序引导音频。
+- 修改文件：
+  - `src/audio-guides.js`：新增持久化音频目录、稳定 ID 与排序，改名保留 ID，删除移除目录项。
+  - `src/routes.js`、`src/index.js`、`src/html.js`、`src/utils.js`：新增排序接口，记录/任务保存 `audioId`，公开任务报表识别改名与删除状态。
+  - `public/index.html`：新增正念任务音频选择、失效提示、管理员拖拽/方向键排序与保存。
+  - `test/audio-guides.test.js`、`test/audio-guide-api.test.js`、`test/mindfulness-records.test.js`：覆盖稳定 ID、排序、任务匹配与报表名称。
+  - `docs/ai/FEATURE_INDEX.md`：更新正念、成绩、每日任务、管理员功能索引。
+- 验证：`node --check src/audio-guides.js src/routes.js src/utils.js src/index.js src/html.js`、`npm test` 通过（6/6）。
+- 后续风险：直接在磁盘改名/删除 MP3 会被目录同步视为旧音频删除和新音频加入；请通过管理员面板操作以保留绑定关系。
+
 ## 2026-07-14
 
 - 类型：功能新增

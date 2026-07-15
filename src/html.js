@@ -23,7 +23,7 @@ function getIndexHtml() {
   return indexHtml;
 }
 
-function renderPublicUserPage(stored, todayRecords, tasks, records, timeZone) {
+function renderPublicUserPage(stored, todayRecords, tasks, records, timeZone, audioNameForId) {
   const completedTasks = tasks.filter((task) => task.completed).length;
   const progressPercent = tasks.length ? Math.round((completedTasks / tasks.length) * 100) : 0;
   const todayPracticeMs = totalPracticeMs(todayRecords);
@@ -34,7 +34,7 @@ function renderPublicUserPage(stored, todayRecords, tasks, records, timeZone) {
       <div class="practice-total">今日累计练习时长：${escapeHtml(formatPracticeMs(todayPracticeMs))}</div>
       <div class="task-list">${tasks.map((task) => `<article class="task ${task.completed ? "done" : "todo"}">
         <strong>${task.completed ? "已完成" : "进行中"}</strong>
-        <span>${escapeHtml(cloudTaskText(task))} · ${Math.min(task.completedCount, task.targetCount)}/${task.targetCount} 次</span>
+        <span>${escapeHtml(cloudTaskText(task, audioNameForId))} · ${Math.min(task.completedCount, task.targetCount)}/${task.targetCount} 次</span>
       </article>`).join("")}</div>`
     : '<p class="empty">今日暂无任务</p>';
 

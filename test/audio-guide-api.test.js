@@ -64,12 +64,31 @@ test('audio guide APIs require admin access and support the MP3 lifecycle', asyn
   const uploaded = await (await fetch(`${baseUrl}/api/audio-guides`)).json();
   const audio = uploaded.audios.find((item) => item.name === '呼吸');
   assert.ok(audio);
-  assert.equal((await fetch(`${baseUrl}/api/admin/audio-guides/${encodeURIComponent(audio.id)}`, {
+  const renamedResponse = await fetch(`${baseUrl}/api/admin/audio-guides/${encodeURIComponent(audio.id)}`, {
     method: 'PUT',
     headers: { authorization: 'Bearer test-admin-password', 'content-type': 'application/json' },
     body: JSON.stringify({ name: '晨间呼吸' })
-  })).status, 200);
-  assert.equal((await fetch(`${baseUrl}/api/admin/audio-guides/${encodeURIComponent('晨间呼吸.mp3')}`, {
+  });
+  assert.equal(renamedResponse.status, 200);
+  const renamed = (await renamedResponse.json()).audio;
+  assert.equal(renamed.id, audio.id);
+
+  assert.equal((await fetch(`${baseUrl}/api/admin/audio-guides/order`, {
+    method: 'PUT', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ ids: [renamed.id, defaultAudio.id] })
+  })).status, 403);
+  const reordered = await fetch(`${baseUrl}/api/admin/audio-guides/order`, {
+    method: 'PUT',
+    headers: { authorization: 'Bearer test-admin-password', 'content-type': 'application/json' },
+    body: JSON.stringify({ ids: [renamed.id, defaultAudio.id] })
+  });
+  assert.equal(reordered.status, 200);
+  assert.deepEqual((await (await fetch(`${baseUrl}/api/audio-guides`)).json()).audios.map((item) => item.id), [renamed.id, defaultAudio.id]);
+  assert.equal((await fetch(`${baseUrl}/api/admin/audio-guides/order`, {
+    method: 'PUT', headers: { authorization: 'Bearer test-admin-password', 'content-type': 'application/json' },
+    body: JSON.stringify({ ids: [renamed.id] })
+  })).status, 400);
+  assert.equal((await fetch(`${baseUrl}/api/admin/audio-guides/${encodeURIComponent(renamed.id)}`, {
     method: 'DELETE', headers: { authorization: 'Bearer test-admin-password' }
   })).status, 200);
 });

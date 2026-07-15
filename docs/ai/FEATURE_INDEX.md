@@ -1,6 +1,6 @@
 # Feature Index
 
-最近更新时间：2026-07-14
+最近更新时间：2026-07-15
 
 说明：P0 是默认必读文件；P1 是跨功能或后端联动时按需读取；P2 是大文件、部署文件、锁文件或历史说明，读取前应说明原因。`public/index.html` 是单文件前端，读取时优先按下列函数/DOM 锚点定向读取。
 
@@ -253,15 +253,15 @@ P2：谨慎读取文件
 
 ## 正念练习与引导音频
 
-功能说明：用户通过原生 `<audio>` 播放 MP3 引导音频；播放/暂停驱动练习计时，播完自动记录，也可提前结束并记录。管理员可上传、重命名、删除引导音频。
+功能说明：用户通过原生 `<audio>` 播放 MP3 引导音频；播放/暂停驱动练习计时，播完自动记录，也可提前结束并记录。音频目录保存稳定 ID 与管理员排序，改名不影响已绑定任务。
 
 用户入口：训练模块“正念练习”；管理员面板“引导音频”。
 
 P0：必须读取文件
 
 - `public/index.html`：`buildMindfulness`、`loadMindfulnessAudios`、`setMindfulnessAudioSource`、`completeMindfulnessRound`、音频事件与管理员音频管理函数
-- `src/audio-guides.js`：`ensureAudioDir`、`listAudioGuides`、`createAudioGuide`、`renameAudioGuide`、`deleteAudioGuide`
-- `src/routes.js`：`GET /audio-guides`、`GET /audio-guides/:id/file`、`POST/PUT/DELETE /admin/audio-guides`
+- `src/audio-guides.js`：`syncCatalog`、`listAudioGuides`、`createAudioGuide`、`renameAudioGuide`、`deleteAudioGuide`、`reorderAudioGuides`
+- `src/routes.js`：`GET /audio-guides`、`GET /audio-guides/:id/file`、`POST/PUT/DELETE /admin/audio-guides`、`PUT /admin/audio-guides/order`
 - `src/utils.js`：`SERVER_TASK_MATCH_FIELDS.mindfulness`、`normalizeCloudRecord`、`trainingLabel`
 
 P1：按需读取文件
@@ -273,13 +273,13 @@ P2：谨慎读取文件
 - `Dockerfile`：默认 `bgm1.mp3` 打包入镜像
 - `data/audio/`：生产上传音频，默认不要读取
 
-主要调用链：进入模式 -> `GET /api/audio-guides` -> `<audio>` play/pause/ended -> `completeMindfulnessRound()` -> `addRecord()` -> 云端同步；管理链为管理员验证 -> `POST/PUT/DELETE /api/admin/audio-guides` -> `src/audio-guides.js` 文件操作。
+主要调用链：进入模式 -> `GET /api/audio-guides` -> `<audio>` play/pause/ended -> `completeMindfulnessRound()` -> `addRecord()` -> 云端同步；管理链为管理员验证 -> 音频 CRUD/排序 API -> `src/audio-guides.js` 目录与文件操作。
 
-相关状态：`mindfulnessAudios`、`mindfulnessAudio`、`records[].audioName`、`records[].audioCompleted`、`path.dirname(DB_PATH)/audio`。
+相关状态：`mindfulnessAudios`、`mindfulnessAudio`、`records[].audioId/audioName/audioCompleted`、`audio/.audio-guides.json`。
 
-修改注意事项：仅接受不超过 50MB 的 MP3；音频目录首次创建时复制 `bgm1.mp3`，之后删除不会自动恢复；每日任务不绑定具体音频，提前结束记录也计次。
+修改注意事项：仅接受不超过 50MB 的 MP3；目录首次创建时复制 `bgm1.mp3`；改名保留稳定 ID，删除使指定任务失效且不会由其他音频完成；历史记录保留当次 `audioName`。
 
-最近更新时间：2026-07-14
+最近更新时间：2026-07-15
 
 ---
 
@@ -310,9 +310,9 @@ P2：谨慎读取文件
 
 相关接口：`POST /api/users/:identifier/records`、`GET /api/users/:identifier/public`、`GET /u/:identifier`。
 
-修改注意事项：本地和云端记录字段必须兼容；正念记录使用 `audioName`、`audioCompleted` 且不展示错误率；服务器只保留近 90 天记录清理逻辑在启动时执行。
+修改注意事项：本地和云端记录字段必须兼容；正念记录使用 `audioId`、`audioName`、`audioCompleted` 且不展示错误率；服务器只保留近 90 天记录清理逻辑在启动时执行。
 
-最近更新时间：2026-07-14
+最近更新时间：2026-07-15
 
 ---
 
@@ -377,22 +377,22 @@ P2：谨慎读取文件
 
 相关接口：`GET /api/users/:identifier?date=YYYY-MM-DD`、`PUT /api/users/:identifier`、`POST /api/users`、`GET /u/:identifier`。
 
-修改注意事项：新增训练模式或任务字段时必须同时更新前端 `dailyTaskSpecs` 和后端 `SERVER_TASK_MATCH_FIELDS`；正念任务不绑定音频，任意正念记录均计次；模板自动生成机制依赖 `task_templates` 表，删除用户时需同步清理。
+修改注意事项：新增训练模式或任务字段时必须同时更新前端 `dailyTaskSpecs` 和后端 `SERVER_TASK_MATCH_FIELDS`；正念任务 `mode.audioId` 为空时匹配任意音频，指定已删除音频时显示“音频已删除”且不计次；模板自动生成机制依赖 `task_templates` 表，删除用户时需同步清理。
 
-最近更新时间：2026-07-14
+最近更新时间：2026-07-15
 
 ---
 
 ## 管理员面板与系统设置
 
-功能说明：点击标题 5 次打开管理员登录，输入密码后通过 `POST /api/admin/verify` 服务端校验，校验通过后进入管理面板，可查看用户列表、管理引导音频、重置密码、删除用户、设置系统时区，以及拖拽配置训练模式导航的显示与顺序。
+功能说明：点击标题 5 次打开管理员登录，输入密码后通过 `POST /api/admin/verify` 服务端校验，校验通过后进入管理面板，可查看用户列表、管理/排序引导音频、重置密码、删除用户、设置系统时区，以及拖拽配置训练模式导航的显示与顺序。
 
 用户入口：主页标题连续点击 5 次 -> 管理员登录弹窗 -> 输入密码 -> 服务端验证 -> 管理面板。
 
 P0：必须读取文件
 
-- `public/index.html`：`adminClickCount`、`adminAuthHeaders`、`applyTrainingNavigation`、`renderAdminTrainingNavigation`、用户管理函数、`loadAdminAudioGuides`、管理员登录处理
-- `src/routes.js`：`getTrainingNavigation`、`validateTrainingNavigation`、用户管理接口、`POST/PUT/DELETE /admin/audio-guides`、`GET /settings`、`PUT /admin/settings`、`POST /admin/verify`
+- `public/index.html`：`adminClickCount`、`adminAuthHeaders`、`applyTrainingNavigation`、`renderAdminTrainingNavigation`、`renderAdminAudioList`、`saveAdminAudioOrder`、用户管理函数、管理员登录处理
+- `src/routes.js`：`getTrainingNavigation`、`validateTrainingNavigation`、用户管理接口、`POST/PUT/DELETE /admin/audio-guides`、`PUT /admin/audio-guides/order`、`GET /settings`、`PUT /admin/settings`、`POST /admin/verify`
 
 P1：按需读取文件
 
@@ -404,15 +404,15 @@ P2：谨慎读取文件
 - `.env.example`
 - `docker-compose.yml`：确认生产环境变量时读取
 
-主要调用链：标题点击 -> 管理登录弹窗 -> `POST /api/admin/verify` -> 成功则打开面板并加载用户、设置、音频；模式导航 -> `GET /api/settings` -> `renderAdminTrainingNavigation()` -> 拖拽/勾选 -> `PUT /api/admin/settings` -> `settings.training_navigation` -> `applyTrainingNavigation()`；音频管理 -> Bearer 管理密码 -> `/api/admin/audio-guides`。
+主要调用链：标题点击 -> 管理登录弹窗 -> `POST /api/admin/verify` -> 成功则打开面板并加载用户、设置、音频；模式导航 -> `GET /api/settings` -> `renderAdminTrainingNavigation()` -> 拖拽/勾选 -> `PUT /api/admin/settings` -> `settings.training_navigation` -> `applyTrainingNavigation()`；音频排序 -> `renderAdminAudioList()` -> 拖拽/方向键 -> `PUT /api/admin/audio-guides/order`。
 
 相关状态：`adminPassword`、`adminClickCount`、`settings.timezone`、`settings.training_navigation`、前端 `appSettings.trainingNavigation`。
 
-相关接口：`GET /api/admin/users`、`GET /api/admin/users/:identifier`、`POST /api/admin/users/:identifier/password`、`DELETE /api/admin/users/:identifier`、`GET /api/settings`、`PUT /api/admin/settings`、`POST /api/admin/verify`。
+相关接口：`GET /api/admin/users`、`GET /api/admin/users/:identifier`、`POST /api/admin/users/:identifier/password`、`DELETE /api/admin/users/:identifier`、`PUT /api/admin/audio-guides/order`、`GET /api/settings`、`PUT /api/admin/settings`、`POST /api/admin/verify`。
 
 修改注意事项：管理员鉴权当前依赖环境变量 `ADMIN_PASSWORD`；接口受 `/api/admin` rate limit 保护。导航配置必须包含 7 个已知模式、无重复且至少一个可见；隐藏仅影响顶部导航，不影响每日任务配置和跳转。
 
-最近更新时间：2026-07-14
+最近更新时间：2026-07-15
 
 ---
 
