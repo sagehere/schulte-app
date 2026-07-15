@@ -259,7 +259,7 @@ P2：谨慎读取文件
 
 P0：必须读取文件
 
-- `public/index.html`：`buildMindfulness`、`loadMindfulnessAudios`、`setMindfulnessAudioSource`、`completeMindfulnessRound`、音频事件与管理员音频管理函数
+- `public/index.html`：`buildMindfulness`、练习前提示、`loadMindfulnessAudios`、`setMindfulnessAudioSource`、`completeMindfulnessRound`、音频事件与管理员音频管理函数
 - `src/audio-guides.js`：`syncCatalog`、`listAudioGuides`、`createAudioGuide`、`renameAudioGuide`、`deleteAudioGuide`、`reorderAudioGuides`
 - `src/routes.js`：`GET /audio-guides`、`GET /audio-guides/:id/file`、`POST/PUT/DELETE /admin/audio-guides`、`PUT /admin/audio-guides/order`
 - `src/utils.js`：`SERVER_TASK_MATCH_FIELDS.mindfulness`、`normalizeCloudRecord`、`trainingLabel`
@@ -354,11 +354,11 @@ P2：谨慎读取文件
 
 功能说明：用户/管理员可为用户配置当天训练任务，顶部任务条展示进度，点击任务可切换到对应训练配置；任务进度由当天训练记录匹配计算。服务端保存"任务模板"，每天 0:00（管理员时区）自动从模板生成当天任务，无需手动重复设置。
 
-用户入口：用户中心"每日任务"配置；顶部任务条；公开成绩页的任务进度。
+用户入口：用户中心"每日任务"配置（含拖动手柄或方向键排序）；顶部任务条；公开成绩页的任务进度。
 
 P0：必须读取文件
 
-- `public/index.html`：`dailyTaskSpecs`、`buildTaskMode`、`buildTaskFromControls`、`describeTask`、`recordMatchesTask`、`taskProgress`、`renderTitleTasks`、`renderTasks`、`activateTask`
+- `public/index.html`：`dailyTaskSpecs`、`buildTaskMode`、`buildTaskFromControls`、`describeTask`、`recordMatchesTask`、`taskProgress`、`renderTitleTasks`、`renderTasks`、`saveDailyTaskOrder`、`activateTask`
 - `src/utils.js`：`SERVER_TASK_MATCH_FIELDS`、`normalizeCloudTasks`、`recordCompletesCloudTask`、`applyCloudTrainingCompletionToTasks`、`cloudTaskText`
 - `src/routes.js`：`GET /users/:identifier`、`PUT /users/:identifier`、`POST /users`
 - `src/db.js`：`getTasks`、`putTasks`、`getTaskTemplate`、`setTaskTemplate`、`deleteTaskTemplate`
@@ -371,7 +371,7 @@ P2：谨慎读取文件
 
 - 完整 `public/index.html`
 
-主要调用链：用户中心添加任务 -> `buildTaskFromControls()` -> `persistUserCenter()` -> `PUT /api/users/:id` -> `db.putTasks()` + `db.setTaskTemplate()`；进度链为 `recordsForDate()` -> `taskProgress()` / 服务端 `applyCloudTrainingCompletionToTasks()`；自动重置链为 `GET /users/:identifier` / `GET /u/:identifier` -> `!tasks` -> `db.getTaskTemplate()` -> `db.putTasks()`。
+主要调用链：用户中心添加任务或完成排序 -> `buildTaskFromControls()` / `saveDailyTaskOrder()` -> `persistUserCenter()` -> `PUT /api/users/:id` -> `db.putTasks()` + `db.setTaskTemplate()`；进度链为 `recordsForDate()` -> `taskProgress()` / 服务端 `applyCloudTrainingCompletionToTasks()`；自动重置链为 `GET /users/:identifier` / `GET /u/:identifier` -> `!tasks` -> `db.getTaskTemplate()` -> `db.putTasks()`。
 
 相关状态：`dailyTasks`、当天日期 `todayKey()`、任务字段 `module/mode/targetCount/completedCount`、数据库 `task_templates` 表。
 

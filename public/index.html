@@ -254,12 +254,12 @@
       background: var(--paper);
     }
 
-    .admin-navigation-row.is-dragging {
+    .sortable-row.is-dragging {
       opacity: 0.55;
       pointer-events: none;
     }
 
-    .admin-navigation-handle {
+    .sortable-row-handle {
       min-width: 36px;
       min-height: 36px;
       padding: 0;
@@ -267,7 +267,7 @@
       touch-action: none;
     }
 
-    .admin-navigation-handle:active {
+    .sortable-row-handle:active {
       cursor: grabbing;
     }
 
@@ -399,6 +399,15 @@
       margin: 0;
       color: var(--muted);
       line-height: 1.5;
+    }
+
+    .mindfulness-instructions {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border: 1px solid var(--soft-line);
+      border-radius: var(--radius);
+      background: #fffdfa;
     }
 
     .board {
@@ -1132,7 +1141,7 @@
 
     .daily-task-row {
       display: grid;
-      grid-template-columns: auto minmax(0, 1.25fr) minmax(78px, 0.35fr) auto;
+      grid-template-columns: auto auto minmax(0, 1.25fr) minmax(78px, 0.35fr) auto;
       align-items: center;
       gap: 10px;
       padding: 10px;
@@ -1559,6 +1568,13 @@
             <div class="decode-answer-row" id="decodeAnswerPad"></div>
           </div>
           <div class="mindfulness-panel is-hidden" id="mindfulnessPanel" aria-label="正念练习">
+            <section class="mindfulness-instructions" aria-label="练习前提示">
+              <strong>开始前，请记住这几点：</strong>
+              <p>坐得舒服、身体坐稳，不需要刻意挺直。双脚尽量踩地，双手自然放在腿上。把玩具、铅笔等容易分心的东西先放到一边。</p>
+              <p>眼睛可以轻轻闭上，也可以看着前方一个固定的位置。练习时不要求完全不动，感觉不舒服可以慢慢调整。</p>
+              <p>走神或想动都没关系，发现以后，再把注意力带回声音和呼吸就可以。</p>
+              <p>准备好后，我们开始。</p>
+            </section>
             <label class="form-field">引导音频<select id="mindfulnessAudioSelect" disabled><option value="">正在加载音频...</option></select></label>
             <audio id="mindfulnessAudio" controls preload="metadata"></audio>
             <p id="mindfulnessAudioHint" aria-live="polite">选择引导音频后开始练习。</p>
@@ -2360,7 +2376,7 @@
       let adminPassword = "";
       let adminClickCount = 0;
       let adminClickTimer = 0;
-      let adminNavigationDrag = null;
+      let rowDrag = null;
 
       function loadCloudUser() {
         try {
@@ -2516,20 +2532,47 @@
         }
       }
 
-      function moveAdminNavigationRow(row, direction) {
+      function moveSortableRow(row, handle, direction) {
         const sibling = direction < 0 ? row.previousElementSibling : row.nextElementSibling;
-        if (!sibling) return;
+        if (!sibling) return false;
         if (direction < 0) sibling.before(row);
         else sibling.after(row);
-        row.querySelector(".admin-navigation-handle").focus();
+        handle.focus();
+        return true;
       }
 
-      function finishAdminNavigationDrag(event) {
-        if (!adminNavigationDrag || event.pointerId !== adminNavigationDrag.pointerId) return;
-        const { handle, row } = adminNavigationDrag;
+      function startRowDrag(event, row, handle, list, onMove) {
+        if (event.button !== 0) return;
+        event.preventDefault();
+        rowDrag = { row, handle, list, onMove, pointerId: event.pointerId, changed: false };
+        handle.setPointerCapture(event.pointerId);
+        row.classList.add("is-dragging");
+      }
+
+      function finishRowDrag(event) {
+        if (!rowDrag || event.pointerId !== rowDrag.pointerId) return;
+        const { handle, row, onMove, changed } = rowDrag;
         if (handle.hasPointerCapture(event.pointerId)) handle.releasePointerCapture(event.pointerId);
         row.classList.remove("is-dragging");
-        adminNavigationDrag = null;
+        rowDrag = null;
+        if (changed && onMove) onMove();
+      }
+
+      function createSortableRowHandle(row, list, label, onMove) {
+        const handle = document.createElement("button");
+        handle.className = "icon-button sortable-row-handle";
+        handle.type = "button";
+        handle.textContent = "⋮⋮";
+        handle.title = "拖动排序；可用方向键调整";
+        handle.setAttribute("aria-label", `调整${label}顺序`);
+        handle.addEventListener("pointerdown", (event) => startRowDrag(event, row, handle, list, onMove));
+        handle.addEventListener("keydown", (event) => {
+          const direction = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
+          if (!direction) return;
+          if (moveSortableRow(row, handle, direction) && onMove) onMove();
+          event.preventDefault();
+        });
+        return handle;
       }
 
       function renderAdminTrainingNavigation(navigation = appSettings.trainingNavigation) {
@@ -2537,27 +2580,9 @@
         const labels = new Map(trainingButtons.map((button) => [button.dataset.training, button.textContent]));
         normalizeTrainingNavigation(navigation).forEach((item) => {
           const row = document.createElement("div");
-          row.className = "admin-navigation-row";
+          row.className = "admin-navigation-row sortable-row";
           row.dataset.training = item.id;
-          const handle = document.createElement("button");
-          handle.className = "icon-button admin-navigation-handle";
-          handle.type = "button";
-          handle.textContent = "⋮⋮";
-          handle.title = "拖动排序；可用方向键调整";
-          handle.setAttribute("aria-label", `调整${labels.get(item.id)}顺序`);
-          handle.addEventListener("pointerdown", (event) => {
-            if (event.button !== 0) return;
-            event.preventDefault();
-            adminNavigationDrag = { row, handle, list: adminTrainingNavigationList, pointerId: event.pointerId };
-            handle.setPointerCapture(event.pointerId);
-            row.classList.add("is-dragging");
-          });
-          handle.addEventListener("keydown", (event) => {
-            if (event.key === "ArrowUp") moveAdminNavigationRow(row, -1);
-            else if (event.key === "ArrowDown") moveAdminNavigationRow(row, 1);
-            else return;
-            event.preventDefault();
-          });
+          const handle = createSortableRowHandle(row, adminTrainingNavigationList, labels.get(item.id));
           const label = document.createElement("span");
           label.textContent = labels.get(item.id);
           const visible = document.createElement("label");
@@ -2580,16 +2605,17 @@
       }
 
       document.addEventListener("pointermove", (event) => {
-        if (!adminNavigationDrag || event.pointerId !== adminNavigationDrag.pointerId) return;
-        const target = document.elementFromPoint(event.clientX, event.clientY)?.closest(".admin-navigation-row");
-        const { row, list } = adminNavigationDrag;
+        if (!rowDrag || event.pointerId !== rowDrag.pointerId) return;
+        const target = document.elementFromPoint(event.clientX, event.clientY)?.closest(".sortable-row");
+        const { row, list } = rowDrag;
         if (!target || target === row || target.parentElement !== list) return;
         const bounds = target.getBoundingClientRect();
         if (event.clientY < bounds.top + bounds.height / 2) target.before(row);
         else target.after(row);
+        rowDrag.changed = true;
       });
-      document.addEventListener("pointerup", finishAdminNavigationDrag);
-      document.addEventListener("pointercancel", finishAdminNavigationDrag);
+      document.addEventListener("pointerup", finishRowDrag);
+      document.addEventListener("pointercancel", finishRowDrag);
 
       async function loadSettings() {
         try {
@@ -2851,7 +2877,9 @@
         dailyTaskList.replaceChildren(...dailyTasks.map((task) => {
           const progress = taskProgress(task);
           const row = document.createElement("article");
-          row.className = `daily-task-row${progress.done ? " done" : ""}`;
+          row.className = `daily-task-row sortable-row${progress.done ? " done" : ""}`;
+          row.dataset.taskId = task.id;
+          const handle = createSortableRowHandle(row, dailyTaskList, taskModuleLabel(task.module), saveDailyTaskOrder);
           const check = document.createElement("input");
           check.type = "checkbox";
           check.checked = progress.done;
@@ -2881,9 +2909,22 @@
             dailyTasks = dailyTasks.filter((item) => item.id !== task.id);
             persistUserCenter();
           });
-          row.append(check, text, count, remove);
+          row.append(handle, check, text, count, remove);
           return row;
         }));
+      }
+
+      function saveDailyTaskOrder() {
+        const tasksById = new Map();
+        dailyTasks.forEach((task) => {
+          const tasks = tasksById.get(task.id) || [];
+          tasks.push(task);
+          tasksById.set(task.id, tasks);
+        });
+        dailyTasks = [...dailyTaskList.children]
+          .map((row) => tasksById.get(row.dataset.taskId)?.shift())
+          .filter(Boolean);
+        persistUserCenter();
       }
 
       function renderDailyScores() {
@@ -3330,27 +3371,9 @@
         }
         audios.forEach((audio) => {
           const row = document.createElement("div");
-          row.className = "admin-navigation-row";
+          row.className = "admin-navigation-row sortable-row";
           row.dataset.audioId = audio.id;
-          const handle = document.createElement("button");
-          handle.className = "icon-button admin-navigation-handle";
-          handle.type = "button";
-          handle.textContent = "⋮⋮";
-          handle.title = "拖动排序；可用方向键调整";
-          handle.setAttribute("aria-label", `调整${audio.name}顺序`);
-          handle.addEventListener("pointerdown", (event) => {
-            if (event.button !== 0) return;
-            event.preventDefault();
-            adminNavigationDrag = { row, handle, list: adminAudioList, pointerId: event.pointerId };
-            handle.setPointerCapture(event.pointerId);
-            row.classList.add("is-dragging");
-          });
-          handle.addEventListener("keydown", (event) => {
-            if (event.key === "ArrowUp") moveAdminNavigationRow(row, -1);
-            else if (event.key === "ArrowDown") moveAdminNavigationRow(row, 1);
-            else return;
-            event.preventDefault();
-          });
+          const handle = createSortableRowHandle(row, adminAudioList, audio.name);
           const label = document.createElement("span");
           label.textContent = audio.name;
           const info = document.createElement("div");
