@@ -332,10 +332,10 @@ function deleteTasks(userId, date) {
 }
 
 // Records operations
-function getRecords(userId, limit = 500) {
+function getRecords(userId) {
   const results = [];
-  const stmt = db.prepare('SELECT record_json FROM records WHERE user_id = ? ORDER BY created_at DESC LIMIT ?');
-  stmt.bind([userId, limit]);
+  const stmt = db.prepare('SELECT record_json FROM records WHERE user_id = ? ORDER BY created_at DESC');
+  stmt.bind([userId]);
   while (stmt.step()) {
     try {
       results.push(JSON.parse(stmt.get()[0]));

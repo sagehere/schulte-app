@@ -285,13 +285,13 @@ P2：谨慎读取文件
 
 ## 成绩记录与统计
 
-功能说明：本地记录每次训练成绩，展示当前模式统计并可清空当前模式记录；正念模式展示累计/平均时长与完整播放次数；登录用户会同步记录到云端。
+功能说明：本地记录每次训练成绩，展示当前模式统计并可清空当前模式记录；用户中心“每日成绩”展示指定日期明细和各训练模式近 90 天趋势，支持配置/指标筛选；正念模式展示累计/平均时长与完整播放次数；登录用户会同步记录到云端。
 
 用户入口：完成训练结果弹窗；“成绩记录”按钮；“清空当前模式”按钮；公开成绩页。
 
 P0：必须读取文件
 
-- `public/index.html`：`loadRecords`、`saveRecords`、`addRecord`、`syncRecordToCloud`、`recordsForCurrentTraining`、`refreshStats`、`refreshScorePanel`、`createRecordNode`、`renderFullRecords`、`showResult`、`clearRecords`
+- `public/index.html`：`loadRecords`、`saveRecords`、`addRecord`、`recordsForDate`、`buildTrendSeries`、`renderDailyTrends`、`syncRecordToCloud`、`recordsForCurrentTraining`、`refreshStats`、`refreshScorePanel`、`createRecordNode`、`renderFullRecords`、`showResult`、`clearRecords`
 - `src/routes.js`：`POST /users/:identifier/records`、`GET /users/:identifier/public`
 - `src/db.js`：`putRecord`、`getRecords`、`pruneAllOldRecords`
 
@@ -304,13 +304,13 @@ P2：谨慎读取文件
 
 - 数据库文件或 `data/` 目录：涉及生产数据，默认不要读取
 
-主要调用链：训练完成 -> `addRecord(record)` -> `saveRecords()` -> `syncRecordToCloud(record)` -> `POST /api/users/:identifier/records` -> `db.putRecord()`；下载链为 `loadUserCenter()` -> `GET /api/users/:identifier/public` -> `mergeSyncedRecords()`；统计链为 `refreshScorePanel()` -> `refreshStats()` + `renderFullRecords()`。
+主要调用链：训练完成 -> `addRecord(record)` -> `saveRecords()` -> `syncRecordToCloud(record)` -> `POST /api/users/:identifier/records` -> `db.putRecord()`；下载链为 `loadUserCenter()` -> `GET /api/users/:identifier/public` -> `mergeSyncedRecords()`；趋势链为 `renderDailyScores()` / `addRecord()` -> `renderDailyTrends()` -> `buildTrendSeries()` -> 原生 SVG；统计链为 `refreshScorePanel()` -> `refreshStats()` + `renderFullRecords()`。
 
 相关状态：`records`、localStorage 成绩键、云端 `records` 表。
 
 相关接口：`POST /api/users/:identifier/records`、`GET /api/users/:identifier/public`、`GET /u/:identifier`。
 
-修改注意事项：本地和云端记录字段必须兼容；记忆新增可选 `memorySpan`，旧记录不推测评分；评分依据见 `docs/ai/SCORING_REFERENCE.md`；正念记录使用 `audioId`、`audioName`、`audioCompleted` 且不展示错误率；服务器只保留近 90 天记录清理逻辑在启动时执行。
+修改注意事项：本地和云端记录字段必须兼容；每日归日必须使用管理员时区，趋势窗口为今天含在内的 90 个日历日；趋势默认可合并配置，比较用时应筛选同配置；记忆新增可选 `memorySpan`，旧记录不推测评分；评分依据见 `docs/ai/SCORING_REFERENCE.md`；正念记录使用 `audioId`、`audioName`、`audioCompleted` 且不展示错误率；服务器只保留近 90 天记录清理逻辑在启动时执行。
 
 最近更新时间：2026-07-16
 

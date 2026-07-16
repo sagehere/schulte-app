@@ -11,6 +11,7 @@ const apiRoutes = require('./routes');
 const { getIndexHtml, renderPublicUserPage } = require('./html');
 const {
   todayDateKey,
+  recordDateKey,
   normalizeCloudTasks,
   applyCloudTrainingCompletionToTasks,
   validIdentifier
@@ -79,10 +80,7 @@ app.get('/u/:identifier', (req, res) => {
     }
   }
   tasks = normalizeCloudTasks(tasks);
-  const todayRecords = records.filter((r) => {
-    const d = String(r.date || '').slice(0, 10);
-    return d === today;
-  });
+  const todayRecords = records.filter((record) => recordDateKey(record, timeZone) === today);
   const audioNames = new Map(audioGuides.listAudioGuides().map((audio) => [audio.id, audio.name]));
   tasks = applyCloudTrainingCompletionToTasks(tasks, todayRecords, (id) => audioNames.has(id));
 

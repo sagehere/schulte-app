@@ -339,9 +339,12 @@ function formatLocalTime(iso, timeZone) {
   return `${value.hour}:${value.minute}`;
 }
 
-function recordDateKey(record) {
-  const date = String(record && record.date || '').slice(0, 10);
-  return isDateKey(date) ? date : '';
+function recordDateKey(record, timeZone) {
+  const value = record && record.date;
+  const date = new Date(value);
+  if (!Number.isNaN(date.getTime())) return localDateKey(date, timeZone);
+  const fallback = String(value || '').slice(0, 10);
+  return isDateKey(fallback) ? fallback : '';
 }
 
 function validIdentifier(value) {

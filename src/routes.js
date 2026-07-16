@@ -402,7 +402,7 @@ router.get('/users/:identifier/public', (req, res) => {
   const stored = db.getUser(identifier);
   if (!stored) return res.status(404).json({ ok: false, error: '用户不存在' });
 
-  const records = db.getRecords(identifier, 100);
+  const records = db.getRecords(identifier);
   res.json({ ok: true, user: publicCloudUserSummary(stored), records });
 });
 

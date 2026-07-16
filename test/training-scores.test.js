@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
   normalizeCloudRecord,
+  recordDateKey,
   scoreCloudTrainingRecord,
   scoreTrainingRecord
 } = require('../src/utils');
@@ -36,4 +37,10 @@ test('cloud scoring uses the age on the record date', () => {
     [], [], [record], 'Asia/Shanghai'
   );
   assert.match(page, /等第：良好（训练参考，非医学诊断）/);
+});
+
+test('record dates use the configured timezone', () => {
+  const record = { date: '2026-07-15T16:30:00.000Z' };
+  assert.equal(recordDateKey(record, 'Asia/Shanghai'), '2026-07-16');
+  assert.equal(recordDateKey(record, 'America/Los_Angeles'), '2026-07-15');
 });

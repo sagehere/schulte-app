@@ -39,7 +39,7 @@ function renderPublicUserPage(stored, todayRecords, tasks, records, timeZone, au
     : '<p class="empty">今日暂无任务</p>';
 
   const byDate = records.reduce((map, record) => {
-    const date = recordDateKey(record) || '未知日期';
+    const date = recordDateKey(record, timeZone) || '未知日期';
     (map[date] ||= []).push(record);
     return map;
   }, {});

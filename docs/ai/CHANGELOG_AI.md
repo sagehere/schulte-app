@@ -2,6 +2,18 @@
 
 本文件记录 AI 对仓库的维护历史。每次 AI 修改后追加一条，最新记录放在顶部或底部均可，但保持格式一致。
 
+## 2026-07-16
+
+- 类型：功能新增
+- 任务：在用户中心每日成绩增加各训练模式近 90 天指标趋势图。
+- 修改文件：
+  - `public/index.html`：新增模式/配置/指标切换、每日原始值与 7 日趋势 SVG 图、90 天本地记录保留和时区归日。
+  - `src/db.js`、`src/routes.js`：公开成绩同步返回服务器保留的完整近 90 天记录。
+  - `src/utils.js`、`src/index.js`、`src/html.js`：统一按管理员时区归类每日记录与公开页任务进度。
+  - `test/frontend-trends.test.js`、`test/training-scores.test.js`、`test/records-public-api.test.js`：覆盖趋势聚合、正念指标、跨午夜时区归日和完整成绩同步。
+  - `docs/ai/FEATURE_INDEX.md`：更新成绩统计功能锚点和调用链。
+- 验证：`npm test` 通过（13/13）；`node --check src/db.js src/routes.js src/utils.js src/index.js src/html.js` 通过；本地 `/health` 正常。浏览器运行环境无法连接宿主机 `127.0.0.1`，视觉烟测待可访问本地服务的环境执行。
+
 ## 2026-07-15
 
 - 类型：功能优化
