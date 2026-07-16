@@ -4,6 +4,17 @@
 
 ## 2026-07-16
 
+- 类型：功能优化
+- 任务：将用户中心的近 90 天趋势迁移到公开每日成绩页 `/u/:identifier`，并改为入口按钮。
+- 修改文件：
+  - `public/index.html`：移除用户中心趋势图，保留单日成绩并新增新标签打开的趋势入口。
+  - `src/html.js`：公开页新增原生 SVG 趋势图及模式、配置、指标筛选；安全内嵌成绩 JSON。
+  - `test/frontend-trends.test.js`、`test/mindfulness-records.test.js`：迁移趋势测试锚点并覆盖新页面入口。
+  - `docs/ai/FEATURE_INDEX.md`：更新成绩、用户中心与公开成绩页调用链。
+- 验证：`node --check src/html.js`、`npm test`（15/15）通过。
+
+## 2026-07-16
+
 - 类型：功能新增
 - 任务：在用户中心每日成绩增加各训练模式近 90 天指标趋势图。
 - 修改文件：

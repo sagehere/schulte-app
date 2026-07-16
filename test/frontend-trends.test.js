@@ -2,9 +2,10 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
+const { renderPublicUserPage } = require('../src/html');
 
 function trendCore() {
-  const html = fs.readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8');
+  const html = renderPublicUserPage({ identifier: 'demo', username: '演示', birthDate: '' }, [], [], [], 'Asia/Shanghai');
   const start = html.indexOf('/* trend-core:start */');
   const end = html.indexOf('/* trend-core:end */');
   assert.ok(start >= 0 && end > start, 'trend core markers must exist');
@@ -43,4 +44,22 @@ test('mindfulness trends use duration and completion rate', () => {
   assert.equal(series.values.practice.at(-1), 90000);
   assert.equal(series.values.completion.at(-1), 50);
   assert.equal(series.values.count.at(-1), 2);
+});
+
+test('trend UI is served from the public daily-score page', () => {
+  const mainPage = fs.readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8');
+  const publicPage = renderPublicUserPage({ identifier: 'demo', username: '演示', birthDate: '' }, [], [], [], 'Asia/Shanghai');
+
+  assert.match(mainPage, /id="dailyScoresLink"[^>]*target="_blank"/);
+  assert.doesNotMatch(mainPage, /id="trendChart"/);
+  assert.match(publicPage, /id="trendChart"/);
+  assert.match(publicPage, /近 90 天趋势/);
+  const script = publicPage.match(/<script>([\s\S]*)<\/script>/)?.[1];
+  assert.ok(script, 'public trend script must exist');
+  assert.doesNotThrow(() => new Function(script));
+
+  const unsafePage = renderPublicUserPage({ identifier: 'demo', username: '演示', birthDate: '' }, [], [], [{ type: 'mindfulness', audioName: '</script>', date: '2026-07-16T00:00:00.000Z' }], 'Asia/Shanghai');
+  const trendData = unsafePage.match(/<script id="trendData" type="application\/json">([\s\S]*?)<\/script>/)?.[1];
+  assert.ok(trendData && !trendData.includes('</script>'));
+  assert.equal(JSON.parse(trendData).records[0].audioName, '</script>');
 });

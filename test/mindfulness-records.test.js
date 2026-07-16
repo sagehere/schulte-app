@@ -29,5 +29,5 @@ test('mindfulness records retain snapshots and honor optional audio bindings', (
   assert.match(page, /晨间呼吸/);
   assert.match(page, /改名后的晨间呼吸/);
   assert.match(page, /完整播放/);
-  assert.doesNotMatch(page, /正确率/);
+  assert.doesNotMatch(page, /音频 晨间呼吸[^<]*正确率/);
 });

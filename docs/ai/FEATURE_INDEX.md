@@ -285,26 +285,26 @@ P2：谨慎读取文件
 
 ## 成绩记录与统计
 
-功能说明：本地记录每次训练成绩，展示当前模式统计并可清空当前模式记录；用户中心“每日成绩”展示指定日期明细和各训练模式近 90 天趋势，支持配置/指标筛选；正念模式展示累计/平均时长与完整播放次数；登录用户会同步记录到云端。
+功能说明：本地记录每次训练成绩，展示当前模式统计并可清空当前模式记录；用户中心“每日成绩”仅展示指定日期明细，并提供前往公开每日成绩页的趋势入口；公开页展示各训练模式近 90 天趋势，支持配置/指标筛选；正念模式展示累计/平均时长与完整播放次数；登录用户会同步记录到云端。
 
 用户入口：完成训练结果弹窗；“成绩记录”按钮；“清空当前模式”按钮；公开成绩页。
 
 P0：必须读取文件
 
-- `public/index.html`：`loadRecords`、`saveRecords`、`addRecord`、`recordsForDate`、`buildTrendSeries`、`renderDailyTrends`、`syncRecordToCloud`、`recordsForCurrentTraining`、`refreshStats`、`refreshScorePanel`、`createRecordNode`、`renderFullRecords`、`showResult`、`clearRecords`
+- `public/index.html`：`loadRecords`、`saveRecords`、`addRecord`、`recordsForDate`、`syncRecordToCloud`、`recordsForCurrentTraining`、`refreshStats`、`refreshScorePanel`、`createRecordNode`、`renderFullRecords`、`showResult`、`clearRecords`
 - `src/routes.js`：`POST /users/:identifier/records`、`GET /users/:identifier/public`
 - `src/db.js`：`putRecord`、`getRecords`、`pruneAllOldRecords`
 
 P1：按需读取文件
 
 - `src/utils.js`：`scoreCloudRecord`、`normalizeCloudRecord`、`formatPracticeMs`、`trainingLabel`
-- `src/html.js`：公开页成绩渲染与训练参考等第展示
+- `src/html.js`：公开页成绩渲染、近 90 天趋势原生 SVG 与训练参考等第展示
 
 P2：谨慎读取文件
 
 - 数据库文件或 `data/` 目录：涉及生产数据，默认不要读取
 
-主要调用链：训练完成 -> `addRecord(record)` -> `saveRecords()` -> `syncRecordToCloud(record)` -> `POST /api/users/:identifier/records` -> `db.putRecord()`；下载链为 `loadUserCenter()` -> `GET /api/users/:identifier/public` -> `mergeSyncedRecords()`；趋势链为 `renderDailyScores()` / `addRecord()` -> `renderDailyTrends()` -> `buildTrendSeries()` -> 原生 SVG；统计链为 `refreshScorePanel()` -> `refreshStats()` + `renderFullRecords()`。
+主要调用链：训练完成 -> `addRecord(record)` -> `saveRecords()` -> `syncRecordToCloud(record)` -> `POST /api/users/:identifier/records` -> `db.putRecord()`；下载链为 `loadUserCenter()` -> `GET /api/users/:identifier/public` -> `mergeSyncedRecords()`；趋势链为 `GET /u/:identifier` -> `renderPublicUserPage()` -> `buildTrendSeries()` -> 原生 SVG；统计链为 `refreshScorePanel()` -> `refreshStats()` + `renderFullRecords()`。
 
 相关状态：`records`、localStorage 成绩键、云端 `records` 表。
 
@@ -318,9 +318,9 @@ P2：谨慎读取文件
 
 ## 用户中心、登录与云端同步
 
-功能说明：用户可通过识别码/密码登录，登录后自动同步每日任务和练习记录；新用户可通过"注册用户"按钮打开独立注册弹窗创建账号；已登录用户可编辑用户名和生日，保存每日任务，登出。
+功能说明：用户可通过识别码/密码登录，登录后自动同步每日任务和练习记录；新用户可通过"注册用户"按钮打开独立注册弹窗创建账号；已登录或已载入识别码的用户可通过“查看近 90 天趋势”按钮在新标签打开公开每日成绩页。
 
-用户入口：顶部"用户中心"按钮；用户中心内"注册用户"按钮；用户中心内"登录并同步数据"按钮。
+用户入口：顶部"用户中心"按钮；用户中心内"注册用户"按钮；用户中心内"登录并同步数据"按钮；用户中心内"查看近 90 天趋势"按钮。
 
   P0：必须读取文件
 
@@ -344,9 +344,9 @@ P2：谨慎读取文件
 
 相关接口：`POST /api/users`、`GET /api/users/:identifier`、`PUT /api/users/:identifier`、`DELETE /api/users/:identifier`、`POST /api/users/:identifier/login`、`POST /api/users/:identifier/verify-session`。
 
-修改注意事项：不要把明文密码或 session hash 返回给前端；修改识别码时必须保持用户、任务、成绩表同步迁移；登录接口必须验证密码后才返回 sessionToken；verify-session 端点只做 token 校验，不应返回敏感信息；`applyUserToForm` 控制用户资料编辑字段的可见性。
+修改注意事项：不要把明文密码或 session hash 返回给前端；修改识别码时必须保持用户、任务、成绩表同步迁移；登录接口必须验证密码后才返回 sessionToken；verify-session 端点只做 token 校验，不应返回敏感信息；`applyUserToForm` 控制用户资料编辑字段与公开成绩页链接的可见性和 URL。
 
-最近更新时间：2026-06-12
+最近更新时间：2026-07-16
 
 ---
 
@@ -418,14 +418,14 @@ P2：谨慎读取文件
 
 ## 公开用户成绩页
 
-功能说明：无需登录即可查看指定用户当天任务进度和近 90 天训练记录摘要。
+功能说明：无需登录即可查看指定用户当天任务进度、近 90 天训练记录摘要，以及按训练模式、配置和指标筛选的近 90 天趋势图。
 
 用户入口：访问 `/u/:identifier`；API `/api/users/:identifier/public`。
 
 P0：必须读取文件
 
 - `src/index.js`：`GET /u/:identifier`
-- `src/html.js`：`renderPublicUserPage`
+- `src/html.js`：`renderPublicUserPage`、`TREND_SCRIPT`、`TREND_RENDER_SCRIPT`、`TREND_BOOTSTRAP_SCRIPT`
 - `src/utils.js`：`applyCloudTrainingCompletionToTasks`、`cloudTaskText`、`scoreCloudSchulte`、`formatPracticeMs`、`trainingLabel`
 
 P1：按需读取文件
@@ -443,9 +443,9 @@ P2：谨慎读取文件
 
 相关接口：`GET /u/:identifier`、`GET /api/users/:identifier/public`。
 
-修改注意事项：公开页必须避免泄露密码/session/token 字段；服务端渲染字符串需使用 `escapeHtml`。
+修改注意事项：公开页必须避免泄露密码/session/token 字段；服务端渲染字符串需使用 `escapeHtml`；内嵌趋势记录 JSON 必须转义 `<`，避免用户内容闭合 script 标签。
 
-最近更新时间：2026-06-12
+最近更新时间：2026-07-16
 
 ---
 
