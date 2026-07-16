@@ -1,6 +1,6 @@
 # Feature Index
 
-最近更新时间：2026-07-15
+最近更新时间：2026-07-16
 
 说明：P0 是默认必读文件；P1 是跨功能或后端联动时按需读取；P2 是大文件、部署文件、锁文件或历史说明，读取前应说明原因。`public/index.html` 是单文件前端，读取时优先按下列函数/DOM 锚点定向读取。
 
@@ -98,11 +98,11 @@ P2：谨慎读取文件
 
 P0：必须读取文件
 
-- `public/index.html`：`buildStroop`、`renderColorChoices`、`nextStroopPrompt`、`handleColorChoice`、`completeStroopRound`、`stroopTextAnswerOn`
+- `public/index.html`：`buildStroop`、`renderColorChoices`、`nextStroopPrompt`、`handleColorChoice`、`completeStroopRound`、`stroopTextAnswerOn`、`scoreTrainingRecord`
 
 P1：按需读取文件
 
-- `src/utils.js`：`normalizeCloudRecord`、`trainingLabel`、`SERVER_TASK_MATCH_FIELDS.stroop`
+- `src/utils.js`：`scoreTrainingRecord`、`scoreCloudTrainingRecord`、`normalizeCloudRecord`、`trainingLabel`、`SERVER_TASK_MATCH_FIELDS.stroop`
 - `src/routes.js`：成绩保存与任务读取接口
 
 P2：谨慎读取文件
@@ -115,9 +115,9 @@ P2：谨慎读取文件
 
 相关接口：`POST /api/users/:identifier/records`。
 
-修改注意事项：任务匹配依赖 `textAnswer`；若增加题量/颜色字段，要同步前后端任务描述和 record 归一化。
+修改注意事项：任务匹配依赖 `textAnswer`；评分为训练参考，文字答案模式复用同龄阈值；若增加题量/颜色字段，要同步前后端任务描述和 record 归一化。
 
-最近更新时间：2026-06-12
+最近更新时间：2026-07-16
 
 ---
 
@@ -197,11 +197,11 @@ P2：谨慎读取文件
 
 P0：必须读取文件
 
-- `public/index.html`：`buildMemory`、`startMemoryTraining`、`addMemoryTarget`、`showMemoryPreview`、`replayMemoryPreview`、`handleMemoryCell`、`completeMemoryRound`
+- `public/index.html`：`buildMemory`、`startMemoryTraining`、`addMemoryTarget`、`showMemoryPreview`、`replayMemoryPreview`、`handleMemoryCell`、`completeMemoryRound`、`memorySpan`
 
 P1：按需读取文件
 
-- `src/utils.js`：`normalizeCloudRecord`、`trainingLabel`、`memoryReplaySuffix`
+- `src/utils.js`：`scoreTrainingRecord`、`normalizeCloudRecord`、`trainingLabel`、`memoryReplaySuffix`
 - `src/routes.js`：成绩保存接口
 
 P2：谨慎读取文件
@@ -210,13 +210,13 @@ P2：谨慎读取文件
 
 主要调用链：`setTraining('memory')` -> `buildMemory()` -> `startMemoryTraining()` -> `showMemoryPreview()` -> `handleMemoryCell()` -> `completeMemoryRound()` -> `addRecord()`。
 
-相关状态：`memoryActive`、`memoryPreviewing`、`memoryTargets`、`memoryReplayCount`、`memoryTotalRounds`、`records`。
+相关状态：`memoryActive`、`memoryPreviewing`、`memoryTargets`、`memoryReplayCount`、`memorySpan`、`memoryTotalRounds`、`records`。
 
 相关接口：`POST /api/users/:identifier/records`。
 
-修改注意事项：记忆训练的完成逻辑不同于普通点击网格；修改按钮状态时要验证重播禁用/启用和完成后记录字段。
+修改注意事项：`memorySpan` 仅在当前轮无错误且未复现时提升；旧记录缺少该字段时显示暂无跨度数据，不得推测。
 
-最近更新时间：2026-06-12
+最近更新时间：2026-07-16
 
 ---
 
@@ -228,11 +228,11 @@ P2：谨慎读取文件
 
 P0：必须读取文件
 
-- `public/index.html`：`buildDecode`、`renderDecodeAnswerPad`、`refreshDecodeCursor`、`handleDecodeChoice`、`completeDecodeRound`、`decodeReverseOn`
+- `public/index.html`：`buildDecode`、`renderDecodeAnswerPad`、`refreshDecodeCursor`、`handleDecodeChoice`、`completeDecodeRound`、`decodeReverseOn`、`scoreTrainingRecord`
 
 P1：按需读取文件
 
-- `src/utils.js`：`normalizeCloudRecord`、`trainingLabel`、`SERVER_TASK_MATCH_FIELDS.decode`
+- `src/utils.js`：`scoreTrainingRecord`、`scoreCloudTrainingRecord`、`normalizeCloudRecord`、`trainingLabel`、`SERVER_TASK_MATCH_FIELDS.decode`
 - `src/routes.js`：成绩保存与任务读取接口
 
 P2：谨慎读取文件
@@ -245,9 +245,9 @@ P2：谨慎读取文件
 
 相关接口：`POST /api/users/:identifier/records`。
 
-修改注意事项：任务匹配依赖 `reverse`；如果修改符号表或题量，要同步记录展示和每日任务描述。
+修改注意事项：任务匹配依赖 `reverse`；评分为训练参考，反向模式复用同龄阈值；如果修改符号表或题量，要同步记录展示和每日任务描述。
 
-最近更新时间：2026-06-12
+最近更新时间：2026-07-16
 
 ---
 
@@ -297,8 +297,8 @@ P0：必须读取文件
 
 P1：按需读取文件
 
-- `src/utils.js`：`normalizeCloudRecord`、`formatPracticeMs`、`trainingLabel`
-- `src/html.js`：公开页成绩渲染
+- `src/utils.js`：`scoreCloudRecord`、`normalizeCloudRecord`、`formatPracticeMs`、`trainingLabel`
+- `src/html.js`：公开页成绩渲染与训练参考等第展示
 
 P2：谨慎读取文件
 
@@ -310,9 +310,9 @@ P2：谨慎读取文件
 
 相关接口：`POST /api/users/:identifier/records`、`GET /api/users/:identifier/public`、`GET /u/:identifier`。
 
-修改注意事项：本地和云端记录字段必须兼容；正念记录使用 `audioId`、`audioName`、`audioCompleted` 且不展示错误率；服务器只保留近 90 天记录清理逻辑在启动时执行。
+修改注意事项：本地和云端记录字段必须兼容；记忆新增可选 `memorySpan`，旧记录不推测评分；评分依据见 `docs/ai/SCORING_REFERENCE.md`；正念记录使用 `audioId`、`audioName`、`audioCompleted` 且不展示错误率；服务器只保留近 90 天记录清理逻辑在启动时执行。
 
-最近更新时间：2026-07-15
+最近更新时间：2026-07-16
 
 ---
 

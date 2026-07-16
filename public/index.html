@@ -2314,6 +2314,9 @@
       let memoryPreviewing = false;
       let memoryPreviewTimer = 0;
       let memoryReplayCount = 0;
+      let memoryRoundHadError = false;
+      let memoryRoundReplayed = false;
+      let memorySpan = 0;
       let poems = parsePoems(fallbackPoemSource);
       let currentPoem = null;
       let poemChars = [];
@@ -2368,6 +2371,20 @@
           preTeen:    { excellent: 70,  good: 85,  middle: 100 },
           teen:       { excellent: 50,  good: 65,  middle: 80 },
           adult:      { excellent: 35,  good: 45,  middle: 60 }
+        }
+      };
+      const trainingScoreRules = {
+        stroop: {
+          "7-8": [24, 28, 32], "9-11": [21, 24, 27], "12-16": [20, 23, 26],
+          "17-39": [17, 19, 22], "40-59": [18, 21, 24], "60+": [23, 26, 30]
+        },
+        memory: {
+          "7-8": [6, 5, 4], "9-11": [7, 6, 5], "12-16": [8, 7, 6],
+          "17-39": [8, 7, 6], "40-59": [7, 6, 5], "60+": [6, 5, 4]
+        },
+        decode: {
+          "7-8": [53.3, 64, 77.8], "9-11": [43.8, 52, 60.8], "12-16": [31.8, 36.5, 44],
+          "17-39": [31, 33.4, 38.3], "40-59": [32.8, 36.4, 42.5], "60+": [40.3, 47.2, 53.3]
         }
       };
             let cloudUser = loadCloudUser();
@@ -2499,6 +2516,49 @@
         if (seconds < rule.good) return "良好";
         if (seconds < rule.middle) return "中等";
         return "需努力";
+      }
+
+      function trainingAgeBucket(age) {
+        const value = Number(age);
+        if (value < 7) return "under7";
+        if (value <= 8) return "7-8";
+        if (value <= 11) return "9-11";
+        if (value <= 16) return "12-16";
+        if (value <= 39) return "17-39";
+        if (value <= 59) return "40-59";
+        return "60+";
+      }
+
+      function scoreTrainingRecord(record, birthDate) {
+        const type = record?.type;
+        if (!trainingScoreRules[type]) return "";
+        const age = calculateAge(birthDate, record.date ? new Date(record.date) : new Date());
+        if (age === null) return "需填写出生日期";
+        if (type === "decode" && age < 8) return "8岁以下暂无适龄评分标准";
+        if (type !== "decode" && age < 7) return "7岁以下暂无适龄评分标准";
+        if (type === "memory" && (record.memorySpan === undefined || record.memorySpan === null || record.memorySpan === "")) {
+          return "旧记录暂无跨度数据";
+        }
+        if (Number(record.accuracy) <= 80) return "需努力";
+        const rule = trainingScoreRules[type][trainingAgeBucket(age)];
+        if (type === "memory") {
+          const span = Math.max(0, Number(record.memorySpan) || 0);
+          if (span >= rule[0]) return "优秀";
+          if (span >= rule[1]) return "良好";
+          if (span >= rule[2]) return "中等";
+          return "需努力";
+        }
+        const seconds = Math.max(0, Number(record.timeMs) || 0) / 1000;
+        if (seconds <= rule[0]) return "优秀";
+        if (seconds <= rule[1]) return "良好";
+        if (seconds <= rule[2]) return "中等";
+        return "需努力";
+      }
+
+      function scoreRecord(record, birthDate) {
+        return (record.type || "schulte") === "schulte"
+          ? scoreSchulteRecord(record, birthDate)
+          : scoreTrainingRecord(record, birthDate);
       }
 
       function normalizeTrainingNavigation(navigation) {
@@ -2939,15 +2999,7 @@
         practiceSummary.className = "notice";
         practiceSummary.textContent = `当日累计练习时长${formatPracticeDuration(dailyPracticeMs(date))}`;
         dailyScoreList.replaceChildren(practiceSummary, ...dayRecords.map((record) => {
-          const node = createRecordNode(record);
-          const rating = scoreSchulteRecord(record, birthDateInput.value);
-          if (rating) {
-            const ratingNode = document.createElement("div");
-            ratingNode.className = "score-rating";
-            ratingNode.textContent = `评分${rating}`;
-            node.append(ratingNode);
-          }
-          return node;
+          return createRecordNode(record);
         }));
       }
 
@@ -3583,6 +3635,9 @@
         finished = false;
         memoryPreviewing = false;
         memoryReplayCount = 0;
+        memoryRoundHadError = false;
+        memoryRoundReplayed = false;
+        memorySpan = 0;
         errors = 0;
         elapsedMs = 0;
         mindfulnessAudio.pause();
@@ -3991,6 +4046,9 @@
         memoryActive = false;
         memoryPreviewing = false;
         memoryReplayCount = 0;
+        memoryRoundHadError = false;
+        memoryRoundReplayed = false;
+        memorySpan = 0;
         targetLabel.textContent = "轮次";
         targetText.textContent = "待开始";
         resetButton.textContent = "重置记忆";
@@ -4075,6 +4133,7 @@
       function replayMemoryPreview() {
         if (currentTraining !== "memory" || !memoryActive || finished || memoryPreviewing || !memoryTargets.length) return;
         memoryReplayCount += 1;
+        memoryRoundReplayed = true;
         window.clearTimeout(memoryPreviewTimer);
         memoryPreviewing = true;
         updateMemoryReplayButton();
@@ -4378,11 +4437,14 @@
           cell.classList.add("memory-correct");
           memoryRemaining.delete(index);
           if (memoryRemaining.size === 0) {
+            if (!memoryRoundHadError && !memoryRoundReplayed) memorySpan = Math.max(memorySpan, memoryRound);
             if (memoryRound >= memoryTotalRounds) {
               completeMemoryRound();
               return;
             }
             memoryRound += 1;
+            memoryRoundHadError = false;
+            memoryRoundReplayed = false;
             addMemoryTarget();
             memoryPreviewing = true;
             notice.textContent = "准备下一轮";
@@ -4393,6 +4455,7 @@
         }
 
         errors += 1;
+        memoryRoundHadError = true;
         errorText.textContent = String(errors);
         cell.classList.remove("memory-wrong");
         void cell.offsetWidth;
@@ -4546,6 +4609,7 @@
           rounds: memoryTotalRounds,
           grid: `${memorySize}×${memorySize}`,
           replays: memoryReplayCount,
+          memorySpan,
           timeMs: Math.round(elapsedMs),
           errors,
           accuracy: Math.round((correctClicks / (correctClicks + errors)) * 1000) / 10,
@@ -4678,8 +4742,8 @@
             ? `${record.idioms?.length || record.cols || 1}个成绩· 错${record.errors}`
             : type === "poem"
               ? `${record.title || "古诗"} · ${record.chars || 0}字· 错${record.errors}`
-              : type === "memory"
-                ? `${record.rounds || memoryTotalRounds}轮· 错${record.errors}${Number(record.replays || 0) > 0 ? ` · 复现 ${Number(record.replays || 0)} 次` : ""}`
+          : type === "memory"
+                ? `${record.rounds || memoryTotalRounds}轮· 错${record.errors}${Number(record.replays || 0) > 0 ? ` · 复现 ${Number(record.replays || 0)} 次` : ""}${record.memorySpan === undefined || record.memorySpan === null ? "" : ` · 无辅助跨度 ${record.memorySpan} 轮`}`
                 : type === "mindfulness"
                   ? `${record.audioName || "引导音频"} · ${record.audioCompleted ? "完整播放" : "提前结束"}`
                 : `错${record.errors}`;
@@ -4691,10 +4755,16 @@
         const infoDiv = document.createElement("div");
         const strong = document.createElement("strong");
         strong.textContent = type === "mindfulness" ? (record.audioCompleted ? "完整" : "已结束") : `${record.accuracy}%`;
+        const rating = scoreRecord(record, birthDateInput.value);
+        const ratingNode = document.createElement("div");
+        ratingNode.className = "score-rating";
+        ratingNode.textContent = `等第：${rating}（训练参考，非医学诊断）`;
         const time = document.createElement("time");
         time.setAttribute("datetime", record.date || "");
         time.textContent = `${formatShortDate(record.date)} · ${detail}`;
-        infoDiv.append(strong, time);
+        infoDiv.append(strong);
+        if (rating) infoDiv.append(ratingNode);
+        infoDiv.append(time);
 
         const scoreDiv = document.createElement("div");
         scoreDiv.className = "score";
@@ -4733,8 +4803,13 @@
           ["正确", `${record.accuracy}%`],
           ["日期", formatShortDate(record.date)]
         ];
+        const rating = scoreRecord(record, birthDateInput.value);
+        if (rating) items.push(["等第", `${rating}（训练参考，非医学诊断）`]);
         if (type === "memory" && Number(record.replays || 0) > 0) {
           items.push(["复现", String(Number(record.replays || 0))]);
+        }
+        if (type === "memory" && record.memorySpan !== undefined && record.memorySpan !== null) {
+          items.push(["无辅助跨度", `${record.memorySpan}轮`]);
         }
         items.forEach(([spanText, strongText]) => {
           const div = document.createElement("div");

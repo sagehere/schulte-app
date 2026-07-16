@@ -9,7 +9,7 @@ const {
   memoryReplaySuffix,
   recordDateKey,
   cloudTaskText,
-  scoreCloudSchulte
+  scoreCloudRecord
 } = require('./utils');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'public', 'index.html');
@@ -49,12 +49,12 @@ function renderPublicUserPage(stored, todayRecords, tasks, records, timeZone, au
       <h2>${escapeHtml(date)}</h2>
       <div class="practice-total">当日累计练习时长：${escapeHtml(formatPracticeMs(totalPracticeMs(dayRecords)))}</div>
       ${dayRecords.map((record) => {
-        const rating = scoreCloudSchulte(record, stored.birthDate);
+        const rating = scoreCloudRecord(record, stored.birthDate);
         const label = trainingLabel(record);
         const rt = formatRecordTime(record.date, timeZone);
         const detail = (record.type || 'schulte') === 'mindfulness'
           ? `音频 ${escapeHtml(record.audioName || '引导音频')} · 练习 ${escapeHtml(formatPracticeMs(record.practiceMs || record.timeMs))} · ${record.audioCompleted ? '完整播放' : '提前结束'}`
-          : `${formatSeconds(record.timeMs)}s · 练习 ${escapeHtml(formatPracticeMs(record.practiceMs || record.timeMs))} · 错 ${record.errors} · 正确率 ${record.accuracy}%${escapeHtml(memoryReplaySuffix(record).replace(/^，/, " · "))}${rating ? ` · 评分：${escapeHtml(rating)}` : ""}`;
+          : `${formatSeconds(record.timeMs)}s · 练习 ${escapeHtml(formatPracticeMs(record.practiceMs || record.timeMs))} · 错 ${record.errors} · 正确率 ${record.accuracy}%${escapeHtml(memoryReplaySuffix(record).replace(/^，/, " · "))}${rating ? ` · 等第：${escapeHtml(rating)}（训练参考，非医学诊断）` : ""}`;
         return `<article class="record">
           <time>${rt || '--:--'}</time>
           <strong>${escapeHtml(label)}</strong>

@@ -240,3 +240,14 @@
 - 验证：
   - 运行 `node --check src/db.js`、`node --check src/routes.js` 语法检查通过
   - 待运行 `npm start` 后用浏览器验证三个修复点
+## 2026-07-16
+
+- 类型：功能新增
+- 任务：为斯特鲁普、记忆和译码训练增加基于年龄的训练参考等第评分。
+- 修改文件：
+  - `src/utils.js`、`src/html.js`：新增共享评分、公开页展示和 `memorySpan` 云端归一化。
+  - `public/index.html`：新增前端同构评分、无辅助记忆跨度记录，以及结果/记录等第展示。
+  - `test/training-scores.test.js`：覆盖阈值、低龄、正确率、模式和历史记录兼容。
+  - `docs/ai/SCORING_REFERENCE.md`、`docs/ai/FEATURE_INDEX.md`：记录依据和功能锚点。
+- 验证：`node --check src/utils.js src/html.js`、`npm test` 通过（10/10）。
+- 注意：等第为训练参考，非医学诊断；反向模式复用对应年龄表。

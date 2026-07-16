@@ -38,6 +38,21 @@ const SCORE_RULES = {
   }
 };
 
+const TRAINING_SCORE_RULES = {
+  stroop: {
+    '7-8': [24, 28, 32], '9-11': [21, 24, 27], '12-16': [20, 23, 26],
+    '17-39': [17, 19, 22], '40-59': [18, 21, 24], '60+': [23, 26, 30]
+  },
+  memory: {
+    '7-8': [6, 5, 4], '9-11': [7, 6, 5], '12-16': [8, 7, 6],
+    '17-39': [8, 7, 6], '40-59': [7, 6, 5], '60+': [6, 5, 4]
+  },
+  decode: {
+    '7-8': [53.3, 64, 77.8], '9-11': [43.8, 52, 60.8], '12-16': [31.8, 36.5, 44],
+    '17-39': [31, 33.4, 38.3], '40-59': [32.8, 36.4, 42.5], '60+': [40.3, 47.2, 53.3]
+  }
+};
+
 const SERVER_TASK_MATCH_FIELDS = {
   schulte: [
     { key: 'size', type: 'number', defaultValue: 5 },
@@ -92,6 +107,61 @@ function scoreCloudSchulte(record, birthDate) {
   const age = calculateAge(birthDate, record.date ? new Date(record.date) : new Date());
   if (age === null) return '需填写出生日期';
   return scoreSchulteRecord(record, age);
+}
+
+function trainingAgeBucket(age) {
+  const value = Number(age);
+  if (value < 7) return 'under7';
+  if (value <= 8) return '7-8';
+  if (value <= 11) return '9-11';
+  if (value <= 16) return '12-16';
+  if (value <= 39) return '17-39';
+  if (value <= 59) return '40-59';
+  return '60+';
+}
+
+function scoreTime(seconds, rule) {
+  if (seconds <= rule[0]) return '优秀';
+  if (seconds <= rule[1]) return '良好';
+  if (seconds <= rule[2]) return '中等';
+  return '需努力';
+}
+
+function scoreMemorySpan(span, rule) {
+  if (span >= rule[0]) return '优秀';
+  if (span >= rule[1]) return '良好';
+  if (span >= rule[2]) return '中等';
+  return '需努力';
+}
+
+function scoreTrainingRecord(record, age) {
+  const type = record && record.type;
+  if (!TRAINING_SCORE_RULES[type]) return '';
+  const value = Number(age);
+  if (!Number.isFinite(value)) return '需填写出生日期';
+  if (type === 'decode' && value < 8) return '8岁以下暂无适龄评分标准';
+  if (type !== 'decode' && value < 7) return '7岁以下暂无适龄评分标准';
+  if (type === 'memory' && (record.memorySpan === undefined || record.memorySpan === null || record.memorySpan === '')) {
+    return '旧记录暂无跨度数据';
+  }
+  if (Number(record.accuracy) <= 80) return '需努力';
+  const rule = TRAINING_SCORE_RULES[type][trainingAgeBucket(value)];
+  return type === 'memory'
+    ? scoreMemorySpan(Math.max(0, Number(record.memorySpan) || 0), rule)
+    : scoreTime(Math.max(0, Number(record.timeMs) || 0) / 1000, rule);
+}
+
+function scoreCloudTrainingRecord(record, birthDate) {
+  const type = record && record.type;
+  if (!TRAINING_SCORE_RULES[type]) return '';
+  const age = calculateAge(birthDate, record.date ? new Date(record.date) : new Date());
+  return age === null ? '需填写出生日期' : scoreTrainingRecord(record, age);
+}
+
+function scoreCloudRecord(record, birthDate) {
+  return (record && record.type || 'schulte') === 'schulte'
+    ? scoreCloudSchulte(record, birthDate)
+    : scoreCloudTrainingRecord(record, birthDate);
 }
 
 function formatSeconds(ms) {
@@ -221,6 +291,9 @@ function normalizeCloudRecord(input) {
     errors: Math.max(0, Math.round(Number(record.errors || 0))),
     accuracy: Math.max(0, Math.min(100, Number(record.accuracy || 0))),
     replays: Math.max(0, Math.round(Number(record.replays || 0))),
+    memorySpan: record.memorySpan === undefined || record.memorySpan === null || record.memorySpan === ''
+      ? null
+      : Math.max(0, Math.min(25, Math.round(Number(record.memorySpan) || 0))),
     trials: Number(record.trials || 0),
     title: String(record.title || '').slice(0, 40),
     audioId: String(record.audioId || '').slice(0, 100),
@@ -370,10 +443,15 @@ function publicCloudUserSummary(stored) {
 
 module.exports = {
   SCORE_RULES,
+  TRAINING_SCORE_RULES,
   ageBucket,
   calculateAge,
   scoreSchulteRecord,
   scoreCloudSchulte,
+  trainingAgeBucket,
+  scoreTrainingRecord,
+  scoreCloudTrainingRecord,
+  scoreCloudRecord,
   formatSeconds,
   formatPracticeMs,
   totalPracticeMs,
