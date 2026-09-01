@@ -6,6 +6,9 @@ const audioGuides = require('./audio-guides');
 const {
   normalizeCloudUser,
   normalizeCloudTasks,
+  hasCompleteWeeklyCloudTasks,
+  normalizeWeeklyCloudTasks,
+  tasksForWeeklyTemplate,
   normalizeCloudRecord,
   publicCloudUser,
   publicCloudUserSummary,
@@ -38,6 +41,15 @@ const {
 function getTZ() {
   try { return db.getSetting('timezone') || 'Asia/Shanghai'; }
   catch { return 'Asia/Shanghai'; }
+}
+
+function getOrCreateDailyTasks(identifier, date) {
+  let tasks = db.getTasks(identifier, date);
+  if (tasks === null) {
+    tasks = tasksForWeeklyTemplate(db.getTaskTemplate(identifier), date);
+    db.putTasks(identifier, date, tasks);
+  }
+  return normalizeCloudTasks(tasks);
 }
 
 const TRAINING_NAVIGATION_SETTING = 'training_navigation';
@@ -245,11 +257,7 @@ router.post('/users', createLimiter, async (req, res) => {
   });
 
   const session = await issueSession(identifier, db.getUser(identifier));
-  const tasks = normalizeCloudTasks(body.tasks);
-  db.putTasks(identifier, todayDateKey(getTZ()), tasks);
-  if (tasks.length > 0) {
-    db.setTaskTemplate(identifier, tasks);
-  }
+  const tasks = getOrCreateDailyTasks(identifier, todayDateKey(getTZ()));
 
   res.json({ ok: true, user, sessionToken: session.sessionToken, tasks });
 });
@@ -263,17 +271,7 @@ router.get('/users/:identifier', (req, res) => {
   if (!stored) return res.status(404).json({ ok: false, error: '用户不存在' });
 
   const date = isDateKey(req.query.date) ? req.query.date : todayDateKey(getTZ());
-  let tasks = db.getTasks(identifier, date);
-  if (!tasks) {
-    const template = db.getTaskTemplate(identifier);
-    if (template && template.length > 0) {
-      tasks = normalizeCloudTasks(template);
-      db.putTasks(identifier, date, tasks);
-    } else {
-      tasks = [];
-    }
-  }
-  tasks = normalizeCloudTasks(tasks);
+  const tasks = getOrCreateDailyTasks(identifier, date);
 
   res.json({ ok: true, user: publicCloudUser(stored), date, tasks });
 });
@@ -294,23 +292,17 @@ router.put('/users/:identifier', async (req, res) => {
   if (nextIdentifier !== identifier && db.getUser(nextIdentifier)) return res.status(409).json({ ok: false, error: '识别码已存在' });
 
   const user = normalizeCloudUser({ ...(body.user || {}), createdAt: owned.stored.createdAt }, nextIdentifier);
+  if (nextIdentifier !== identifier) {
+    db.renameUserIdentifier(identifier, nextIdentifier);
+  }
+
   db.updateUser(nextIdentifier, {
     username: user.username,
     birth_date: user.birthDate
   });
 
-  if (nextIdentifier !== identifier) {
-    db.renameUserIdentifier(identifier, nextIdentifier);
-  }
-
   const date = isDateKey(body.date) ? body.date : todayDateKey(getTZ());
-  const tasks = normalizeCloudTasks(body.tasks);
-  db.putTasks(nextIdentifier, date, tasks);
-  if (tasks.length > 0) {
-    db.setTaskTemplate(nextIdentifier, tasks);
-  } else {
-    db.deleteTaskTemplate(nextIdentifier);
-  }
+  const tasks = getOrCreateDailyTasks(nextIdentifier, date);
 
   res.json({ ok: true, user: publicCloudUser(db.getUser(nextIdentifier)), sessionToken: body.sessionToken, date, tasks });
 });
@@ -356,9 +348,7 @@ router.post('/users/:identifier/login', loginLimiter, async (req, res) => {
 
   const session = await issueSession(identifier, nextStored);
   const date = isDateKey(body.date) ? body.date : todayDateKey(getTZ());
-  let tasks = db.getTasks(identifier, date);
-  if (!tasks) tasks = [];
-  tasks = normalizeCloudTasks(tasks);
+  const tasks = getOrCreateDailyTasks(identifier, date);
 
   res.json({ ok: true, user: publicCloudUser(session.stored), sessionToken: session.sessionToken, date, tasks });
 });
@@ -459,7 +449,33 @@ router.get('/admin/users/:identifier', (req, res) => {
   if (!stored) return res.status(404).json({ ok: false, error: '用户不存在' });
 
   const records = db.getRecords(identifier);
-  res.json({ ok: true, user: publicCloudUser(stored), recordCount: records.length });
+  res.json({
+    ok: true,
+    user: publicCloudUser(stored),
+    recordCount: records.length,
+    weeklyTasks: normalizeWeeklyCloudTasks(db.getTaskTemplate(identifier))
+  });
+});
+
+router.put('/admin/users/:identifier/weekly-tasks', (req, res) => {
+  if (!hasAdminAccess(req)) return res.status(403).json({ ok: false, error: '管理密码不正确' });
+
+  const { identifier } = req.params;
+  if (!validIdentifier(identifier)) return res.status(400).json({ ok: false, error: '识别码仅可输入数字与字母' });
+  if (!db.getUser(identifier)) return res.status(404).json({ ok: false, error: '用户不存在' });
+
+  const body = req.body;
+  if (!body || !hasCompleteWeeklyCloudTasks(body.weeklyTasks)) {
+    return res.status(400).json({ ok: false, error: '周任务表必须包含周一至周日的任务数组' });
+  }
+
+  const weeklyTasks = normalizeWeeklyCloudTasks(body.weeklyTasks);
+  const today = todayDateKey(getTZ());
+  db.setTaskTemplate(identifier, weeklyTasks);
+  db.deleteTasksFromDate(identifier, today);
+  const tasks = tasksForWeeklyTemplate(weeklyTasks, today);
+  db.putTasks(identifier, today, tasks);
+  res.json({ ok: true, weeklyTasks, date: today, tasks });
 });
 
 // Admin: reset password

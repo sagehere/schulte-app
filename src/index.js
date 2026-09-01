@@ -13,6 +13,7 @@ const {
   todayDateKey,
   recordDateKey,
   normalizeCloudTasks,
+  tasksForWeeklyTemplate,
   applyCloudTrainingCompletionToTasks,
   validIdentifier
 } = require('./utils');
@@ -70,14 +71,9 @@ app.get('/u/:identifier', (req, res) => {
   const today = todayDateKey(timeZone);
   const records = db.getRecords(identifier);
   let tasks = db.getTasks(identifier, today);
-  if (!tasks) {
-    const template = db.getTaskTemplate(identifier);
-    if (template && template.length > 0) {
-      tasks = normalizeCloudTasks(template);
-      db.putTasks(identifier, today, tasks);
-    } else {
-      tasks = [];
-    }
+  if (tasks === null) {
+    tasks = tasksForWeeklyTemplate(db.getTaskTemplate(identifier), today);
+    db.putTasks(identifier, today, tasks);
   }
   tasks = normalizeCloudTasks(tasks);
   const todayRecords = records.filter((record) => recordDateKey(record, timeZone) === today);

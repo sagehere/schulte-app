@@ -352,16 +352,16 @@ P2：谨慎读取文件
 
 ## 每日任务
 
-功能说明：用户/管理员可为用户配置当天训练任务，顶部任务条展示进度，点击任务可切换到对应训练配置；任务进度由当天训练记录匹配计算。服务端保存"任务模板"，每天 0:00（管理员时区）自动从模板生成当天任务，无需手动重复设置。
+功能说明：管理员可为每个用户配置周一至周日循环任务表；用户仅查看当天任务与进度，顶部任务条可跳转至下一项。服务端按管理员时区的星期从周模板生成每日任务快照，任务进度由当天训练记录匹配计算。
 
-用户入口：用户中心"每日任务"配置（含拖动手柄或方向键排序）；顶部任务条；公开成绩页的任务进度。
+用户入口：用户中心"今日任务"只读列表；顶部任务条；公开成绩页的任务进度；管理员面板"周任务表"编辑、排序和保存。
 
 P0：必须读取文件
 
-- `public/index.html`：`dailyTaskSpecs`、`buildTaskMode`、`buildTaskFromControls`、`describeTask`、`recordMatchesTask`、`taskProgress`、`renderTitleTasks`、`renderTasks`、`saveDailyTaskOrder`、`activateTask`
-- `src/utils.js`：`SERVER_TASK_MATCH_FIELDS`、`normalizeCloudTasks`、`recordCompletesCloudTask`、`applyCloudTrainingCompletionToTasks`、`cloudTaskText`
-- `src/routes.js`：`GET /users/:identifier`、`PUT /users/:identifier`、`POST /users`
-- `src/db.js`：`getTasks`、`putTasks`、`getTaskTemplate`、`setTaskTemplate`、`deleteTaskTemplate`
+- `public/index.html`：`dailyTaskSpecs`、`buildTaskFromControls`、`renderTasks`、`renderAdminWeeklyTasks`、`saveAdminWeeklyTaskOrder`、`saveAdminWeeklyTasks`、`activateTask`
+- `src/utils.js`：`normalizeCloudTasks`、`normalizeWeeklyCloudTasks`、`tasksForWeeklyTemplate`、任务匹配与进度函数
+- `src/routes.js`：`getOrCreateDailyTasks`、`GET /users/:identifier`、`PUT /users/:identifier`、`PUT /admin/users/:identifier/weekly-tasks`
+- `src/db.js`：`getTasks`、`putTasks`、`deleteTasksFromDate`、`getTaskTemplate`、`setTaskTemplate`
 
 P1：按需读取文件
 
@@ -371,28 +371,28 @@ P2：谨慎读取文件
 
 - 完整 `public/index.html`
 
-主要调用链：用户中心添加任务或完成排序 -> `buildTaskFromControls()` / `saveDailyTaskOrder()` -> `persistUserCenter()` -> `PUT /api/users/:id` -> `db.putTasks()` + `db.setTaskTemplate()`；进度链为 `recordsForDate()` -> `taskProgress()` / 服务端 `applyCloudTrainingCompletionToTasks()`；自动重置链为 `GET /users/:identifier` / `GET /u/:identifier` -> `!tasks` -> `db.getTaskTemplate()` -> `db.putTasks()`。
+主要调用链：管理员选择用户 -> `GET /api/admin/users/:id` -> 编辑周任务表 -> `PUT /api/admin/users/:id/weekly-tasks` -> `db.setTaskTemplate()` + 清理今天及未来快照 -> 重建今天任务；读取链为 `GET /users/:identifier`、登录或公开页 -> `getOrCreateDailyTasks()` / 周模板按星期取任务 -> `db.putTasks()`；进度链为 `recordsForDate()` -> `taskProgress()` / 服务端 `applyCloudTrainingCompletionToTasks()`。
 
-相关状态：`dailyTasks`、当天日期 `todayKey()`、任务字段 `module/mode/targetCount/completedCount`、数据库 `task_templates` 表。
+相关状态：`dailyTasks`、`adminWeeklyTasks`、`adminWeekday`、当天日期 `todayKey()`、任务字段 `module/mode/targetCount/completedCount`、数据库 `task_templates` 表（JSON 为 `mon` 至 `sun`）。
 
-相关接口：`GET /api/users/:identifier?date=YYYY-MM-DD`、`PUT /api/users/:identifier`、`POST /api/users`、`GET /u/:identifier`。
+相关接口：`GET /api/users/:identifier?date=YYYY-MM-DD`、`PUT /api/users/:identifier`、`GET /api/admin/users/:identifier`、`PUT /api/admin/users/:identifier/weekly-tasks`、`GET /u/:identifier`。
 
-修改注意事项：新增训练模式或任务字段时必须同时更新前端 `dailyTaskSpecs` 和后端 `SERVER_TASK_MATCH_FIELDS`；正念任务 `mode.audioId` 为空时匹配任意音频，指定已删除音频时显示“音频已删除”且不计次；模板自动生成机制依赖 `task_templates` 表，删除用户时需同步清理。
+修改注意事项：普通用户资料更新不得写入任务；新增训练模式或任务字段时必须同时更新前端 `dailyTaskSpecs` 和后端 `SERVER_TASK_MATCH_FIELDS`；旧数组模板读取时须保持七天相同；管理员保存周表仅清理今天及未来快照，删除用户或改识别码时须同步处理模板。
 
-最近更新时间：2026-07-15
+最近更新时间：2026-09-01
 
 ---
 
 ## 管理员面板与系统设置
 
-功能说明：点击标题 5 次打开管理员登录，输入密码后通过 `POST /api/admin/verify` 服务端校验，校验通过后进入管理面板，可查看用户列表、管理/排序引导音频、重置密码、删除用户、设置系统时区，以及拖拽配置训练模式导航的显示与顺序。
+功能说明：点击标题 5 次打开管理员登录，输入密码后通过 `POST /api/admin/verify` 服务端校验，校验通过后进入管理面板，可查看用户、独立编辑并保存其周任务表、管理/排序引导音频、重置密码、删除用户、设置系统时区，以及拖拽配置训练模式导航的显示与顺序。
 
 用户入口：主页标题连续点击 5 次 -> 管理员登录弹窗 -> 输入密码 -> 服务端验证 -> 管理面板。
 
 P0：必须读取文件
 
-- `public/index.html`：`adminClickCount`、`adminAuthHeaders`、`applyTrainingNavigation`、`renderAdminTrainingNavigation`、`renderAdminAudioList`、`saveAdminAudioOrder`、用户管理函数、管理员登录处理
-- `src/routes.js`：`getTrainingNavigation`、`validateTrainingNavigation`、用户管理接口、`POST/PUT/DELETE /admin/audio-guides`、`PUT /admin/audio-guides/order`、`GET /settings`、`PUT /admin/settings`、`POST /admin/verify`
+- `public/index.html`：`adminClickCount`、`adminAuthHeaders`、`renderAdminWeeklyTasks`、`saveAdminWeeklyTasks`、导航、音频和用户管理函数
+- `src/routes.js`：管理员用户接口、`PUT /admin/users/:identifier/weekly-tasks`、音频、设置和验证接口
 
 P1：按需读取文件
 
@@ -404,15 +404,15 @@ P2：谨慎读取文件
 - `.env.example`
 - `docker-compose.yml`：确认生产环境变量时读取
 
-主要调用链：标题点击 -> 管理登录弹窗 -> `POST /api/admin/verify` -> 成功则打开面板并加载用户、设置、音频；模式导航 -> `GET /api/settings` -> `renderAdminTrainingNavigation()` -> 拖拽/勾选 -> `PUT /api/admin/settings` -> `settings.training_navigation` -> `applyTrainingNavigation()`；音频排序 -> `renderAdminAudioList()` -> 拖拽/方向键 -> `PUT /api/admin/audio-guides/order`。
+主要调用链：标题点击 -> 管理登录弹窗 -> `POST /api/admin/verify` -> 成功则加载用户、周任务表、设置和音频；周任务表 -> `GET /api/admin/users/:id` -> 草稿编辑/排序 -> `PUT /api/admin/users/:id/weekly-tasks`；模式导航与音频排序保持原调用链。
 
 相关状态：`adminPassword`、`adminClickCount`、`settings.timezone`、`settings.training_navigation`、前端 `appSettings.trainingNavigation`。
 
-相关接口：`GET /api/admin/users`、`GET /api/admin/users/:identifier`、`POST /api/admin/users/:identifier/password`、`DELETE /api/admin/users/:identifier`、`PUT /api/admin/audio-guides/order`、`GET /api/settings`、`PUT /api/admin/settings`、`POST /api/admin/verify`。
+相关接口：`GET /api/admin/users`、`GET /api/admin/users/:identifier`、`PUT /api/admin/users/:identifier/weekly-tasks`、`POST /api/admin/users/:identifier/password`、`DELETE /api/admin/users/:identifier`、`PUT /api/admin/audio-guides/order`、`GET /api/settings`、`PUT /api/admin/settings`、`POST /api/admin/verify`。
 
 修改注意事项：管理员鉴权当前依赖环境变量 `ADMIN_PASSWORD`；接口受 `/api/admin` rate limit 保护。导航配置必须包含 7 个已知模式、无重复且至少一个可见；隐藏仅影响顶部导航，不影响每日任务配置和跳转。
 
-最近更新时间：2026-07-15
+最近更新时间：2026-09-01
 
 ---
 

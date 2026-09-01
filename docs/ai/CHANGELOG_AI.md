@@ -2,6 +2,17 @@
 
 本文件记录 AI 对仓库的维护历史。每次 AI 修改后追加一条，最新记录放在顶部或底部均可，但保持格式一致。
 
+## 2026-09-01
+
+- 类型：功能新增与权限调整
+- 任务：将每日任务编辑权上提至管理员，并新增按周循环的用户独立任务表。
+- 修改文件：
+  - `src/utils.js`、`src/db.js`、`src/routes.js`、`src/index.js`：新增周模板归一化、按日期取星期任务、管理员保存接口、今天及未来快照刷新，以及识别码迁移模板。
+  - `public/index.html`：用户中心改为只读今日任务；管理员面板新增周一至周日草稿编辑、排序和显式保存。
+  - `test/weekly-tasks-api.test.js`、`test/frontend-syntax.test.js`：覆盖管理员鉴权、循环与旧模板兼容、历史快照、普通用户不可写入、识别码迁移、删除清理和前端控件。
+  - `docs/ai/FEATURE_INDEX.md`：更新每日任务和管理员面板调用链。
+- 验证：`node --check src/utils.js src/db.js src/routes.js src/index.js`、`npm test`（17/17）通过。
+
 ## 2026-07-16
 
 - 类型：功能优化

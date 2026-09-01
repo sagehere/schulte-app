@@ -70,6 +70,8 @@ const SERVER_TASK_MATCH_FIELDS = {
   mindfulness: []
 };
 
+const WEEKDAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
 function ageBucket(age) {
   const value = Number(age);
   if (!value || value >= 17) return 'adult';
@@ -347,6 +349,29 @@ function recordDateKey(record, timeZone) {
   return isDateKey(fallback) ? fallback : '';
 }
 
+function hasCompleteWeeklyCloudTasks(input) {
+  return Boolean(input && !Array.isArray(input) && typeof input === 'object'
+    && WEEKDAY_KEYS.every((key) => Array.isArray(input[key])));
+}
+
+function normalizeWeeklyCloudTasks(input) {
+  if (Array.isArray(input)) {
+    const tasks = normalizeCloudTasks(input);
+    return Object.fromEntries(WEEKDAY_KEYS.map((key) => [key, tasks.map((task) => ({ ...task, mode: { ...task.mode } }))]));
+  }
+  const weeklyTasks = input && typeof input === 'object' ? input : {};
+  return Object.fromEntries(WEEKDAY_KEYS.map((key) => [key, normalizeCloudTasks(weeklyTasks[key])]));
+}
+
+function weeklyTaskKeyForDate(date) {
+  const parsed = new Date(`${date}T12:00:00Z`);
+  return WEEKDAY_KEYS[(parsed.getUTCDay() + 6) % 7] || 'mon';
+}
+
+function tasksForWeeklyTemplate(template, date) {
+  return normalizeWeeklyCloudTasks(template)[weeklyTaskKeyForDate(date)];
+}
+
 function validIdentifier(value) {
   return /^[A-Za-z0-9]+$/.test(String(value || '').trim());
 }
@@ -466,6 +491,10 @@ module.exports = {
   cloudTaskText,
   normalizeCloudUser,
   normalizeCloudTasks,
+  hasCompleteWeeklyCloudTasks,
+  normalizeWeeklyCloudTasks,
+  weeklyTaskKeyForDate,
+  tasksForWeeklyTemplate,
   normalizeCloudRecord,
   isDateKey,
   todayDateKey,

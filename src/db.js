@@ -277,6 +277,7 @@ function renameUserIdentifier(oldId, newId) {
     db.run('UPDATE users SET identifier = ? WHERE identifier = ?', [newId, oldId]);
     db.run('UPDATE tasks SET user_id = ? WHERE user_id = ?', [newId, oldId]);
     db.run('UPDATE records SET user_id = ? WHERE user_id = ?', [newId, oldId]);
+    db.run('UPDATE task_templates SET user_id = ? WHERE user_id = ?', [newId, oldId]);
     db.run('COMMIT');
   } catch (e) {
     db.run('ROLLBACK');
@@ -328,6 +329,11 @@ function deleteTasks(userId, date) {
   } else {
     db.run('DELETE FROM tasks WHERE user_id = ?', [userId]);
   }
+  saveDb();
+}
+
+function deleteTasksFromDate(userId, date) {
+  db.run('DELETE FROM tasks WHERE user_id = ? AND date >= ?', [userId, date]);
   saveDb();
 }
 
@@ -413,6 +419,7 @@ module.exports = {
   getTasks,
   putTasks,
   deleteTasks,
+  deleteTasksFromDate,
   getRecords,
   getRecordsByDate,
   putRecord,

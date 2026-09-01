@@ -1156,6 +1156,16 @@
       background: #fbf7ee;
     }
 
+    .daily-task-row.readonly {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .weekday-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
     .daily-task-row input[type="checkbox"] {
       width: 20px;
       height: 20px;
@@ -1713,67 +1723,8 @@
       </section>
       <section class="panel task-panel subsection-header">
         <div class="panel-header">
-          <h2>每日任务设置</h2>
+          <h2>今日任务</h2>
           <span class="profile-meta" id="taskDateText"></span>
-        </div>
-        <div class="task-config-grid">
-          <label class="form-field">模块
-            <select id="taskModuleSelect">
-              <option value="schulte">舒尔特方格</option>
-              <option value="stroop">斯特鲁普</option>
-              <option value="idiom">成语训练</option>
-              <option value="poem">古诗训练</option>
-              <option value="memory">记忆训练</option>
-              <option value="decode">译码训练</option>
-              <option value="mindfulness">正念练习</option>
-            </select>
-          </label>
-          <label class="form-field" id="taskSizeWrap">规格
-            <select id="taskSizeSelect">
-              <option value="3">3×3</option>
-              <option value="4">4×4</option>
-              <option value="5" selected>5×5</option>
-              <option value="6">6×6</option>
-              <option value="7">7×7</option>
-            </select>
-          </label>
-          <label class="form-field" id="taskReverseWrap">顺序
-            <select id="taskReverseSelect">
-              <option value="false">正序</option>
-              <option value="true">倒序</option>
-            </select>
-          </label>
-          <label class="form-field" id="taskColorWrap">颜色干扰
-            <select id="taskColorSelect">
-              <option value="false">关</option>
-              <option value="true">开</option>
-            </select>
-          </label>
-          <label class="form-field" id="taskIdiomWrap">成语数量
-            <select id="taskIdiomSelect">
-              <option value="4">4×4</option>
-              <option value="5">4×5</option>
-              <option value="6">4×6</option>
-              <option value="7">4×7</option>
-            </select>
-          </label>
-          <label class="form-field" id="taskStroopAnswerWrap">答题规则
-            <select id="taskStroopAnswerSelect">
-              <option value="false">按字色作答</option>
-              <option value="true">按文字作答</option>
-            </select>
-          </label>
-          <label class="form-field" id="taskDecodeReverseWrap">译码方向
-            <select id="taskDecodeReverseSelect">
-              <option value="false">符号 → 字母</option>
-              <option value="true">字母 → 符号</option>
-            </select>
-          </label>
-          <label class="form-field" id="taskMindfulnessAudioWrap">引导音频
-            <select id="taskMindfulnessAudioSelect"><option value="">任意引导音频</option></select>
-          </label>
-          <label class="form-field">次数<input id="taskCountInput" type="number" min="1" max="50" value="1" inputmode="numeric"></label>
-          <button class="tool-button primary" type="button" id="addTaskButton">添加任务</button>
         </div>
         <div class="full-records" id="dailyTaskList"></div>
       </section>
@@ -1902,6 +1853,29 @@
             <button class="tool-button" type="button" id="adminResetPasswordButton">重置密码</button>
             <button class="tool-button primary" type="button" id="adminDeleteButton">删除用户</button>
           </div>
+        </div>
+        <hr class="subsection-divider">
+        <div class="task-panel">
+          <div class="panel-header"><strong>周任务表</strong><span class="profile-meta" id="adminWeeklyTaskDayText"></span></div>
+          <div class="weekday-tabs" id="adminWeekdayTabs" aria-label="周任务表日期"></div>
+          <div class="task-config-grid">
+            <label class="form-field">模块
+              <select id="taskModuleSelect">
+                <option value="schulte">舒尔特方格</option><option value="stroop">斯特鲁普</option><option value="idiom">成语训练</option><option value="poem">古诗训练</option><option value="memory">记忆训练</option><option value="decode">译码训练</option><option value="mindfulness">正念练习</option>
+              </select>
+            </label>
+            <label class="form-field" id="taskSizeWrap">规格<select id="taskSizeSelect"><option value="3">3×3</option><option value="4">4×4</option><option value="5" selected>5×5</option><option value="6">6×6</option><option value="7">7×7</option></select></label>
+            <label class="form-field" id="taskReverseWrap">顺序<select id="taskReverseSelect"><option value="false">正序</option><option value="true">倒序</option></select></label>
+            <label class="form-field" id="taskColorWrap">颜色干扰<select id="taskColorSelect"><option value="false">关</option><option value="true">开</option></select></label>
+            <label class="form-field" id="taskIdiomWrap">成语数量<select id="taskIdiomSelect"><option value="4">4×4</option><option value="5">4×5</option><option value="6">4×6</option><option value="7">4×7</option></select></label>
+            <label class="form-field" id="taskStroopAnswerWrap">答题规则<select id="taskStroopAnswerSelect"><option value="false">按字色作答</option><option value="true">按文字作答</option></select></label>
+            <label class="form-field" id="taskDecodeReverseWrap">译码方向<select id="taskDecodeReverseSelect"><option value="false">符号 → 字母</option><option value="true">字母 → 符号</option></select></label>
+            <label class="form-field" id="taskMindfulnessAudioWrap">引导音频<select id="taskMindfulnessAudioSelect"><option value="">任意引导音频</option></select></label>
+            <label class="form-field">次数<input id="taskCountInput" type="number" min="1" max="50" value="1" inputmode="numeric"></label>
+            <button class="tool-button primary" type="button" id="addTaskButton">添加任务</button>
+          </div>
+          <div class="full-records" id="adminWeeklyTaskList"></div>
+          <button class="tool-button primary" type="button" id="adminSaveWeeklyTasksButton">保存周任务表</button>
         </div>
         <div class="full-records" id="adminUserPreview"></div>
         <div class="notice" id="adminPanelNotice" aria-live="polite"></div>
@@ -2039,6 +2013,10 @@
       const adminNewPasswordInput = document.getElementById("adminNewPasswordInput");
       const adminResetPasswordButton = document.getElementById("adminResetPasswordButton");
       const adminUserPreview = document.getElementById("adminUserPreview");
+      const adminWeekdayTabs = document.getElementById("adminWeekdayTabs");
+      const adminWeeklyTaskDayText = document.getElementById("adminWeeklyTaskDayText");
+      const adminWeeklyTaskList = document.getElementById("adminWeeklyTaskList");
+      const adminSaveWeeklyTasksButton = document.getElementById("adminSaveWeeklyTasksButton");
       const adminPanelNotice = document.getElementById("adminPanelNotice");
       const adminTimezoneInput = document.getElementById("adminTimezoneInput");
       const adminSaveSettingsButton = document.getElementById("adminSaveSettingsButton");
@@ -2412,6 +2390,14 @@
       let loadedUserIdentifier = loadLoadedUserIdentifier();
       let dailyTasks = [];
       let adminPassword = "";
+      const weeklyTaskDays = [
+        ["mon", "周一"], ["tue", "周二"], ["wed", "周三"], ["thu", "周四"],
+        ["fri", "周五"], ["sat", "周六"], ["sun", "周日"]
+      ];
+      let adminWeeklyTasks = Object.fromEntries(weeklyTaskDays.map(([key]) => [key, []]));
+      let adminWeekday = "mon";
+      let adminWeeklyTasksDirty = false;
+      let adminLoadedIdentifier = "";
       let adminClickCount = 0;
       let adminClickTimer = 0;
       let rowDrag = null;
@@ -2991,14 +2977,60 @@
         dailyTaskList.replaceChildren(...dailyTasks.map((task) => {
           const progress = taskProgress(task);
           const row = document.createElement("article");
-          row.className = `daily-task-row sortable-row${progress.done ? " done" : ""}`;
-          row.dataset.taskId = task.id;
-          const handle = createSortableRowHandle(row, dailyTaskList, taskModuleLabel(task.module), saveDailyTaskOrder);
+          row.className = `daily-task-row readonly${progress.done ? " done" : ""}`;
           const check = document.createElement("input");
           check.type = "checkbox";
           check.checked = progress.done;
           check.disabled = true;
           check.title = `今日进度 ${progress.count}/${progress.target}`;
+          const text = document.createElement("div");
+          text.className = "task-input";
+          text.textContent = `${taskModuleLabel(task.module)} · ${describeTask(task)} · ${progress.count}/${progress.target}`;
+          row.append(check, text);
+          return row;
+        }));
+      }
+
+      function normalizeAdminWeeklyTasks(tasks) {
+        const source = tasks && typeof tasks === "object" ? tasks : {};
+        return Object.fromEntries(weeklyTaskDays.map(([key]) => [key, Array.isArray(source[key]) ? source[key].map((task) => ({ ...task, mode: { ...(task.mode || {}) } })) : []]));
+      }
+
+      function activeAdminWeeklyTasks() {
+        return adminWeeklyTasks[adminWeekday] || (adminWeeklyTasks[adminWeekday] = []);
+      }
+
+      function renderAdminWeekdayTabs() {
+        adminWeekdayTabs.replaceChildren(...weeklyTaskDays.map(([key, label]) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = `tool-button${key === adminWeekday ? " primary" : ""}`;
+          button.textContent = label;
+          button.addEventListener("click", () => {
+            adminWeekday = key;
+            renderAdminWeekdayTabs();
+            renderAdminWeeklyTasks();
+          });
+          return button;
+        }));
+      }
+
+      function renderAdminWeeklyTasks() {
+        adminWeeklyTaskDayText.textContent = weeklyTaskDays.find(([key]) => key === adminWeekday)?.[1] || "";
+        const tasks = activeAdminWeeklyTasks();
+        if (!adminLoadedIdentifier) {
+          adminWeeklyTaskList.innerHTML = `<p class="empty">请先选择用户</p>`;
+          return;
+        }
+        if (!tasks.length) {
+          adminWeeklyTaskList.innerHTML = `<p class="empty">当天暂无任务</p>`;
+          return;
+        }
+        adminWeeklyTaskList.replaceChildren(...tasks.map((task) => {
+          const row = document.createElement("article");
+          row.className = "daily-task-row sortable-row";
+          row.dataset.taskId = task.id;
+          const handle = createSortableRowHandle(row, adminWeeklyTaskList, taskModuleLabel(task.module), saveAdminWeeklyTaskOrder);
           const text = document.createElement("input");
           text.className = "task-input";
           text.value = `${taskModuleLabel(task.module)} · ${describeTask(task)}`;
@@ -3008,11 +3040,11 @@
           count.type = "number";
           count.min = "1";
           count.max = "50";
-          count.value = String(progress.target);
-          count.title = `今日进度 ${progress.count}/${progress.target}`;
+          count.value = String(taskTargetCount(task));
           count.addEventListener("change", () => {
             task.targetCount = taskTargetCount({ targetCount: count.value });
-            persistUserCenter();
+            adminWeeklyTasksDirty = true;
+            count.value = String(task.targetCount);
           });
           const remove = document.createElement("button");
           remove.className = "icon-button";
@@ -3020,25 +3052,26 @@
           remove.textContent = "×";
           remove.setAttribute("aria-label", "删除任务");
           remove.addEventListener("click", () => {
-            dailyTasks = dailyTasks.filter((item) => item.id !== task.id);
-            persistUserCenter();
+            adminWeeklyTasks[adminWeekday] = activeAdminWeeklyTasks().filter((item) => item.id !== task.id);
+            adminWeeklyTasksDirty = true;
+            renderAdminWeeklyTasks();
           });
-          row.append(handle, check, text, count, remove);
+          row.append(handle, text, count, remove);
           return row;
         }));
       }
 
-      function saveDailyTaskOrder() {
+      function saveAdminWeeklyTaskOrder() {
         const tasksById = new Map();
-        dailyTasks.forEach((task) => {
+        activeAdminWeeklyTasks().forEach((task) => {
           const tasks = tasksById.get(task.id) || [];
           tasks.push(task);
           tasksById.set(task.id, tasks);
         });
-        dailyTasks = [...dailyTaskList.children]
+        adminWeeklyTasks[adminWeekday] = [...adminWeeklyTaskList.children]
           .map((row) => tasksById.get(row.dataset.taskId)?.shift())
           .filter(Boolean);
-        persistUserCenter();
+        adminWeeklyTasksDirty = true;
       }
 
       function renderDailyScores() {
@@ -3172,8 +3205,7 @@
             body: JSON.stringify({
               sessionToken: cloudUser.sessionToken,
               user,
-              date: todayKey(),
-              tasks: dailyTasks
+              date: todayKey()
             })
           });
           cloudUser.identifier = payload.user.identifier;
@@ -3237,9 +3269,7 @@
             body: JSON.stringify({
               authCode: regAuthCodeInput.value,
               password: regPasswordInput.value,
-              user,
-              date: todayKey(),
-              tasks: []
+              user
             })
           });
 
@@ -3309,6 +3339,10 @@
           option.textContent = "暂无用户";
           adminIdentifierInput.append(option);
           adminIdentifierInput.disabled = true;
+          adminLoadedIdentifier = "";
+          adminWeeklyTasks = normalizeAdminWeeklyTasks();
+          renderAdminWeekdayTabs();
+          renderAdminWeeklyTasks();
           return;
         }
         adminIdentifierInput.disabled = false;
@@ -3354,13 +3388,44 @@
           const strong = document.createElement("strong");
           strong.textContent = user.identifier;
           const time = document.createElement("time");
-          time.textContent = `出生日期${user.birthDate || "未填写"} · 记录 ${payload.recordCount || 0} 条· 任务 ${payload.taskKeyCount || 0} `;
+          time.textContent = `出生日期${user.birthDate || "未填写"} · 记录 ${payload.recordCount || 0} 条`;
           infoDiv.append(strong, time);
           article.append(modeDiv, infoDiv);
           adminUserPreview.append(article);
+          adminLoadedIdentifier = identifier;
+          adminWeeklyTasks = normalizeAdminWeeklyTasks(payload.weeklyTasks);
+          adminWeeklyTasksDirty = false;
+          renderAdminWeekdayTabs();
+          renderAdminWeeklyTasks();
           setNotice(adminPanelNotice, "已查询到用户");
         } catch (error) {
           adminUserPreview.innerHTML = "";
+          setNotice(adminPanelNotice, error.message, true);
+        }
+      }
+
+      async function saveAdminWeeklyTasks() {
+        const identifier = cleanIdentifier(adminIdentifierInput.value);
+        if (!validIdentifier(identifier) || identifier !== adminLoadedIdentifier) {
+          setNotice(adminPanelNotice, "请先选择用户", true);
+          return;
+        }
+        try {
+          const payload = await apiJson(`/api/admin/users/${encodeURIComponent(identifier)}/weekly-tasks`, {
+            method: "PUT",
+            headers: adminAuthHeaders(),
+            body: JSON.stringify({ weeklyTasks: adminWeeklyTasks })
+          });
+          adminWeeklyTasks = normalizeAdminWeeklyTasks(payload.weeklyTasks);
+          adminWeeklyTasksDirty = false;
+          renderAdminWeekdayTabs();
+          renderAdminWeeklyTasks();
+          if (activeUserIdentifier() === identifier) {
+            dailyTasks = Array.isArray(payload.tasks) ? payload.tasks : [];
+            renderTasks();
+          }
+          setNotice(adminPanelNotice, "周任务表已保存");
+        } catch (error) {
           setNotice(adminPanelNotice, error.message, true);
         }
       }
@@ -5080,12 +5145,22 @@
       taskStroopAnswerSelect.addEventListener("change", updateTaskConfigVisibility);
       taskDecodeReverseSelect.addEventListener("change", updateTaskConfigVisibility);
       addTaskButton.addEventListener("click", () => {
-        dailyTasks.push(buildTaskFromControls());
-        persistUserCenter();
+        if (!adminLoadedIdentifier) {
+          setNotice(adminPanelNotice, "请先选择用户", true);
+          return;
+        }
+        activeAdminWeeklyTasks().push(buildTaskFromControls());
+        adminWeeklyTasksDirty = true;
+        renderAdminWeeklyTasks();
       });
       refreshDailyScoresButton.addEventListener("click", renderDailyScores);
       closeAdminLoginButton.addEventListener("click", () => adminLoginDialog.close());
-      closeAdminPanelButton.addEventListener("click", () => adminPanelDialog.close());
+      closeAdminPanelButton.addEventListener("click", () => {
+        if (!adminWeeklyTasksDirty || window.confirm("周任务表尚未保存，确定关闭吗？")) adminPanelDialog.close();
+      });
+      adminPanelDialog.addEventListener("cancel", (event) => {
+        if (adminWeeklyTasksDirty && !window.confirm("周任务表尚未保存，确定关闭吗？")) event.preventDefault();
+      });
       appTitle.addEventListener("click", () => {
         window.clearTimeout(adminClickTimer);
         adminClickCount += 1;
@@ -5123,10 +5198,17 @@
           setNotice(adminLoginNotice, e.message || "管理密码不正确", true);
         }
       });
-      adminIdentifierInput.addEventListener("change", adminLookup);
+      adminIdentifierInput.addEventListener("change", async () => {
+        if (adminWeeklyTasksDirty && !window.confirm("周任务表尚未保存，确定切换用户吗？")) {
+          adminIdentifierInput.value = adminLoadedIdentifier;
+          return;
+        }
+        await adminLookup();
+      });
 
       adminResetPasswordButton.addEventListener("click", adminResetPassword);
       adminDeleteButton.addEventListener("click", adminDeleteUser);
+      adminSaveWeeklyTasksButton.addEventListener("click", saveAdminWeeklyTasks);
       adminSaveSettingsButton.addEventListener("click", saveAdminSettings);
       adminSaveTrainingNavigationButton.addEventListener("click", saveAdminTrainingNavigation);
       adminAudioFileInput.addEventListener("change", () => {
@@ -5137,6 +5219,8 @@
       adminSaveAudioOrderButton.addEventListener("click", saveAdminAudioOrder);
       loadSettings();
       renderTitleTasks();
+      renderAdminWeekdayTabs();
+      renderAdminWeeklyTasks();
       updateTaskConfigVisibility();
       loadUserCenter();
       loadPoems();
