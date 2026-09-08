@@ -1,6 +1,6 @@
 # Feature Index
 
-最近更新时间：2026-07-16
+最近更新时间：2026-09-08
 
 说明：P0 是默认必读文件；P1 是跨功能或后端联动时按需读取；P2 是大文件、部署文件、锁文件或历史说明，读取前应说明原因。`public/index.html` 是单文件前端，读取时优先按下列函数/DOM 锚点定向读取。
 
@@ -285,15 +285,15 @@ P2：谨慎读取文件
 
 ## 成绩记录与统计
 
-功能说明：本地记录每次训练成绩，展示当前模式统计并可清空当前模式记录；用户中心“每日成绩”仅展示指定日期明细，并提供前往公开每日成绩页的趋势入口；公开页展示各训练模式近 90 天趋势，支持配置/指标筛选；正念模式展示累计/平均时长与完整播放次数；登录用户会同步记录到云端。
+功能说明：练习首次操作即登记开始记录，完成后更新同一记录；中断保留未完成留痕。统计、最佳成绩、趋势和每日任务只采用已完成记录，正念提前结束保留练习时长。用户中心“每日成绩”仅展示指定日期明细，并提供前往公开每日成绩页的趋势入口。
 
 用户入口：完成训练结果弹窗；“成绩记录”按钮；“清空当前模式”按钮；公开成绩页。
 
 P0：必须读取文件
 
-- `public/index.html`：`loadRecords`、`saveRecords`、`addRecord`、`recordsForDate`、`syncRecordToCloud`、`recordsForCurrentTraining`、`refreshStats`、`refreshScorePanel`、`createRecordNode`、`renderFullRecords`、`showResult`、`clearRecords`
-- `src/routes.js`：`POST /users/:identifier/records`、`GET /users/:identifier/public`
-- `src/db.js`：`putRecord`、`getRecords`、`pruneAllOldRecords`
+- `public/index.html`：`ensureAttemptStarted`、`abandonActiveAttempt`、`addRecord`、`syncRecordToCloud`、`refreshStats`、`createRecordNode`
+- `src/routes.js`：`POST /users/:identifier/records/start`、`POST /users/:identifier/records`、`POST /users/:identifier/records/:id/interrupt`
+- `src/db.js`：`getRecord`、`putRecord`、`getRecords`
 
 P1：按需读取文件
 
@@ -304,15 +304,15 @@ P2：谨慎读取文件
 
 - 数据库文件或 `data/` 目录：涉及生产数据，默认不要读取
 
-主要调用链：训练完成 -> `addRecord(record)` -> `saveRecords()` -> `syncRecordToCloud(record)` -> `POST /api/users/:identifier/records` -> `db.putRecord()`；下载链为 `loadUserCenter()` -> `GET /api/users/:identifier/public` -> `mergeSyncedRecords()`；趋势链为 `GET /u/:identifier` -> `renderPublicUserPage()` -> `buildTrendSeries()` -> 原生 SVG；统计链为 `refreshScorePanel()` -> `refreshStats()` + `renderFullRecords()`。
+主要调用链：首次操作 -> `ensureAttemptStarted()` -> `POST /records/start` -> `db.putRecord()`；完成 -> `addRecord()` -> `POST /records` 更新原记录；重开/切换 -> `abandonActiveAttempt()` -> `POST /records/:id/interrupt`；下载链为 `loadUserCenter()` -> `GET /public` -> `mergeSyncedRecords()`。
 
 相关状态：`records`、localStorage 成绩键、云端 `records` 表。
 
-相关接口：`POST /api/users/:identifier/records`、`GET /api/users/:identifier/public`、`GET /u/:identifier`。
+相关接口：`POST /api/users/:identifier/records/start`、`POST /api/users/:identifier/records`、`POST /api/users/:identifier/records/:id/interrupt`、`GET /api/users/:identifier/public`、`GET /u/:identifier`。
 
-修改注意事项：本地和云端记录字段必须兼容；每日归日必须使用管理员时区，趋势窗口为今天含在内的 90 个日历日；趋势默认可合并配置，比较用时应筛选同配置；记忆新增可选 `memorySpan`，旧记录不推测评分；评分依据见 `docs/ai/SCORING_REFERENCE.md`；正念记录使用 `audioId`、`audioName`、`audioCompleted` 且不展示错误率；服务器只保留近 90 天记录清理逻辑在启动时执行。
+修改注意事项：新记录使用 `status`、`startedAt`、`endedAt`、`interruptionReason`；无 `status` 的历史记录兼容为已完成。未完成不得用于任务、评分、趋势或最佳成绩；服务器拒绝未经开始登记的完成提交。
 
-最近更新时间：2026-07-16
+最近更新时间：2026-09-08
 
 ---
 

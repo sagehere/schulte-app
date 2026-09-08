@@ -2,6 +2,18 @@
 
 本文件记录 AI 对仓库的维护历史。每次 AI 修改后追加一条，最新记录放在顶部或底部均可，但保持格式一致。
 
+## 2026-09-08
+
+- 类型：功能新增
+- 任务：为七种练习增加开始登记和中断留痕，防止通过刷新或重开选择性保留成绩。
+- 修改文件：
+  - `public/index.html`：首次操作登记、重开/切换确认、中断与待同步处理；统计和记录展示区分已完成与未完成。
+  - `src/routes.js`、`src/db.js`、`src/utils.js`：开始、完成、中断 API；同一记录更新、状态归一化及任务过滤。
+  - `src/html.js`：公开页与趋势排除未完成记录，并显示留痕完成率。
+  - `test/record-status.test.js`、`test/records-public-api.test.js`：覆盖旧记录兼容、任务过滤、开始幂等和禁止直接提交。
+  - `docs/ai/FEATURE_INDEX.md`：更新成绩记录调用链和接口。
+- 验证：`npm test`、`node --check src/utils.js src/db.js src/routes.js src/html.js`、`git diff --check`。
+
 ## 2026-09-01
 
 - 类型：功能新增与权限调整

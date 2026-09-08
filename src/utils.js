@@ -182,6 +182,10 @@ function totalPracticeMs(records) {
   return records.reduce((sum, record) => sum + Math.max(0, Math.round(Number(record && (record.practiceMs || record.timeMs) || 0))), 0);
 }
 
+function isCompletedRecord(record) {
+  return !record || !record.status || record.status === 'completed';
+}
+
 function trainingLabel(record) {
   const type = record.type || 'schulte';
   if (type === 'stroop') return '斯特鲁普';
@@ -206,6 +210,7 @@ function taskFieldValue(value, rule) {
 }
 
 function recordCompletesCloudTask(record, task, audioExists) {
+  if (!isCompletedRecord(record)) return false;
   if (!task || !task.mode || !task.mode.type) return false;
   const type = task.mode.type;
   const matchFields = SERVER_TASK_MATCH_FIELDS[type];
@@ -301,6 +306,10 @@ function normalizeCloudRecord(input) {
     audioId: String(record.audioId || '').slice(0, 100),
     audioName: String(record.audioName || '').slice(0, 80),
     audioCompleted: Boolean(record.audioCompleted),
+    status: record.status === 'completed' || record.status === 'unfinished' ? record.status : undefined,
+    startedAt: String(record.startedAt || ''),
+    endedAt: String(record.endedAt || ''),
+    interruptionReason: String(record.interruptionReason || '').slice(0, 40),
     date: String(record.date || new Date().toISOString()),
     syncedAt: new Date().toISOString()
   };
@@ -483,6 +492,7 @@ module.exports = {
   formatSeconds,
   formatPracticeMs,
   totalPracticeMs,
+  isCompletedRecord,
   trainingLabel,
   memoryReplaySuffix,
   taskFieldValue,

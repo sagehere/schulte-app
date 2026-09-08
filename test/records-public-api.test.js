@@ -47,15 +47,43 @@ test('public records include the complete retained history', async (t) => {
   assert.ok(created.sessionToken);
 
   for (let index = 0; index < 101; index += 1) {
+    const record = { id: `trend-${index}`, type: 'schulte', size: 5, timeMs: 1000 + index, errors: 0, accuracy: 100, date: '2026-07-16T08:00:00.000Z' };
+    if (index === 0) {
+      const rejected = await fetch(`${baseUrl}/api/users/trenduser/records`, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ sessionToken: created.sessionToken, record: { ...record, status: 'completed' } })
+      });
+      assert.equal(rejected.status, 409);
+    }
+    const started = await fetch(`${baseUrl}/api/users/trenduser/records/start`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sessionToken: created.sessionToken, record })
+    });
+    assert.equal(started.status, 200);
+    if (index === 0) {
+      const repeatedStart = await fetch(`${baseUrl}/api/users/trenduser/records/start`, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ sessionToken: created.sessionToken, record })
+      });
+      assert.equal(repeatedStart.status, 200);
+    }
     const response = await fetch(`${baseUrl}/api/users/trenduser/records`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         sessionToken: created.sessionToken,
-        record: { id: `trend-${index}`, type: 'schulte', size: 5, timeMs: 1000 + index, errors: 0, accuracy: 100, date: '2026-07-16T08:00:00.000Z' }
+        record: { ...record, status: 'completed' }
       })
     });
     assert.equal(response.status, 200);
+    if (index === 0) {
+      const repeatedCompletion = await fetch(`${baseUrl}/api/users/trenduser/records`, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ sessionToken: created.sessionToken, record: { ...record, status: 'completed', timeMs: 1 } })
+      });
+      assert.equal(repeatedCompletion.status, 200);
+    }
   }
 
   const publicRecords = await (await fetch(`${baseUrl}/api/users/trenduser/public`)).json();

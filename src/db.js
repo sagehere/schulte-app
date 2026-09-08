@@ -364,6 +364,23 @@ function getRecordsByDate(userId, date) {
   return results;
 }
 
+function getRecord(userId, id) {
+  const stmt = db.prepare('SELECT record_json FROM records WHERE user_id = ? AND id = ?');
+  stmt.bind([userId, id]);
+  const found = stmt.step();
+  const value = found ? stmt.get()[0] : null;
+  stmt.free();
+  try { return value ? JSON.parse(value) : null; } catch { return null; }
+}
+
+function getRecordOwner(id) {
+  const stmt = db.prepare('SELECT user_id FROM records WHERE id = ?');
+  stmt.bind([id]);
+  const owner = stmt.step() ? stmt.get()[0] : '';
+  stmt.free();
+  return owner;
+}
+
 function putRecord(userId, record) {
   const id = record.id || require('crypto').randomUUID();
   const date = record.date ? record.date.slice(0, 10) : '';
@@ -422,6 +439,8 @@ module.exports = {
   deleteTasksFromDate,
   getRecords,
   getRecordsByDate,
+  getRecord,
+  getRecordOwner,
   putRecord,
   deleteRecords,
   pruneAllOldRecords,

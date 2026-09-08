@@ -2316,6 +2316,8 @@
       let poemChars = [];
       let poemNextIndex = 0;
       let mindfulnessAudios = [];
+      let activeAttempt = null;
+      let attemptStarting = false;
 
       function loadRecords() {
         try {
@@ -2892,6 +2894,7 @@
       }
 
       function recordMatchesTask(record, task) {
+        if (record.status && record.status !== "completed") return false;
         const type = record.type || "schulte";
         const spec = dailyTaskSpecs[task.module];
         if (type !== task.module || !spec) return false;
@@ -3084,7 +3087,10 @@
         }
         const practiceSummary = document.createElement("div");
         practiceSummary.className = "notice";
-        practiceSummary.textContent = `当日累计练习时长${formatPracticeDuration(dailyPracticeMs(date))}`;
+        const tracked = dayRecords.filter((record) => record.status);
+        const completed = tracked.filter((record) => record.status === "completed").length;
+        const completion = tracked.length ? ` · 完成/开始 ${completed}/${tracked.length}（${Math.round(completed * 100 / tracked.length)}%）` : "";
+        practiceSummary.textContent = `当日累计练习时长${formatPracticeDuration(dailyPracticeMs(date))}${completion}`;
         dailyScoreList.replaceChildren(practiceSummary, ...dayRecords.map((record) => {
           return createRecordNode(record);
         }));
@@ -3129,6 +3135,7 @@
           dailyTasks = Array.isArray(payload.tasks) ? payload.tasks : [];
           if (canWriteActiveUser()) {
             try {
+              syncPendingRecords();
               const publicPayload = await apiJson(`/api/users/${encodeURIComponent(identifier)}/public`);
               const added = mergeSyncedRecords(publicPayload.records);
               setNotice(userCenterNotice, added > 0 ? `资料已加载，同步了 ${added} 条新记录` : "用户资料已加载");
@@ -3171,6 +3178,7 @@
           const loadedUser = userPayload.user || publicPayload.user;
           cloudUser = { identifier: loadedUser.identifier, sessionToken: userPayload.sessionToken };
           loadedUserIdentifier = "";
+          syncPendingRecords();
           loginPasswordInput.value = "";
           saveCloudUser();
           saveLoadedUserIdentifier();
@@ -3275,6 +3283,7 @@
 
           cloudUser = { identifier: payload.user.identifier, sessionToken: payload.sessionToken };
           loadedUserIdentifier = "";
+          syncPendingRecords();
           saveCloudUser();
           saveLoadedUserIdentifier();
 
@@ -3292,7 +3301,7 @@
       }
 
       async function syncRecordToCloud(record) {
-        if (!canWriteActiveUser()) return;
+        if (!canWriteActiveUser() || record.ownerIdentifier !== activeUserIdentifier()) return;
         try {
           await apiJson(`/api/users/${encodeURIComponent(activeUserIdentifier())}/records`, {
             method: "POST",
@@ -3301,17 +3310,89 @@
               record
             })
           });
+          record.syncPending = false;
+          saveRecords();
           setNotice(recordsNotice, "已生成本次成绩记录，并同步到云端");
         } catch (error) {
+          record.syncPending = true;
+          saveRecords();
           setNotice(recordsNotice, `本地已保存，云端同步失败${error.message}`, true);
         }
       }
 
+      function syncPendingRecords() {
+        if (!canWriteActiveUser()) return;
+        records.filter((record) => record.syncPending && record.ownerIdentifier === activeUserIdentifier()).forEach(syncRecordToCloud);
+      }
+
+      function attemptConfig() {
+        return {
+          id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+          type: currentTraining,
+          size: currentTraining === "schulte" ? size : 0,
+          reverse: currentTraining === "schulte" ? reverseOrderOn : currentTraining === "decode" ? decodeReverseOn : false,
+          textAnswer: currentTraining === "stroop" && stroopTextAnswerOn,
+          colorInterference: ["schulte", "idiom", "poem"].includes(currentTraining) && colorInterferenceOn,
+          cols: currentTraining === "idiom" ? idiomCols : 0,
+          audioId: currentTraining === "mindfulness" ? (selectedMindfulnessAudio()?.id || "") : "",
+          audioName: currentTraining === "mindfulness" ? (selectedMindfulnessAudio()?.name || "") : ""
+        };
+      }
+
+      async function ensureAttemptStarted() {
+        if (activeAttempt) return true;
+        if (attemptStarting) return false;
+        attemptStarting = true;
+        const draft = { ...attemptConfig(), status: "unfinished", date: new Date().toISOString(), ownerIdentifier: canWriteActiveUser() ? activeUserIdentifier() : "" };
+        try {
+          if (canWriteActiveUser()) {
+            const payload = await apiJson(`/api/users/${encodeURIComponent(activeUserIdentifier())}/records/start`, {
+              method: "POST", body: JSON.stringify({ sessionToken: cloudUser.sessionToken, record: draft })
+            });
+            Object.assign(draft, payload.record);
+          } else {
+            draft.startedAt = draft.date;
+          }
+          records.unshift(draft);
+          saveRecords();
+          activeAttempt = draft;
+          return true;
+        } catch (error) {
+          setNotice(notice, `无法登记本次练习：${error.message}`, true);
+          return false;
+        } finally {
+          attemptStarting = false;
+        }
+      }
+
+      function abandonActiveAttempt(reason = "restarted") {
+        if (!activeAttempt || activeAttempt.status === "completed") return true;
+        if (!window.confirm("本次练习将记为未完成，确定继续吗？")) return false;
+        const abandoned = activeAttempt;
+        abandoned.endedAt = new Date().toISOString();
+        abandoned.interruptionReason = reason;
+        saveRecords();
+        if (canWriteActiveUser()) apiJson(`/api/users/${encodeURIComponent(activeUserIdentifier())}/records/${encodeURIComponent(abandoned.id)}/interrupt`, {
+          method: "POST", body: JSON.stringify({ sessionToken: cloudUser.sessionToken, reason })
+        }).catch(() => { abandoned.syncPending = true; saveRecords(); });
+        activeAttempt = null;
+        return true;
+      }
+
       function addRecord(record) {
+        if (activeAttempt) {
+          Object.assign(activeAttempt, record, {
+            id: activeAttempt.id,
+            status: record.type === "mindfulness" && !record.audioCompleted ? "unfinished" : "completed",
+            endedAt: new Date().toISOString()
+          });
+          record = activeAttempt;
+          activeAttempt = null;
+        }
         record.practiceMs = recordPracticeMs(record);
         sessionElapsedMs = 0;
         refreshSessionTimer();
-        records.unshift(record);
+        if (!records.includes(record)) records.unshift(record);
         saveRecords();
         refreshScorePanel();
         renderTasks();
@@ -4206,8 +4287,9 @@
         notice.textContent = "点击开始记忆";
       }
 
-      function startMemoryTraining() {
+      async function startMemoryTraining() {
         if (currentTraining !== "memory" || memoryActive || finished) return;
+        if (!await ensureAttemptStarted()) return;
         memoryActive = true;
         memoryStartButton.disabled = true;
         memoryStartButton.textContent = "记忆中";
@@ -4401,10 +4483,11 @@
         });
       }
 
-      function handleCell(cell, value) {
+      async function handleCell(cell, value) {
         if (finished || cell.classList.contains("found")) return;
 
         if (!started) {
+          if (!await ensureAttemptStarted()) return;
           startTimer();
           revealAllCells();
         }
@@ -4432,9 +4515,12 @@
         }, 300);
       }
 
-      function handleColorChoice(button, colorKey) {
+      async function handleColorChoice(button, colorKey) {
         if (finished) return;
-        if (!started) startTimer();
+        if (!started) {
+          if (!await ensureAttemptStarted()) return;
+          startTimer();
+        }
 
         if (currentStroopAnswerColor && colorKey === currentStroopAnswerColor.key) {
           button.classList.add("correct");
@@ -4459,9 +4545,12 @@
         }, 300);
       }
 
-      function handleDecodeChoice(button) {
+      async function handleDecodeChoice(button) {
         if (finished || decodeAnswered >= decodeQuestionsData.length) return;
-        if (!started) startTimer();
+        if (!started) {
+          if (!await ensureAttemptStarted()) return;
+          startTimer();
+        }
         const item = decodeQuestions.querySelector(`.decode-question[data-index="${decodeAnswered}"]`);
         const question = decodeQuestionsData[decodeAnswered];
         const answer = decodeReverseOn ? question.symbol : question.letter;
@@ -4486,10 +4575,11 @@
         }, 300);
       }
 
-      function handleIdiomCell(cell) {
+      async function handleIdiomCell(cell) {
         if (finished || cell.classList.contains("found")) return;
 
         if (!started) {
+          if (!await ensureAttemptStarted()) return;
           startTimer();
           revealAllCells();
         }
@@ -4518,10 +4608,11 @@
         }, 300);
       }
 
-      function handlePoemCell(cell) {
+      async function handlePoemCell(cell) {
         if (finished || cell.classList.contains("found")) return;
 
         if (!started) {
+          if (!await ensureAttemptStarted()) return;
           startTimer();
           revealAllCells();
         }
@@ -4795,35 +4886,37 @@
       }
 
       function bestForCurrentTraining() {
-        return recordsForCurrentTraining().sort((a, b) => a.timeMs - b.timeMs)[0];
+        return recordsForCurrentTraining().filter((record) => !record.status || record.status === "completed").sort((a, b) => a.timeMs - b.timeMs)[0];
       }
 
       function refreshStats() {
         const current = recordsForCurrentTraining();
+        const completed = current.filter((record) => !record.status || record.status === "completed");
+        const completionText = current.length ? `${completed.length}/${current.length}（${Math.round(completed.length * 100 / current.length)}%）` : "--";
         if (currentTraining === "mindfulness") {
-          const total = current.reduce((sum, record) => sum + recordPracticeMs(record), 0);
-          countLabel.textContent = "练习次数";
+          const total = current.filter((record) => record.endedAt).reduce((sum, record) => sum + recordPracticeMs(record), 0);
+          countLabel.textContent = "完成/开始";
           avgLabel.textContent = "累计时长";
           fastLabel.textContent = "平均时长";
           avgErrorLabel.textContent = "完整播放";
-          countText.textContent = String(current.length);
+          countText.textContent = completionText;
           avgText.textContent = current.length ? formatPracticeDuration(total) : "--";
           fastText.textContent = current.length ? formatPracticeDuration(total / current.length) : "--";
-          avgErrorText.textContent = String(current.filter((record) => record.audioCompleted).length);
+          avgErrorText.textContent = String(completed.filter((record) => record.audioCompleted).length);
           return;
         }
         const best = bestForCurrentTraining();
-        countLabel.textContent = "练习次数";
+        countLabel.textContent = "完成/开始";
         avgLabel.textContent = "平均用时";
         fastLabel.textContent = "最快用时";
         avgErrorLabel.textContent = "平均错误";
-        countText.textContent = String(current.length);
+        countText.textContent = completionText;
         fastText.textContent = best ? `${formatSeconds(best.timeMs)}s` : "--";
-        avgText.textContent = current.length
-          ? `${formatSeconds(current.reduce((sum, record) => sum + record.timeMs, 0) / current.length)}s`
+        avgText.textContent = completed.length
+          ? `${formatSeconds(completed.reduce((sum, record) => sum + record.timeMs, 0) / completed.length)}s`
           : "--";
-        avgErrorText.textContent = current.length
-          ? (current.reduce((sum, record) => sum + record.errors, 0) / current.length).toFixed(1)
+        avgErrorText.textContent = completed.length
+          ? (completed.reduce((sum, record) => sum + record.errors, 0) / completed.length).toFixed(1)
           : "--";
       }
 
@@ -4853,7 +4946,8 @@
         node.className = "record";
         const type = record.type || "schulte";
         const label = type === "stroop" ? "斯特鲁普" : type === "decode" ? "\u8bd1\u7801\u8bad\u7ec3" : type === "idiom" ? `4×${record.cols}` : type === "poem" ? "古诗训练" : type === "memory" ? "记忆训练" : type === "mindfulness" ? "正念练习" : `${record.size}×${record.size}${record.reverse ? " 倒序" : ""}`;
-        const detail = type === "stroop"
+        const unfinished = record.status && record.status !== "completed";
+        const detail = unfinished ? `未完成${record.endedAt ? " · 已中断" : " · 进行中"}` : type === "stroop"
           ? `${record.trials || stroopTotal}题· 错${record.errors}`
           : type === "decode"
             ? `${record.trials || decodeTotal}\u9898 \u00b7 \u9519 ${record.errors}`
@@ -4873,8 +4967,8 @@
 
         const infoDiv = document.createElement("div");
         const strong = document.createElement("strong");
-        strong.textContent = type === "mindfulness" ? (record.audioCompleted ? "完整" : "已结束") : `${record.accuracy}%`;
-        const rating = scoreRecord(record, birthDateInput.value);
+        strong.textContent = unfinished ? "未完成" : type === "mindfulness" ? (record.audioCompleted ? "完整" : "已结束") : `${record.accuracy}%`;
+        const rating = unfinished ? "" : scoreRecord(record, birthDateInput.value);
         const ratingNode = document.createElement("div");
         ratingNode.className = "score-rating";
         ratingNode.textContent = `等第：${rating}（训练参考，非医学诊断）`;
@@ -4887,7 +4981,7 @@
 
         const scoreDiv = document.createElement("div");
         scoreDiv.className = "score";
-        scoreDiv.textContent = `${formatSeconds(record.timeMs)}s`;
+        scoreDiv.textContent = unfinished && !record.timeMs ? "--" : `${formatSeconds(record.timeMs)}s`;
 
         node.append(modeDiv, infoDiv, scoreDiv);
         return node;
@@ -4989,6 +5083,7 @@
       }
 
       function setTraining(training) {
+        if (training !== currentTraining && !abandonActiveAttempt("switched_training")) return;
         currentTraining = training;
         trainingButtons.forEach((button) => {
           button.classList.toggle("active", button.dataset.training === currentTraining);
@@ -4998,6 +5093,7 @@
       }
 
       function setSize(nextSize) {
+        if (nextSize !== size && !abandonActiveAttempt("changed_mode")) return;
         size = nextSize;
         modeButtons.forEach((button) => {
           button.classList.toggle("active", Number(button.dataset.size) === size);
@@ -5006,6 +5102,7 @@
       }
 
       function setIdiomCols(nextCols) {
+        if (nextCols !== idiomCols && !abandonActiveAttempt("changed_mode")) return;
         idiomCols = nextCols;
         idiomModeButtons.forEach((button) => {
           button.classList.toggle("active", Number(button.dataset.idiomCols) === idiomCols);
@@ -5025,11 +5122,13 @@
         button.addEventListener("click", () => setIdiomCols(Number(button.dataset.idiomCols)));
       });
 
-      document.getElementById("resetButton").addEventListener("click", buildBoard);
+      document.getElementById("resetButton").addEventListener("click", () => {
+        if (abandonActiveAttempt("restarted")) buildBoard();
+      });
       memoryStartButton.addEventListener("click", startMemoryTraining);
       memoryReplayButton.addEventListener("click", replayMemoryPreview);
       mindfulnessAudioSelect.addEventListener("change", setMindfulnessAudioSource);
-      mindfulnessAudio.addEventListener("play", () => {
+      mindfulnessAudio.addEventListener("play", async () => {
         if (currentTraining !== "mindfulness") {
           mindfulnessAudio.pause();
           return;
@@ -5037,6 +5136,10 @@
         if (finished) {
           mindfulnessAudio.pause();
           notice.textContent = "本次练习已记录，请重新开始。";
+          return;
+        }
+        if (!started && !await ensureAttemptStarted()) {
+          mindfulnessAudio.pause();
           return;
         }
         startTimer();
@@ -5072,13 +5175,14 @@
       document.getElementById("closeRecordsBottomButton").addEventListener("click", () => recordsDialog.close());
       function clearRecords() {
         const current = recordsForCurrentTraining();
-        if (!current.length) {
+        const clearable = current.filter((record) => (!record.status || record.status === "completed") && !record.syncPending);
+        if (!clearable.length) {
           refreshScorePanel();
           recordsNotice.textContent = "暂无可清空的成绩记录";
           return;
         }
         if (window.confirm("确定清空当前模式的所有成绩记录吗？")) {
-          records = records.filter((record) => !current.includes(record));
+          records = records.filter((record) => !clearable.includes(record));
           saveRecords();
           refreshScorePanel();
           notice.textContent = "成绩记录已清空";
@@ -5087,6 +5191,12 @@
       }
 
       document.getElementById("clearAllButton").addEventListener("click", clearRecords);
+      window.addEventListener("beforeunload", (event) => {
+        if (!activeAttempt || activeAttempt.status === "completed") return;
+        event.preventDefault();
+        event.returnValue = "本次练习会保留为未完成记录。";
+      });
+      window.addEventListener("online", syncPendingRecords);
       sessionStartButton.style.display = "none";
       sessionStopButton.style.display = "none";
       sessionStartButton.addEventListener("click", startSessionTimer);
@@ -5096,18 +5206,22 @@
         refreshHint();
       });
       reverseOrderToggle.addEventListener("change", () => {
+        if (!abandonActiveAttempt("changed_mode")) { reverseOrderToggle.checked = reverseOrderOn; return; }
         reverseOrderOn = reverseOrderToggle.checked;
         if (currentTraining === "schulte") buildBoard();
       });
       colorInterferenceToggle.addEventListener("change", () => {
+        if (!abandonActiveAttempt("changed_mode")) { colorInterferenceToggle.checked = colorInterferenceOn; return; }
         colorInterferenceOn = colorInterferenceToggle.checked;
         if (currentTraining !== "stroop") applyGridTextColors();
       });
       decodeReverseToggle.addEventListener("change", () => {
+        if (!abandonActiveAttempt("changed_mode")) { decodeReverseToggle.checked = decodeReverseOn; return; }
         decodeReverseOn = decodeReverseToggle.checked;
         if (currentTraining === "decode") buildBoard();
       });
       stroopTextAnswerToggle.addEventListener("change", () => {
+        if (!abandonActiveAttempt("changed_mode")) { stroopTextAnswerToggle.checked = stroopTextAnswerOn; return; }
         stroopTextAnswerOn = stroopTextAnswerToggle.checked;
         if (currentTraining === "stroop") buildBoard();
       });

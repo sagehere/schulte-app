@@ -367,8 +367,8 @@ router.post('/users/:identifier/verify-session', async (req, res) => {
   res.json({ ok: true, valid: true });
 });
 
-// Post record
-router.post('/users/:identifier/records', async (req, res) => {
+// Register an attempt before it begins. A client-provided id makes retries safe.
+router.post('/users/:identifier/records/start', async (req, res) => {
   const { identifier } = req.params;
   if (!validIdentifier(identifier)) return res.status(400).json({ ok: false, error: '识别码仅可输入数字与字母' });
 
@@ -378,9 +378,63 @@ router.post('/users/:identifier/records', async (req, res) => {
   const owned = await requireSession(identifier, body.sessionToken);
   if (owned.error) return res.status(owned.error.status).json(owned.error);
 
-  const record = normalizeCloudRecord(body.record);
+  if (!body.record || !body.record.id) return res.status(400).json({ ok: false, error: '练习记录缺少标识' });
+  const requested = normalizeCloudRecord(body.record);
+  const existing = db.getRecord(identifier, requested.id);
+  if (existing) return res.json({ ok: true, record: existing });
+  if (db.getRecordOwner(requested.id)) return res.status(409).json({ ok: false, error: '练习记录标识冲突，请重新开始' });
+  const now = new Date().toISOString();
+  const record = { ...requested, status: 'unfinished', startedAt: now, endedAt: '', interruptionReason: '', date: now };
   db.putRecord(identifier, record);
+  res.json({ ok: true, record });
+});
 
+// Finish only a previously registered attempt. This prevents a page that never
+// registered its start from submitting a selectively chosen score.
+router.post('/users/:identifier/records', async (req, res) => {
+  const { identifier } = req.params;
+  if (!validIdentifier(identifier)) return res.status(400).json({ ok: false, error: '识别码仅可输入数字与字母' });
+  const body = req.body;
+  if (!body) return res.status(400).json({ ok: false, error: '请求体不是有效 JSON' });
+  const owned = await requireSession(identifier, body.sessionToken);
+  if (owned.error) return res.status(owned.error.status).json(owned.error);
+  const submitted = normalizeCloudRecord(body.record);
+  const existing = db.getRecord(identifier, submitted.id);
+  if (!existing) return res.status(409).json({ ok: false, error: '请刷新页面后重新开始练习' });
+  if (existing.status === 'completed') return res.json({ ok: true, record: existing });
+  if (existing.endedAt) return res.status(409).json({ ok: false, error: '本次练习已中断，无法改写成绩' });
+  const completed = submitted.status === 'completed';
+  const record = {
+    ...existing,
+    timeMs: submitted.timeMs,
+    practiceMs: submitted.practiceMs,
+    errors: submitted.errors,
+    accuracy: submitted.accuracy,
+    replays: submitted.replays,
+    memorySpan: submitted.memorySpan,
+    trials: submitted.trials,
+    title: submitted.title || existing.title,
+    audioName: submitted.audioName || existing.audioName,
+    audioCompleted: submitted.audioCompleted,
+    status: completed ? 'completed' : 'unfinished',
+    endedAt: new Date().toISOString(),
+    interruptionReason: completed ? '' : (submitted.interruptionReason || 'ended_early')
+  };
+  db.putRecord(identifier, record);
+  res.json({ ok: true, record });
+});
+
+router.post('/users/:identifier/records/:id/interrupt', async (req, res) => {
+  const { identifier, id } = req.params;
+  if (!validIdentifier(identifier)) return res.status(400).json({ ok: false, error: '识别码仅可输入数字与字母' });
+  const body = req.body || {};
+  const owned = await requireSession(identifier, body.sessionToken);
+  if (owned.error) return res.status(owned.error.status).json(owned.error);
+  const existing = db.getRecord(identifier, String(id));
+  if (!existing) return res.status(404).json({ ok: false, error: '练习记录不存在' });
+  if (existing.status === 'completed' || existing.endedAt) return res.json({ ok: true, record: existing });
+  const record = { ...existing, status: 'unfinished', endedAt: new Date().toISOString(), interruptionReason: String(body.reason || 'interrupted').slice(0, 40) };
+  db.putRecord(identifier, record);
   res.json({ ok: true, record });
 });
 

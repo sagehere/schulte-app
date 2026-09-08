@@ -132,7 +132,7 @@ const TREND_SCRIPT = String.raw`
     const indexByDate = new Map(dates.map((date, index) => [date, index]));
     const filtered = records.filter((record) => {
       const date = dateKeyForRecord(record);
-      return (record.type || 'schulte') === mode && indexByDate.has(date) && (!variantKey || trendVariant(record).key === variantKey);
+      return (!record.status || record.status === 'completed') && (record.type || 'schulte') === mode && indexByDate.has(date) && (!variantKey || trendVariant(record).key === variantKey);
     });
     filtered.forEach((record) => addTrendRecord(buckets[indexByDate.get(dateKeyForRecord(record))], record));
     const metrics = trendMetricDefinitions(mode);
@@ -268,7 +268,7 @@ const TREND_BOOTSTRAP_SCRIPT = String.raw`
     const startDate = shiftDateKey(data.endDate, -89);
     const modeRecords = records.filter((record) => {
       const date = recordDateKey(record);
-      return (record.type || 'schulte') === trendMode && date >= startDate && date <= data.endDate;
+      return (!record.status || record.status === 'completed') && (record.type || 'schulte') === trendMode && date >= startDate && date <= data.endDate;
     });
     const variants = [...new Map(modeRecords.map((record) => {
       const variant = trendVariant(record);
@@ -314,11 +314,14 @@ function renderPublicUserPage(stored, todayRecords, tasks, records, timeZone, au
   const completedTasks = tasks.filter((task) => task.completed).length;
   const progressPercent = tasks.length ? Math.round((completedTasks / tasks.length) * 100) : 0;
   const todayPracticeMs = totalPracticeMs(todayRecords);
+  const trackedAttempts = records.filter((record) => Boolean(record.status));
+  const completedAttempts = trackedAttempts.filter((record) => record.status === 'completed').length;
+  const completionRate = trackedAttempts.length ? `${completedAttempts}/${trackedAttempts.length}（${Math.round(completedAttempts * 100 / trackedAttempts.length)}%）` : '—';
 
   const taskSummary = tasks.length
     ? `<div class="progress-head"><strong>${completedTasks}/${tasks.length}</strong><span>${progressPercent}%</span></div>
       <div class="progress"><span style="width:${progressPercent}%"></span></div>
-      <div class="practice-total">今日累计练习时长：${escapeHtml(formatPracticeMs(todayPracticeMs))}</div>
+      <div class="practice-total">今日累计练习时长：${escapeHtml(formatPracticeMs(todayPracticeMs))} · 完成/开始：${completionRate}（仅统计启用留痕后的记录）</div>
       <div class="task-list">${tasks.map((task) => `<article class="task ${task.completed ? "done" : "todo"}">
         <strong>${task.completed ? "已完成" : "进行中"}</strong>
         <span>${escapeHtml(cloudTaskText(task, audioNameForId))} · ${Math.min(task.completedCount, task.targetCount)}/${task.targetCount} 次</span>
@@ -336,15 +339,16 @@ function renderPublicUserPage(stored, todayRecords, tasks, records, timeZone, au
       <h2>${escapeHtml(date)}</h2>
       <div class="practice-total">当日累计练习时长：${escapeHtml(formatPracticeMs(totalPracticeMs(dayRecords)))}</div>
       ${dayRecords.map((record) => {
+        const unfinished = record.status && record.status !== 'completed';
         const rating = scoreCloudRecord(record, stored.birthDate);
         const label = trainingLabel(record);
         const rt = formatRecordTime(record.date, timeZone);
-        const detail = (record.type || 'schulte') === 'mindfulness'
+        const detail = unfinished ? `未完成${record.endedAt ? ' · 已中断' : ' · 进行中'}` : (record.type || 'schulte') === 'mindfulness'
           ? `音频 ${escapeHtml(record.audioName || '引导音频')} · 练习 ${escapeHtml(formatPracticeMs(record.practiceMs || record.timeMs))} · ${record.audioCompleted ? '完整播放' : '提前结束'}`
           : `${formatSeconds(record.timeMs)}s · 练习 ${escapeHtml(formatPracticeMs(record.practiceMs || record.timeMs))} · 错 ${record.errors} · 正确率 ${record.accuracy}%${escapeHtml(memoryReplaySuffix(record).replace(/^，/, " · "))}${rating ? ` · 等第：${escapeHtml(rating)}（训练参考，非医学诊断）` : ""}`;
         return `<article class="record">
           <time>${rt || '--:--'}</time>
-          <strong>${escapeHtml(label)}</strong>
+          <strong>${escapeHtml(label)}${unfinished ? ' · 未完成' : ''}</strong>
           <span>${detail}</span>
         </article>`;
       }).join("")}
