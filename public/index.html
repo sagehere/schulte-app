@@ -1525,6 +1525,9 @@
         <div class="menu-row">
           <span class="menu-label">训练模块</span>
           <nav class="training-switch" id="trainingSwitch" aria-label="训练模式">
+            <a class="tool-button learning-link" data-learning="reading" href="/learning?module=reading">读懂一段话</a>
+            <a class="tool-button learning-link" data-learning="reasoning" href="/learning?module=reasoning">寻找原因</a>
+            <a class="tool-button learning-link" data-learning="math-reading" href="/learning?module=math-reading">读懂数学题</a>
             <button class="training-button active" type="button" data-training="schulte">舒尔特方格</button>
             <button class="training-button" type="button" data-training="stroop">斯特鲁普</button>
             <button class="training-button" type="button" data-training="idiom">成语训练</button>
@@ -1861,6 +1864,9 @@
           <div class="task-config-grid">
             <label class="form-field">模块
               <select id="taskModuleSelect">
+                <option value="reading">读懂一段话</option>
+                <option value="reasoning">寻找原因</option>
+                <option value="math-reading">读懂数学题</option>
                 <option value="schulte">舒尔特方格</option><option value="stroop">斯特鲁普</option><option value="idiom">成语训练</option><option value="poem">古诗训练</option><option value="memory">记忆训练</option><option value="decode">译码训练</option><option value="mindfulness">正念练习</option>
               </select>
             </label>
@@ -1947,7 +1953,9 @@
       const poemFullText = document.getElementById("poemFullText");
       const trainingSwitch = document.getElementById("trainingSwitch");
       const trainingButtons = [...document.querySelectorAll(".training-button")];
-      const defaultTrainingNavigation = trainingButtons.map((button) => ({ id: button.dataset.training, visible: true }));
+      const navigationElements = [...trainingButtons, ...document.querySelectorAll('.learning-link')];
+      const navId = button => button.dataset.training || button.dataset.learning;
+      const defaultTrainingNavigation = navigationElements.map((button) => ({ id: navId(button), visible: true }));
       appSettings.trainingNavigation = defaultTrainingNavigation.map((item) => ({ ...item }));
       const modeButtons = [...document.querySelectorAll(".mode-button")];
       const idiomModeButtons = [...document.querySelectorAll("[data-idiom-cols]")];
@@ -2447,14 +2455,22 @@
         return Boolean(cloudUser && cloudUser.sessionToken && identifier && cloudUser.identifier === identifier);
       }
 
+      function ownedRecords() {
+        return records.filter((record) => (record.ownerIdentifier || '') === activeUserIdentifier());
+      }
       function mergeSyncedRecords(nextRecords) {
         if (!Array.isArray(nextRecords) || !nextRecords.length) return 0;
         const recordKey = (record) => record.id || [record.type || "schulte", record.date, record.timeMs, record.errors].join(":");
-        const seen = new Set(records.map(recordKey));
+        const seen = new Set(ownedRecords().map(recordKey));
         let added = 0;
         nextRecords.forEach((record) => {
           const key = recordKey(record);
-          if (seen.has(key)) return;
+          record = { ...record, ownerIdentifier: activeUserIdentifier() };
+          if (seen.has(key)) {
+            const index = records.findIndex((item) => recordKey(item) === key && item.ownerIdentifier === activeUserIdentifier());
+            if (index >= 0 && !records[index].syncPending) { records[index] = record; added += 1; }
+            return;
+          }
           seen.add(key);
           records.push(record);
           added += 1;
@@ -2618,14 +2634,15 @@
       function applyTrainingNavigation(navigation) {
         const normalized = normalizeTrainingNavigation(navigation);
         appSettings.trainingNavigation = normalized;
-        const buttonsById = new Map(trainingButtons.map((button) => [button.dataset.training, button]));
+        const buttonsById = new Map(navigationElements.map((button) => [navId(button), button]));
         normalized.forEach((item) => {
           const button = buttonsById.get(item.id);
           button.hidden = !item.visible;
           trainingSwitch.append(button);
         });
         if (!normalized.some((item) => item.id === currentTraining && item.visible)) {
-          setTraining(normalized.find((item) => item.visible).id);
+          const next = normalized.find(item => item.visible && !['reading','reasoning','math-reading'].includes(item.id));
+          if (next) setTraining(next.id);
         }
       }
 
@@ -2674,7 +2691,7 @@
 
       function renderAdminTrainingNavigation(navigation = appSettings.trainingNavigation) {
         adminTrainingNavigationList.replaceChildren();
-        const labels = new Map(trainingButtons.map((button) => [button.dataset.training, button.textContent]));
+        const labels = new Map(navigationElements.map((button) => [navId(button), button.textContent]));
         normalizeTrainingNavigation(navigation).forEach((item) => {
           const row = document.createElement("div");
           row.className = "admin-navigation-row sortable-row";
@@ -2733,6 +2750,7 @@
             ...options,
             headers: {
               "content-type": "application/json",
+              ...(cloudUser?.sessionToken ? { Authorization: `Bearer ${cloudUser.sessionToken}` } : {}),
               ...(options.headers || {})
             }
           });
@@ -2789,6 +2807,9 @@
       }
 
       const dailyTaskSpecs = {
+        reading: { label: '读懂一段话', controls: [], describe: () => '完成一个理解单元' },
+        reasoning: { label: '寻找原因', controls: [], describe: () => '完成一个推理单元' },
+        'math-reading': { label: '读懂数学题', controls: [], describe: () => '完成一个读题单元' },
         schulte: {
           label: "舒尔特方格",
           controls: [
@@ -2910,7 +2931,7 @@
       }
 
       function recordsForDate(date) {
-        return records.filter((record) => recordDateKey(record) === date);
+        return ownedRecords().filter((record) => recordDateKey(record) === date);
       }
 
       function taskTargetCount(task) {
@@ -3303,13 +3324,15 @@
       async function syncRecordToCloud(record) {
         if (!canWriteActiveUser() || record.ownerIdentifier !== activeUserIdentifier()) return;
         try {
-          await apiJson(`/api/users/${encodeURIComponent(activeUserIdentifier())}/records`, {
+          const payload = await apiJson(`/api/users/${encodeURIComponent(activeUserIdentifier())}/records${record.status === 'unfinished' && record.endedAt && record.interruptionReason ? '/' + encodeURIComponent(record.id) + '/interrupt' : ''}`, {
             method: "POST",
             body: JSON.stringify({
               sessionToken: cloudUser.sessionToken,
+              reason: record.interruptionReason,
               record
             })
           });
+          if (payload.record) Object.assign(record, payload.record);
           record.syncPending = false;
           saveRecords();
           setNotice(recordsNotice, "已生成本次成绩记录，并同步到云端");
@@ -4872,6 +4895,7 @@
       }
 
       function recordMatchesTraining(record, training = currentTraining) {
+        if (!ownedRecords().includes(record)) return false;
         const type = record.type || "schulte";
         return type === training;
       }
@@ -4945,7 +4969,7 @@
         const node = document.createElement("article");
         node.className = "record";
         const type = record.type || "schulte";
-        const label = type === "stroop" ? "斯特鲁普" : type === "decode" ? "\u8bd1\u7801\u8bad\u7ec3" : type === "idiom" ? `4×${record.cols}` : type === "poem" ? "古诗训练" : type === "memory" ? "记忆训练" : type === "mindfulness" ? "正念练习" : `${record.size}×${record.size}${record.reverse ? " 倒序" : ""}`;
+        const label = ({reading:'读懂一段话',reasoning:'寻找原因','math-reading':'读懂数学题'})[type] || (type === "stroop" ? "斯特鲁普" : type === "decode" ? "\u8bd1\u7801\u8bad\u7ec3" : type === "idiom" ? `4×${record.cols}` : type === "poem" ? "古诗训练" : type === "memory" ? "记忆训练" : type === "mindfulness" ? "正念练习" : `${record.size}×${record.size}${record.reverse ? " 倒序" : ""}`);
         const unfinished = record.status && record.status !== "completed";
         const detail = unfinished ? `未完成${record.endedAt ? " · 已中断" : " · 进行中"}` : type === "stroop"
           ? `${record.trials || stroopTotal}题· 错${record.errors}`
@@ -4998,7 +5022,7 @@
 
       function showResult(record, isBest) {
         const type = record.type || "schulte";
-        const label = type === "stroop" ? "斯特鲁普" : type === "decode" ? "\u8bd1\u7801\u8bad\u7ec3" : type === "idiom" ? `成语训练` : type === "poem" ? "古诗训练" : type === "memory" ? "记忆训练" : type === "mindfulness" ? "正念练习" : `${record.size}×${record.size}${record.reverse ? " 倒序" : ""}`;
+        const label = ({reading:'读懂一段话',reasoning:'寻找原因','math-reading':'读懂数学题'})[type] || (type === "stroop" ? "斯特鲁普" : type === "decode" ? "\u8bd1\u7801\u8bad\u7ec3" : type === "idiom" ? `成语训练` : type === "poem" ? "古诗训练" : type === "memory" ? "记忆训练" : type === "mindfulness" ? "正念练习" : `${record.size}×${record.size}${record.reverse ? " 倒序" : ""}`);
         const unit = type === "decode" ? `${record.trials || decodeTotal}\u9898` : type === "stroop" ? `${record.trials || stroopTotal}题` : type === "idiom" ? `${record.idioms?.length || record.cols || 1}个成绩· 4×${record.cols}` : type === "poem" ? `${record.title || "古诗"} · ${record.chars || 0}字` : type === "memory" ? `${record.rounds || memoryTotalRounds}轮· ${record.grid || "5×5"}` : type === "mindfulness" ? record.audioName || "引导音频" : record.reverse ? "倒序方格" : "方格";
 
         resultSummary.replaceChildren();
@@ -5053,6 +5077,10 @@
       }
 
       function activateTask(task) {
+        if (['reading', 'reasoning', 'math-reading'].includes(task.module)) {
+          if (abandonActiveAttempt('switched_training')) location.href = '/learning?module=' + task.module;
+          return;
+        }
         if (!dailyTaskSpecs[task.module]) return;
         if (task.module === "schulte") {
           size = Number(taskModeSetting(task, "size")) || 5;
@@ -5110,6 +5138,7 @@
         buildBoard();
       }
 
+      document.querySelectorAll('.learning-link').forEach(link => link.addEventListener('click', event => { if (!abandonActiveAttempt('switched_training')) event.preventDefault(); }));
       trainingButtons.forEach((button) => {
         button.addEventListener("click", () => setTraining(button.dataset.training));
       });

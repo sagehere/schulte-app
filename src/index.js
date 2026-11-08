@@ -45,6 +45,9 @@ app.use((req, res, next) => {
 app.use('/api/admin', adminLimiter);
 app.use('/api', apiRoutes);
 
+app.get('/learning', (req, res) => res.sendFile(path.join(__dirname, '../public/learning.html')));
+app.use('/assets', express.static(path.join(__dirname, '../public/assets')));
+
 // Main page
 app.get('/', (req, res) => {
   res.setHeader('content-type', 'text/html; charset=UTF-8');
@@ -122,6 +125,7 @@ async function start() {
   }
 
   db.pruneAllOldRecords();
+  setInterval(() => db.pruneAllOldRecords(), 24 * 60 * 60 * 1000).unref();
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);

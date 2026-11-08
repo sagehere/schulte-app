@@ -54,6 +54,7 @@ const TRAINING_SCORE_RULES = {
 };
 
 const SERVER_TASK_MATCH_FIELDS = {
+  reading: [], reasoning: [], 'math-reading': [],
   schulte: [
     { key: 'size', type: 'number', defaultValue: 5 },
     { key: 'reverse', type: 'boolean', defaultValue: false },
@@ -188,6 +189,9 @@ function isCompletedRecord(record) {
 
 function trainingLabel(record) {
   const type = record.type || 'schulte';
+  if (type === 'reading') return '读懂一段话';
+  if (type === 'reasoning') return '寻找原因';
+  if (type === 'math-reading') return '读懂数学题';
   if (type === 'stroop') return '斯特鲁普';
   if (type === 'idiom') return '成语训练';
   if (type === 'poem') return '古诗训练';

@@ -516,3 +516,17 @@ P2：谨慎读取文件
 修改注意事项：不要随意升级 Node 或依赖；变更数据路径/用户权限时必须验证容器能写入数据库。
 
 最近更新时间：2026-07-14
+
+
+## 段落理解、因果推理与数学读题（首轮）
+
+最近更新时间：2026-11-09
+
+- P0：`src/learning.js`、`src/modules.js`、`src/content/learning.json`、`public/learning.html`、`public/assets/learning.js`、`public/assets/learning.css`、`test/learning-api.test.js`。
+- P1：`src/db.js`（`learningSessions`/`saveLearningSession`、`learning_sessions` 表、用户删除/迁移）、`src/routes.js`（学习路由与导航注册）、`src/utils.js`（三模块任务匹配）、`public/index.html`（入口、每日任务及用户隔离）。
+- API：`GET /api/learning/catalog`、`POST /api/learning/start`、`POST /api/learning/:id/action`、`GET /api/learning/export`。使用 `x-user-id` + Bearer session；管理员凭据亦可访问指定用户。
+- 状态：单元版本快照、逐步答案与提示、事件去重ID、未完成/完成、独立答对标记。开始与每次提交同步刷盘；重复 eventId 不重复累计。完成时派生成绩摘要供每日任务匹配，详情不经过公开 API。
+- 内容：18单元，各模块6个；不对开放口头表达自动评分，不自动升降级。后续：家长UI、CSV、复习与更多题库。
+- 新导航注册表为10项，旧7项设置读取时补入新增模块。新模块进入独立学习页，不调用原七模式的棋盘渲染。
+- 同期数据修复：本地记录按 ownerIdentifier 过滤；同ID云端记录替换已同步本地记录；出生日期仅授权读取；数据库使用临时文件原子替换，旧记录每天清理；正念已结束的提前退出记录进入趋势。
+- 注意：学习详情当前持续保留，摘要90天清理；完成单元代表学完，不等于掌握；列式仅接受内容包列出的答案变式。
