@@ -7,7 +7,7 @@ const { once } = require('node:events');
 const test = require('node:test');
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const defaultNavigation = ['schulte', 'stroop', 'idiom', 'poem', 'memory', 'decode', 'mindfulness']
+const defaultNavigation = ['schulte', 'stroop', 'idiom', 'poem', 'memory', 'decode', 'mindfulness', 'reading', 'reasoning', 'math-reading']
   .map((id) => ({ id, visible: true }));
 
 async function waitForServer(url, child) {

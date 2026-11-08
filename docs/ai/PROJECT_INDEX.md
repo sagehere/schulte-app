@@ -86,3 +86,8 @@ rtk npm start
 - 不读取：`node_modules`、`dist`、`build`、`.next`、`coverage`、`.git`、大型日志和生成文件。
 - 谨慎读取：`package-lock.json`、数据库文件、生产数据目录、完整 `public/index.html`。需要时优先按函数名/行号定向读取。
 
+
+
+## 2026-11-09 理解训练扩展
+
+新增独立 `/learning` 页面与 `/assets` 静态资源，`src/modules.js` 注册10个模式。`src/learning.js` 管理私有学习会话，题库位于 `src/content/learning.json`。首轮18个单元及过程记录，扩展说明见 README 与 FEATURE_INDEX。

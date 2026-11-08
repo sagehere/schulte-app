@@ -53,9 +53,7 @@ function getOrCreateDailyTasks(identifier, date) {
 }
 
 const TRAINING_NAVIGATION_SETTING = 'training_navigation';
-const DEFAULT_TRAINING_NAVIGATION = [
-  'schulte', 'stroop', 'idiom', 'poem', 'memory', 'decode', 'mindfulness'
-].map((id) => ({ id, visible: true }));
+const DEFAULT_TRAINING_NAVIGATION = Object.keys(require('./modules')).map((id) => ({ id, visible: true }));
 
 function getTrainingNavigation() {
   try {
@@ -68,6 +66,7 @@ function getTrainingNavigation() {
 }
 
 function validateTrainingNavigation(value) {
+  if (Array.isArray(value) && value.length === 7 && value.every(item => item && DEFAULT_TRAINING_NAVIGATION.slice(0,7).some(v => v.id === item.id))) value = [...value, ...DEFAULT_TRAINING_NAVIGATION.slice(7)];
   if (!Array.isArray(value) || value.length !== DEFAULT_TRAINING_NAVIGATION.length) return null;
   const expectedIds = new Set(DEFAULT_TRAINING_NAVIGATION.map((item) => item.id));
   const ids = new Set();
@@ -263,7 +262,7 @@ router.post('/users', createLimiter, async (req, res) => {
 });
 
 // Get user
-router.get('/users/:identifier', (req, res) => {
+router.get('/users/:identifier', async (req, res) => {
   const { identifier } = req.params;
   if (!validIdentifier(identifier)) return res.status(400).json({ ok: false, error: '识别码仅可输入数字与字母' });
 
@@ -273,7 +272,8 @@ router.get('/users/:identifier', (req, res) => {
   const date = isDateKey(req.query.date) ? req.query.date : todayDateKey(getTZ());
   const tasks = getOrCreateDailyTasks(identifier, date);
 
-  res.json({ ok: true, user: publicCloudUser(stored), date, tasks });
+  const access = await requireSession(identifier, (req.headers.authorization || '').replace(/^Bearer /, ''));
+  res.json({ ok: true, user: access.error ? publicCloudUserSummary(stored) : publicCloudUser(stored), date, tasks });
 });
 
 // Update user
@@ -380,6 +380,7 @@ router.post('/users/:identifier/records/start', async (req, res) => {
 
   if (!body.record || !body.record.id) return res.status(400).json({ ok: false, error: '练习记录缺少标识' });
   const requested = normalizeCloudRecord(body.record);
+  if (['reading', 'reasoning', 'math-reading'].includes(requested.type)) return res.status(400).json({ok:false,error:'请从理解训练页面开始'});
   const existing = db.getRecord(identifier, requested.id);
   if (existing) return res.json({ ok: true, record: existing });
   if (db.getRecordOwner(requested.id)) return res.status(409).json({ ok: false, error: '练习记录标识冲突，请重新开始' });
@@ -401,6 +402,7 @@ router.post('/users/:identifier/records', async (req, res) => {
   const submitted = normalizeCloudRecord(body.record);
   const existing = db.getRecord(identifier, submitted.id);
   if (!existing) return res.status(409).json({ ok: false, error: '请刷新页面后重新开始练习' });
+  if (['reading','reasoning','math-reading'].includes(existing.type)) return res.status(400).json({ok:false,error:'请使用理解训练接口'});
   if (existing.status === 'completed') return res.json({ ok: true, record: existing });
   if (existing.endedAt) return res.status(409).json({ ok: false, error: '本次练习已中断，无法改写成绩' });
   const completed = submitted.status === 'completed';
@@ -432,6 +434,7 @@ router.post('/users/:identifier/records/:id/interrupt', async (req, res) => {
   if (owned.error) return res.status(owned.error.status).json(owned.error);
   const existing = db.getRecord(identifier, String(id));
   if (!existing) return res.status(404).json({ ok: false, error: '练习记录不存在' });
+  if (['reading','reasoning','math-reading'].includes(existing.type)) return res.status(400).json({ok:false,error:'请使用理解训练接口'});
   if (existing.status === 'completed' || existing.endedAt) return res.json({ ok: true, record: existing });
   const record = { ...existing, status: 'unfinished', endedAt: new Date().toISOString(), interruptionReason: String(body.reason || 'interrupted').slice(0, 40) };
   db.putRecord(identifier, record);
@@ -574,5 +577,7 @@ router.post('/admin/verify', (req, res) => {
   if (!hasAdminAccess(req)) return res.status(403).json({ ok: false, error: '管理密码不正确' });
   res.json({ ok: true });
 });
+
+router.use('/learning', require('./learning')(requireSession, hasAdminAccess));
 
 module.exports = router;

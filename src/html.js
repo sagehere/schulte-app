@@ -132,7 +132,7 @@ const TREND_SCRIPT = String.raw`
     const indexByDate = new Map(dates.map((date, index) => [date, index]));
     const filtered = records.filter((record) => {
       const date = dateKeyForRecord(record);
-      return (!record.status || record.status === 'completed') && (record.type || 'schulte') === mode && indexByDate.has(date) && (!variantKey || trendVariant(record).key === variantKey);
+      return (!record.status || record.status === 'completed' || (mode === 'mindfulness' && record.endedAt)) && (record.type || 'schulte') === mode && indexByDate.has(date) && (!variantKey || trendVariant(record).key === variantKey);
     });
     filtered.forEach((record) => addTrendRecord(buckets[indexByDate.get(dateKeyForRecord(record))], record));
     const metrics = trendMetricDefinitions(mode);

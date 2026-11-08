@@ -46,9 +46,9 @@ function saveDbImmediate() {
   if (!db) return;
   const data = db.export();
   const buffer = Buffer.from(data);
-  fs.writeFile(DB_PATH, buffer, (err) => {
-    if (err) console.error('Failed to save database:', err);
-  });
+  const temporaryPath = DB_PATH + '.tmp';
+  fs.writeFileSync(temporaryPath, buffer);
+  fs.renameSync(temporaryPath, DB_PATH);
 }
 
 function flushDbSync() {
@@ -58,8 +58,7 @@ function flushDbSync() {
     saveTimer = null;
     savePending = false;
   }
-  const data = db.export();
-  fs.writeFileSync(DB_PATH, Buffer.from(data));
+  saveDbImmediate();
 }
 
 function saveDb() {
@@ -76,6 +75,10 @@ function saveDb() {
 }
 
 function initTables() {
+  db.run(`CREATE TABLE IF NOT EXISTS learning_sessions (
+    id TEXT PRIMARY KEY, user_id TEXT NOT NULL, data_json TEXT NOT NULL
+  )`);
+
   db.run(`
     CREATE TABLE IF NOT EXISTS users (
       identifier TEXT PRIMARY KEY,
@@ -128,6 +131,7 @@ function initTables() {
     )
   `);
 
+  db.run('CREATE INDEX IF NOT EXISTS idx_learning_user ON learning_sessions(user_id)');
   db.run('CREATE INDEX IF NOT EXISTS idx_records_user_date ON records(user_id, date)');
   db.run('CREATE INDEX IF NOT EXISTS idx_records_user_created ON records(user_id, created_at)');
 }
@@ -249,6 +253,7 @@ function deleteUser(identifier) {
     db.run('DELETE FROM tasks WHERE user_id = ?', [identifier]);
     db.run('DELETE FROM records WHERE user_id = ?', [identifier]);
     db.run('DELETE FROM task_templates WHERE user_id = ?', [identifier]);
+    db.run('DELETE FROM learning_sessions WHERE user_id = ?', [identifier]);
     db.run('COMMIT');
   } catch (e) {
     db.run('ROLLBACK');
@@ -278,6 +283,7 @@ function renameUserIdentifier(oldId, newId) {
     db.run('UPDATE tasks SET user_id = ? WHERE user_id = ?', [newId, oldId]);
     db.run('UPDATE records SET user_id = ? WHERE user_id = ?', [newId, oldId]);
     db.run('UPDATE task_templates SET user_id = ? WHERE user_id = ?', [newId, oldId]);
+    db.run('UPDATE learning_sessions SET user_id = ? WHERE user_id = ?', [newId, oldId]);
     db.run('COMMIT');
   } catch (e) {
     db.run('ROLLBACK');
@@ -422,7 +428,18 @@ function pruneAllOldRecords(days = 90) {
   saveDb();
 }
 
+function learningSessions(userId) {
+  const stmt = db.prepare('SELECT data_json FROM learning_sessions WHERE user_id = ?');
+  stmt.bind([userId]); const rows = [];
+  while (stmt.step()) rows.push(JSON.parse(stmt.get()[0]));
+  stmt.free(); return rows;
+}
+function saveLearningSession(userId, session) {
+  db.run('INSERT OR REPLACE INTO learning_sessions (id,user_id,data_json) VALUES (?,?,?)', [session.id,userId,JSON.stringify(session)]);
+  saveDb();
+}
 module.exports = {
+  learningSessions, saveLearningSession,
   initDb,
   getDb,
   saveDb,

@@ -63,3 +63,13 @@ test('trend UI is served from the public daily-score page', () => {
   assert.ok(trendData && !trendData.includes('</script>'));
   assert.equal(JSON.parse(trendData).records[0].audioName, '</script>');
 });
+
+test('ended early mindfulness remains in duration and completion denominator',()=>{
+ const {buildTrendSeries}=trendCore();
+ const data=buildTrendSeries([
+ {type:'mindfulness',status:'completed',endedAt:'x',audioCompleted:true,practiceMs:60000,day:'2026-07-16'},
+ {type:'mindfulness',status:'unfinished',endedAt:'x',audioCompleted:false,practiceMs:30000,day:'2026-07-16'},
+ {type:'mindfulness',status:'unfinished',endedAt:'',practiceMs:0,day:'2026-07-16'}
+ ],'2026-07-16','mindfulness','',r=>r.day);
+ assert.equal(data.values.practice.at(-1),90000);assert.equal(data.values.completion.at(-1),50);assert.equal(data.values.count.at(-1),2);
+});
