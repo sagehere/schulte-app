@@ -2455,6 +2455,12 @@
         return Boolean(cloudUser && cloudUser.sessionToken && identifier && cloudUser.identifier === identifier);
       }
 
+      function prepareUserChange() {
+        if (!abandonActiveAttempt("switched_user")) return false;
+        buildBoard();
+        return true;
+      }
+
       function ownedRecords() {
         return records.filter((record) => (record.ownerIdentifier || '') === activeUserIdentifier());
       }
@@ -3197,6 +3203,7 @@
           ]);
           
           const loadedUser = userPayload.user || publicPayload.user;
+          if (loadedUser.identifier !== activeUserIdentifier() && !prepareUserChange()) return;
           cloudUser = { identifier: loadedUser.identifier, sessionToken: userPayload.sessionToken };
           loadedUserIdentifier = "";
           syncPendingRecords();
@@ -3207,6 +3214,7 @@
           applyUserToForm(loadedUser);
           dailyTasks = Array.isArray(userPayload.tasks) ? userPayload.tasks : [];
           const added = mergeSyncedRecords(publicPayload.records);
+          refreshScorePanel();
           renderTasks();
           renderTitleTasks();
           renderDailyScores();
@@ -3229,6 +3237,7 @@
         }
         try {
           const user = userPayloadFromForm();
+          if (user.identifier !== cloudUser.identifier && !prepareUserChange()) return;
           const payload = await apiJson(`/api/users/${encodeURIComponent(cloudUser.identifier)}`, {
             method: "PUT",
             body: JSON.stringify({
@@ -3237,6 +3246,9 @@
               date: todayKey()
             })
           });
+          const previousIdentifier = cloudUser.identifier;
+          records.forEach(record => { if (record.ownerIdentifier === previousIdentifier) record.ownerIdentifier = payload.user.identifier; });
+          saveRecords();
           cloudUser.identifier = payload.user.identifier;
           if (payload.sessionToken) cloudUser.sessionToken = payload.sessionToken;
           loadedUserIdentifier = "";
@@ -3293,6 +3305,7 @@
         }
 
         try {
+          if (!prepareUserChange()) return;
           const payload = await apiJson("/api/users", {
             method: "POST",
             body: JSON.stringify({
@@ -5265,12 +5278,14 @@
       saveUserButton.addEventListener("click", saveUserProfile);
       registerUserButton.addEventListener("click", openRegisterDialog);
       logoutUserButton.addEventListener("click", () => {
+        if (!prepareUserChange()) return;
         cloudUser = null;
         loadedUserIdentifier = "";
         loginPasswordInput.value = "";
         saveCloudUser();
         saveLoadedUserIdentifier();
         loadUserCenter();
+        refreshScorePanel();
         setNotice(userCenterNotice, "已登出");
       });
       loginUserButton.addEventListener("click", loadSyncedUserByIdentifier);
