@@ -27,6 +27,7 @@ const bank=require('../src/content/learning.json'),checks=require('../src/conten
     await page.locator('#progress').filter({hasText:`${i+1}/${reviewUnit.steps.length}`}).waitFor();
   }
   await page.getByRole('heading',{name:'本次学习已完成'}).waitFor();await page.getByRole('button',{name:'保存并返回列表'}).click();await page.locator('#units').filter({hasText:'暂无到期复习'}).waitFor();
+  await page.locator('#manualReview').click();assert.ok(await page.locator('#units').getByRole('button',{name:'开始复习'}).count()>0);await page.locator('#manualReview').click();
   const weeklyTasks=Object.fromEntries(['mon','tue','wed','thu','fri','sat','sun'].map(day=>[day,[{id:'checktask',module:'reading',mode:{type:'reading',learningPhase:'check',learningLevel:1,learningSkill:'信息定位'},targetCount:1}]]));
   const response=await fetch(base+'/api/admin/users/cycleuser/weekly-tasks',{method:'PUT',headers:{'content-type':'application/json',authorization:'Bearer cycle-admin'},body:JSON.stringify({weeklyTasks})});assert.ok(response.ok);
   await page.goto(base+'/');await page.locator('#titleTaskStrip').filter({hasText:'0/1'}).waitFor();await page.locator('#titleTaskStrip button').click();

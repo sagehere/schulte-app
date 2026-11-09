@@ -2,7 +2,7 @@
   const $=id=>document.getElementById(id), phaseLabel={train:'学习练习',check:'独立检查',review:'复习'};
   let user;try{user=JSON.parse(localStorage.getItem('schulte.cloudUser.v1')||'null');}catch{}
   const params=new URLSearchParams(location.search);
-  let catalog,session,busy=false,selected=params.get('module')||'reading',phase=params.get('phase')||'train',pending=null,activeMs=0,tick=performance.now();
+  let manualReview=false,catalog,session,busy=false,selected=params.get('module')||'reading',phase=params.get('phase')||'train',pending=null,activeMs=0,tick=performance.now();
   if(!phaseLabel[phase])phase='train';
   setInterval(()=>{const now=performance.now();if(session&&session.status!=='completed'&&!document.hidden)activeMs+=now-tick;tick=now;},1000);
   document.addEventListener('visibilitychange',()=>{tick=performance.now();});
@@ -19,6 +19,8 @@
     if(busy)return;
     busy=true;
     try{
+      const open=catalog.sessions.find(s=>s.unitId===unit.id&&s.status==='unfinished'&&(s.phase||'train')===requestedPhase);
+      if(open){showSession(open);return;}
       const key='learning.start.'+user.identifier+'.'+unit.id+'.'+requestedPhase;
       let id=localStorage.getItem(key);if(!id){id=crypto.randomUUID();localStorage.setItem(key,id);}
       const result=await api('/start',{unitId:unit.id,id,phase:requestedPhase,focusSkill});
@@ -79,23 +81,24 @@
     $('catalog').hidden=false;$('practice').hidden=true;session=null;pending=null;
     document.querySelectorAll('[data-module]').forEach(b=>b.classList.toggle('active',b.dataset.module===selected));
     document.querySelectorAll('[data-phase]').forEach(b=>b.classList.toggle('active',b.dataset.phase===phase));
+    $('manualReview').hidden=phase!=='review';$('manualReview').textContent=manualReview?'查看到期复习':'自主选择复习材料';
     $('unitListTitle').textContent=phase==='check'?'选择一份独立检查':phase==='review'?'到期复习':'选择一个小练习';
     $('modeHint').textContent=phase==='check'?'每份检查材料只使用一次，提交全部步骤后统一查看讲解。遇到不会的步骤可以先提交。':phase==='review'?'按到期技能复习，优先换一份材料；重复材料会标明已见，不增加新题证据。':'先学方法，再在新材料中试一试。基础与连接层次可自由选择。';
     const rec=catalog.plan?.recommendations.find(r=>r.module===selected),box=$('recommendation');box.replaceChildren();
-    if(rec){box.append(node('strong','下一步建议：'+rec.title),node('p',phaseLabel[rec.phase]+' · '+(rec.level===1?'基础':'连接')+' · '+rec.focusSkill),node('p',rec.reason+(rec.seen?'（已见材料，用于巩固。）':'')),button('按建议开始',()=>{const unfinished=catalog.sessions.find(s=>s.unitId===rec.unitId&&s.status==='unfinished');unfinished?showSession(unfinished):start(allUnits().find(u=>u.id===rec.unitId),rec.phase,rec.focusSkill);}));}
+    if(rec){box.append(node('strong','下一步建议：'+rec.title),node('p',phaseLabel[rec.phase]+' · '+(rec.level===1?'基础':'连接')+' · '+rec.focusSkill),node('p',rec.reason+(rec.seen?'（已见材料，用于巩固。）':'')),button('按建议开始',()=>{const unfinished=catalog.sessions.find(s=>s.unitId===rec.unitId&&s.status==='unfinished'&&(s.phase||'train')===rec.phase);unfinished?showSession(unfinished):start(allUnits().find(u=>u.id===rec.unitId),rec.phase,rec.focusSkill);}));}
     box.hidden=!rec;progress();
     const level=$('levelFilter').value,skill=$('skillFilter').value;
     const matches=u=>u.module===selected&&(!level||u.level===Number(level))&&(!skill||u.skills.includes(skill));
     let cards;
-    if(phase==='review'){
+    if(phase==='review'&&!manualReview){
       cards=(catalog.plan?.reviews||[]).filter(r=>r.module===selected&&(!skill||r.skill===skill)&&(!level||r.level===Number(level))).map(review=>{
         const card=node('article','');card.className='card';card.append(node('h3',review.skill),node('p',`到期：${review.dueDate} · ${review.seen?'已见材料巩固':'换一份材料'}`),node('p',review.title),button('开始复习',()=>start(allUnits().find(u=>u.id===review.unitId),'review',review.skill)));return card;
       });
     }else cards=(phase==='check'?catalog.checks:catalog.units).filter(matches).map(u=>{
       const card=node('article','');card.className='card';card.append(node('h3',u.title),node('p',`${u.level===1?'基础':'连接'} · ${u.seen?'练习过':'新材料'}`));
-      const unfinished=catalog.sessions.find(s=>s.unitId===u.id&&s.status==='unfinished');
+      const unfinished=catalog.sessions.find(s=>s.unitId===u.id&&s.status==='unfinished'&&(s.phase||'train')===phase);
       const completed=catalog.sessions.find(s=>s.unitId===u.id&&s.status==='completed');
-      card.append(button(unfinished?'继续上次练习':phase==='check'&&completed?'回看检查结果':phase==='check'?'开始检查':'开始练习',()=>unfinished?showSession(unfinished):phase==='check'&&completed?showSession(completed):start(u)));return card;
+      card.append(button(unfinished?'继续上次练习':phase==='check'&&completed?'回看检查结果':phase==='check'?'开始检查':phase==='review'?'开始复习':'开始练习',()=>unfinished?showSession(unfinished):phase==='check'&&completed?showSession(completed):start(u)));return card;
     });
     $('units').replaceChildren(...(cards.length?cards:[node('p',phase==='review'?'当前筛选下暂无到期复习。':'当前筛选下没有材料。')]));
     $('history').replaceChildren(...catalog.sessions.slice().sort((a,b)=>Date.parse(b.startedAt)-Date.parse(a.startedAt)).slice(0,20).map(s=>{
@@ -105,6 +108,7 @@
     }));
   }
   $('levelFilter').value=['1','2'].includes(params.get('level'))?params.get('level'):'';
+  $('manualReview').onclick=()=>{manualReview=!manualReview;list();};
   $('levelFilter').onchange=list;$('skillFilter').onchange=list;
   document.querySelectorAll('[data-phase]').forEach(b=>b.onclick=()=>{if(!busy){phase=b.dataset.phase;list();}});
   $('answerForm').onsubmit=e=>{e.preventDefault();action('answer',$('answer').value);};

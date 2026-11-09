@@ -25,6 +25,8 @@ test('unfinished checks, duplicate steps and legacy repeats cannot inflate evide
  assert.equal(row(buildLearningPlan([original,repeat],bank)).levels[0].samples,1);
 });
 test('review intervals are due-date based and same-day retries cannot erase a failed review',()=>{
+ const initialSuccess=session('initial-success','2026-11-01'),early=session('early','2026-11-02',{phase:'review'});
+ assert.equal(row(buildLearningPlan([initialSuccess,early],bank)).dueDate,'2026-11-04');
  const failed=session('failed','2026-11-01',{ok:false});
  let plan=buildLearningPlan([failed],bank,new Date('2026-11-02T02:00:00Z'));assert.equal(row(plan).dueDate,'2026-11-02');assert.equal(row(plan).due,true);
  assert.equal(plan.reviews.find(r=>r.module==='reading').seen,false);

@@ -544,4 +544,5 @@ P2：谨慎读取文件
 - `GET /api/learning/catalog` 保留原 units（练习），新增 checks 与 plan（skills/reviews/recommendations/policy）。独立检查未完成时 view/公开摘要/export 均不暴露正确性或解释；服务端拒绝 hint/demo/reveal。skip 为检查专用；题目结束后释放解释。检查重复使用返回409，重复事件仍幂等。
 - 新任务条件：mode.learningPhase、learningLevel、learningSkill；成绩摘要对应 learningPhase、learningLevel、learningSkills。省略条件是通配。私有学习详情仍只经授权API返回。
 - 验证：`test/learning-checks.test.js`、`test/learning-progress.test.js`、原测试；`scripts/browser-learning-cycle.cjs` 用独立临时数据验证换材料复习、检查恢复及周任务流程。
+- 无到期项目时可自主选择材料复习；前端按单元及phase续接未完成会话，避免把普通练习误算成指定复习任务。
 - 注意：8份未见材料/2日/80%是产品默认规则而非能力常模；题量不足保持观察。按技能建议，不锁定用户手动层次。复习队列在页面访问时计算，无推送或额外后台服务。
