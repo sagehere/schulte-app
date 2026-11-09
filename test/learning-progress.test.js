@@ -59,3 +59,8 @@ test('repeated difficulty at the connection level recommends foundational suppor
  const plan=buildLearningPlan([...basics,...hard],bank,new Date('2026-11-04T02:00:00Z'));
  assert.equal(row(plan).levels[0].state,'ready');assert.equal(row(plan).levels[1].state,'strengthen');assert.equal(row(plan).recommendedLevel,1);
 });
+
+test('transfer suggestions require both earlier levels and never imply untested mastery',()=>{
+ const rows=[];for(const level of [1,2])for(let i=0;i<8;i++)rows.push(session('level'+level+'-'+i,i<4?'2026-11-01':'2026-11-02',{level,phase:i===7?'check':'train'}));
+ const p=buildLearningPlan(rows,bank,new Date('2026-11-03T02:00:00Z'));assert.equal(row(p).recommendedLevel,3);assert.equal(row(p).levels[2].state,'collecting');
+});

@@ -32,14 +32,16 @@ function buildLearningPlan(sessions, units, now = new Date(), timeZone = 'Asia/S
     }
   }
   const rows=[...skills.values()].map(row=>{
-    const levels=[1,2].map(level=>{
+    const levels=[1,2,3].map(level=>{
       const samples=row.samples.filter(s=>s.level===level).slice(-POLICY.minSamples), n=samples.length;
       const days=new Set(samples.map(s=>s.date)).size, correct=samples.filter(s=>s.independent).length;
       const checkSamples=samples.filter(s=>s.phase==='check'),checks=checkSamples.length,checkRate=checks?checkSamples.filter(s=>s.independent).length/checks:null,rate=n?correct/n:null;
       const ready=n>=POLICY.minSamples&&days>=POLICY.minDays&&checks>=POLICY.minCheckSamples&&checkRate>=POLICY.threshold&&rate>=POLICY.threshold;
       return {level,samples:n,days,checks,checkRate,correct,rate,state:ready?'ready':n>=3&&rate<POLICY.threshold?'strengthen':'collecting'};
     });
-    const recommendedLevel=levels[0].state==='ready'&&levels[1].state!=='strengthen'?2:1;
+    let recommendedLevel=1;
+    if(levels[0].state==='ready'&&levels[1].state!=='strengthen')recommendedLevel=2;
+    if(recommendedLevel===2&&levels[1].state==='ready'&&levels[2].state!=='strengthen')recommendedLevel=3;
     return {key:row.key,module:row.module,skill:row.skill,levels,recommendedLevel,dueDate:row.dueDate,due:!!row.dueDate&&row.dueDate<=today,
       reviewCount:row.reviews.filter(r=>r.phase==='review').length};
   });

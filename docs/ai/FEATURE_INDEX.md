@@ -526,7 +526,7 @@ P2：谨慎读取文件
 - P1：`src/db.js`（`learningSessions`/`saveLearningSession`、`learning_sessions` 表、用户删除/迁移）、`src/routes.js`（学习路由与导航注册）、`src/utils.js`（三模块任务匹配）、`public/index.html`（入口、每日任务及用户隔离）。
 - API：`GET /api/learning/catalog`、`POST /api/learning/start`、`POST /api/learning/:id/action`、`GET /api/learning/export`。使用 `x-user-id` + Bearer session；管理员凭据亦可访问指定用户。
 - 状态：单元版本快照、逐步答案与提示、事件去重ID、未完成/完成、独立答对标记。开始与每次提交同步刷盘；重复 eventId 不重复累计。完成时派生成绩摘要供每日任务匹配，详情不经过公开 API。
-- 内容：19个练习单元、18份独立检查；按技能提供层次建议与到期复习，不对开放口头表达自动评分。后续：专用家长UI、CSV与90单元题库。
+- 内容：90个练习单元（每模块/每层次10个）、18份独立检查；含基础/连接/迁移、家长报告、观察及CSV。独立检查层次不足时保持观察，不对开放口头表达自动评分。
 - 新导航注册表为10项，旧7项设置读取时补入新增模块。新模块进入独立学习页，不调用原七模式的棋盘渲染。
 - 同期数据修复：本地记录按 ownerIdentifier 过滤；同ID云端记录替换已同步本地记录；出生日期仅授权读取；数据库使用临时文件原子替换，旧记录每天清理；正念已结束的提前退出记录进入趋势。
 - 注意：学习详情当前持续保留，摘要90天清理；完成单元代表学完，不等于掌握；列式仅接受内容包列出的答案变式。
@@ -546,3 +546,16 @@ P2：谨慎读取文件
 - 验证：`test/learning-checks.test.js`、`test/learning-progress.test.js`、原测试；`scripts/browser-learning-cycle.cjs` 用独立临时数据验证换材料复习、检查恢复及周任务流程。
 - 无到期项目时可自主选择材料复习；前端按单元及phase续接未完成会话，避免把普通练习误算成指定复习任务。
 - 注意：8份未见材料/2日/80%是产品默认规则而非能力常模；题量不足保持观察。按技能建议，不锁定用户手动层次。复习队列在页面访问时计算，无推送或额外后台服务。
+
+
+## 90单元题库与家长报告（第四阶段）
+
+最近更新时间：2026-11-09
+
+- P0：`src/content/learning.json`（90单元，保留原19个ID及内容）、`src/learning-report.js`（`reportRange`、`buildReport`、`toCsv`）、`src/parent-routes.js`、`public/parents.html`、`public/assets/parents.js`、`public/assets/parents.css`。
+- P1：`src/db.js`（`learning_observations` 表及CRUD、用户迁移/删除）、`src/learning.js`（家长路由挂载、JSON v3）、`src/index.js`（/parents页面）、`public/index.html`（管理员报告入口与三级任务）、`src/learning-progress.js`（三级建议）、`src/utils.js`（三级任务归一化）。为报告与账户生命周期接入定向读取以上代码。
+- 私有API：`GET /api/learning/parents/report`、`PUT/DELETE /api/learning/parents/observations/:id`、`GET /api/learning/parents/export`。继承原owner/session/admin鉴权，no-store；JSON export v3增加observations。
+- 参数：from/to（管理员时区日历日，最长366天且不得晚于今天）、module；CSV kind=steps/skills/observations。比较期为前一个等长区间；只比较同技能/层次/phase的未见材料，一材料一技能仅一个样本；两期各3份且跨2日才计算变化。
+- 状态：观察JSON含date/context/module/sessionId/stepIndex/tags/note/revision/lastMutation；同mutation幂等、旧revision冲突409、跨用户读取/修改被拒绝。匿名静态页面不含私有数据，未完成检查不会进入报告作答/CSV或泄露正确性。
+- 验证：内容唯一性与算式一致性、40项Node测试；三套Chromium移动视口脚本，新增browser-parents覆盖观察CRUD、CSV、权限、管理员访问、层次筛选。无新依赖。
+- 注意：报告复用用户或管理员权限；家长标签不覆盖客观判分。原检查库保留18份，没有迁移层检查时不认定迁移掌握。题库尚需实际试用反馈；下一步为家庭试用与修订。

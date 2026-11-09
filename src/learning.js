@@ -10,7 +10,7 @@ const clean = value => String(value ?? '').normalize('NFKC').replace(/\s/g, '').
 function validateBank(bank) {
   const ids = new Set();
   for (const u of bank) {
-    if (!MODULES[u.module] || ids.has(u.id) || !u.version || ![1,2].includes(u.level) || !u.lines.length || !u.steps.length) throw Error('题库单元无效');
+    if (!MODULES[u.module] || ids.has(u.id) || !u.version || ![1,2,3].includes(u.level) || !u.lines.length || !u.steps.length) throw Error('题库单元无效');
     ids.add(u.id);
     for (const q of u.steps) {
       if (!q.skill || !q.prompt || !q.explanation || q.hints.length !== 3 || !q.answers.length) throw Error('题库步骤无效');
@@ -57,6 +57,7 @@ function shuffleCheck(unit) {
 module.exports = (requireSession, hasAdminAccess) => {
   const router = express.Router();
   router.use(async (req,res,next) => {
+    res.setHeader('cache-control','no-store');
     const identifier=String(req.headers['x-user-id']||'');
     const token=(req.headers.authorization||'').replace(/^Bearer /,'');
     if(hasAdminAccess(req)&&identifier&&db.getUser(identifier)){req.owner=identifier;return next();}
@@ -121,8 +122,9 @@ module.exports = (requireSession, hasAdminAccess) => {
   router.get('/export',(req,res)=>{
     res.setHeader('content-disposition','attachment; filename="learning-records.json"');
     const sessions=db.learningSessions(req.owner);
-    res.json({version:2,exportedAt:new Date().toISOString(),sessions:sessions.map(s=>sessionPhase(s)==='check'&&s.status!=='completed'?view(s):s)});
+    res.json({version:3,observations:db.learningObservations(req.owner),exportedAt:new Date().toISOString(),sessions:sessions.map(s=>sessionPhase(s)==='check'&&s.status!=='completed'?view(s):s)});
   });
+  router.use('/parents', require('./parent-routes')({units,view}));
   return router;
 };
 module.exports.validateBank=validateBank;

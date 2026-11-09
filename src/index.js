@@ -45,6 +45,7 @@ app.use((req, res, next) => {
 app.use('/api/admin', adminLimiter);
 app.use('/api', apiRoutes);
 
+app.get('/parents', (req,res)=>res.sendFile(path.join(__dirname, '../public/parents.html')));
 app.get('/learning', (req, res) => res.sendFile(path.join(__dirname, '../public/learning.html')));
 app.use('/assets', express.static(path.join(__dirname, '../public/assets')));
 

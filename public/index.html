@@ -1877,7 +1877,7 @@
             <label class="form-field" id="taskStroopAnswerWrap">答题规则<select id="taskStroopAnswerSelect"><option value="false">按字色作答</option><option value="true">按文字作答</option></select></label>
             <label class="form-field" id="taskDecodeReverseWrap">译码方向<select id="taskDecodeReverseSelect"><option value="false">符号 → 字母</option><option value="true">字母 → 符号</option></select></label>
             <label class="form-field" id="taskLearningPhaseWrap">理解训练方式<select id="taskLearningPhaseSelect"><option value="">任意方式</option><option value="train">学习练习</option><option value="check">独立检查</option><option value="review">复习</option></select></label>
-            <label class="form-field" id="taskLearningLevelWrap">内容层次<select id="taskLearningLevelSelect"><option value="0">全部层次</option><option value="1">基础</option><option value="2">连接</option></select></label>
+            <label class="form-field" id="taskLearningLevelWrap">内容层次<select id="taskLearningLevelSelect"><option value="0">全部层次</option><option value="1">基础</option><option value="2">连接</option><option value="3">迁移</option></select></label>
             <label class="form-field" id="taskLearningSkillWrap">目标技能<select id="taskLearningSkillSelect"><option value="">全部技能</option></select></label>
             <label class="form-field" id="taskMindfulnessAudioWrap">引导音频<select id="taskMindfulnessAudioSelect"><option value="">任意引导音频</option></select></label>
             <label class="form-field">次数<input id="taskCountInput" type="number" min="1" max="50" value="1" inputmode="numeric"></label>
@@ -3531,6 +3531,7 @@
           time.textContent = `出生日期${user.birthDate || "未填写"} · 记录 ${payload.recordCount || 0} 条`;
           infoDiv.append(strong, time);
           article.append(modeDiv, infoDiv);
+          const parentLink=document.createElement('a');parentLink.className='tool-button';parentLink.textContent='查看该用户家长报告';parentLink.target='_blank';parentLink.rel='noopener';parentLink.href='/parents?user='+encodeURIComponent(identifier);article.append(parentLink);
           adminUserPreview.append(article);
           adminLoadedIdentifier = identifier;
           adminWeeklyTasks = normalizeAdminWeeklyTasks(payload.weeklyTasks);
