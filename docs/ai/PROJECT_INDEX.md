@@ -91,3 +91,8 @@ rtk npm start
 ## 2026-11-09 理解训练扩展
 
 新增独立 `/learning` 页面与 `/assets` 静态资源，`src/modules.js` 注册10个模式。`src/learning.js` 管理私有学习会话，题库位于 `src/content/learning.json`。首轮18个单元及过程记录，扩展说明见 README 与 FEATURE_INDEX。
+
+
+## 教学闭环（第三阶段）
+
+`src/learning-progress.js` 依据私有会话生成按技能/层次的证据、到期复习和下一步建议；`src/content/checks.json` 为独立检查库。学习API响应兼容旧字段，新增 phase/fresh 和 plan，周任务支持方式/层次/技能筛选。沿用原数据库JSON会话，无新增依赖。

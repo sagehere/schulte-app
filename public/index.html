@@ -1876,6 +1876,9 @@
             <label class="form-field" id="taskIdiomWrap">成语数量<select id="taskIdiomSelect"><option value="4">4×4</option><option value="5">4×5</option><option value="6">4×6</option><option value="7">4×7</option></select></label>
             <label class="form-field" id="taskStroopAnswerWrap">答题规则<select id="taskStroopAnswerSelect"><option value="false">按字色作答</option><option value="true">按文字作答</option></select></label>
             <label class="form-field" id="taskDecodeReverseWrap">译码方向<select id="taskDecodeReverseSelect"><option value="false">符号 → 字母</option><option value="true">字母 → 符号</option></select></label>
+            <label class="form-field" id="taskLearningPhaseWrap">理解训练方式<select id="taskLearningPhaseSelect"><option value="">任意方式</option><option value="train">学习练习</option><option value="check">独立检查</option><option value="review">复习</option></select></label>
+            <label class="form-field" id="taskLearningLevelWrap">内容层次<select id="taskLearningLevelSelect"><option value="0">全部层次</option><option value="1">基础</option><option value="2">连接</option></select></label>
+            <label class="form-field" id="taskLearningSkillWrap">目标技能<select id="taskLearningSkillSelect"><option value="">全部技能</option></select></label>
             <label class="form-field" id="taskMindfulnessAudioWrap">引导音频<select id="taskMindfulnessAudioSelect"><option value="">任意引导音频</option></select></label>
             <label class="form-field">次数<input id="taskCountInput" type="number" min="1" max="50" value="1" inputmode="numeric"></label>
             <button class="tool-button primary" type="button" id="addTaskButton">添加任务</button>
@@ -2812,10 +2815,21 @@
         }
       }
 
+      const learningTaskSkills = {
+        reading:['信息定位','句意连接','段落概括','证据定位'],
+        reasoning:['原因与结果','证据与关系','解释检查'],
+        'math-reading':['寻找未知量','数量关系','列式','计算','条件充分性']
+      };
+      const learningTaskControls = [
+        {key:'learningPhase',wrap:document.getElementById('taskLearningPhaseWrap'),input:document.getElementById('taskLearningPhaseSelect'),type:'string',defaultValue:''},
+        {key:'learningLevel',wrap:document.getElementById('taskLearningLevelWrap'),input:document.getElementById('taskLearningLevelSelect'),type:'number',defaultValue:0},
+        {key:'learningSkill',wrap:document.getElementById('taskLearningSkillWrap'),input:document.getElementById('taskLearningSkillSelect'),type:'string',defaultValue:''}
+      ];
+      const learningTaskDescription = mode => [({train:'学习练习',check:'独立检查',review:'复习'})[mode.learningPhase]||'任意方式',mode.learningLevel?('层次'+mode.learningLevel):'',mode.learningSkill||''].filter(Boolean).join(' · ');
       const dailyTaskSpecs = {
-        reading: { label: '读懂一段话', controls: [], describe: () => '完成一个理解单元' },
-        reasoning: { label: '寻找原因', controls: [], describe: () => '完成一个推理单元' },
-        'math-reading': { label: '读懂数学题', controls: [], describe: () => '完成一个读题单元' },
+        reading: { label: '读懂一段话', controls: learningTaskControls, describe: learningTaskDescription },
+        reasoning: { label: '寻找原因', controls: learningTaskControls, describe: learningTaskDescription },
+        'math-reading': { label: '读懂数学题', controls: learningTaskControls, describe: learningTaskDescription },
         schulte: {
           label: "舒尔特方格",
           controls: [
@@ -2867,7 +2881,7 @@
           describe: (mode) => mindfulnessTaskAudioName(mode.audioId)
         }
       };
-      const dailyTaskControls = [taskSizeWrap, taskReverseWrap, taskColorWrap, taskIdiomWrap, taskStroopAnswerWrap, taskDecodeReverseWrap, taskMindfulnessAudioWrap];
+      const dailyTaskControls = [...learningTaskControls.map(control=>control.wrap), taskSizeWrap, taskReverseWrap, taskColorWrap, taskIdiomWrap, taskStroopAnswerWrap, taskDecodeReverseWrap, taskMindfulnessAudioWrap];
 
       function readTaskControl(control) {
         const raw = control.input.value;
@@ -2928,6 +2942,12 @@
         if (task.module === "mindfulness") {
           const audioId = String(task.mode && task.mode.audioId || "");
           return !audioId || (mindfulnessAudios.some((audio) => audio.id === audioId) && String(record.audioId || "") === audioId);
+        }
+        if (learningTaskSkills[task.module]) {
+          const mode=task.mode||{};
+          return (!mode.learningPhase||(record.learningPhase||'train')===mode.learningPhase)
+            && (!mode.learningLevel||Number(record.learningLevel)===Number(mode.learningLevel))
+            && (!mode.learningSkill||(record.learningSkills||[]).includes(mode.learningSkill));
         }
         return spec.controls.every((control) => {
           const expected = modeValue((task.mode || {})[control.key], control);
@@ -3438,6 +3458,9 @@
       }
 
       function updateTaskConfigVisibility() {
+        const skillSelect=learningTaskControls[2].input, previous=skillSelect.value;
+        skillSelect.replaceChildren(new Option('全部技能',''),...(learningTaskSkills[taskModuleSelect.value]||[]).map(skill=>new Option(skill,skill)));
+        if((learningTaskSkills[taskModuleSelect.value]||[]).includes(previous))skillSelect.value=previous;
         const spec = dailyTaskSpecs[taskModuleSelect.value];
         dailyTaskControls.forEach((wrap) => wrap.classList.add("is-hidden"));
         if (!spec) return;
@@ -5091,7 +5114,10 @@
 
       function activateTask(task) {
         if (['reading', 'reasoning', 'math-reading'].includes(task.module)) {
-          if (abandonActiveAttempt('switched_training')) location.href = '/learning?module=' + task.module;
+          if (abandonActiveAttempt('switched_training')) {
+            const mode=task.mode||{};
+            location.href='/learning?'+new URLSearchParams({module:task.module,phase:mode.learningPhase||'train',level:mode.learningLevel||'',skill:mode.learningSkill||''});
+          }
           return;
         }
         if (!dailyTaskSpecs[task.module]) return;

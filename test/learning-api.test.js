@@ -6,9 +6,9 @@ const bank=require('../src/content/learning.json');
 const {validateBank}=require('../src/learning');
 const {applyCloudTrainingCompletionToTasks}=require('../src/utils');
 
-test('learning bank has 18 validated distinct units, six per module',()=>{
- validateBank(bank);assert.equal(bank.length,18);
- for(const module of ['reading','reasoning','math-reading'])assert.equal(bank.filter(u=>u.module===module).length,6);
+test('learning bank preserves original units and adds a missing-condition bridge',()=>{
+ validateBank(bank);assert.equal(bank.length,19);
+ for(const module of ['reading','reasoning','math-reading'])assert.equal(bank.filter(u=>u.module===module).length,module==='math-reading'?7:6);
  assert.throws(()=>validateBank([bank[0],bank[0]]));
 });
 test('private learning, retries, hints, continuation, completed summaries and exports',async(t)=>{
@@ -25,7 +25,7 @@ test('private learning, retries, hints, continuation, completed summaries and ex
  assert.equal((await call('/api/users/reader',null,headers)).body.user.birthDate,'2016-01-01');
  assert.equal((await call('/api/learning/catalog')).status,403);
  const catalog=(await call('/api/learning/catalog',null,headers)).body;
- assert.equal(catalog.units.length,18);assert.ok(!JSON.stringify(catalog).includes('answers'));
+ assert.equal(catalog.units.length,bank.length);assert.ok(!JSON.stringify(catalog).includes('answers'));
  const start=async (u,id)=>call('/api/learning/start',{unitId:u.id,id},headers);
  let id='session-main',s=(await start(bank[0],id)).body.session;
  assert.equal(s.index,0);assert.equal((await start(bank[1],id)).body.session.unitId,bank[0].id);
@@ -53,12 +53,12 @@ test('private learning, retries, hints, continuation, completed summaries and ex
  assert.equal(s.status,'completed',u.id);assert.ok(s.results.every(r=>r.independent));
  }
  const pub=(await call('/api/users/reader/public')).body;
- assert.equal(pub.records.filter(r=>r.status==='completed').length,19);
+ assert.equal(pub.records.filter(r=>r.status==='completed').length,bank.length+1);
  assert.ok(!JSON.stringify(pub).includes('explanation'));assert.ok(!JSON.stringify(pub).includes('results'));
  const progress=applyCloudTrainingCompletionToTasks([{module:'reading',mode:{type:'reading'},targetCount:1}],pub.records);
  assert.equal(progress[0].completed,true);
  const forged=await call('/api/users/reader/records',{sessionToken:token,record:{id,type:'math-reading',status:'completed'}},headers);
  assert.equal(forged.status,400);
- const exported=(await call('/api/learning/export',null,headers)).body;assert.equal(exported.sessions.length,19);assert.ok(exported.sessions[0].results[0].answers.length);
+ const exported=(await call('/api/learning/export',null,headers)).body;assert.equal(exported.sessions.length,bank.length+1);assert.ok(exported.sessions[0].results[0].answers.length);
  assert.equal((await fetch(base+'/learning')).status,200);assert.equal((await fetch(base+'/assets/learning.js')).status,200);
 });
