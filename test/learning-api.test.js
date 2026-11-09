@@ -17,7 +17,10 @@ test('private learning, retries, hints, continuation, completed summaries and ex
  let child;
  async function launch(){child=spawn(process.execPath,['src/index.js'],{env:{...process.env,PORT:String(port),DB_PATH:path.join(dir,'db'),USER_CREATE_CODE:'code',ADMIN_PASSWORD:'admin'},stdio:'ignore'});
  for(let i=0;i<100;i++){try{if((await fetch(base+'/health')).ok)return;}catch{} await new Promise(r=>setTimeout(r,30));}throw Error('server unavailable');}
- t.after(()=>{child.kill();fs.rmSync(dir,{recursive:true,force:true});});await launch();
+ t.after(async()=>{
+  await new Promise(resolve=>{if(child.exitCode!==null)return resolve();child.once('exit',resolve);child.kill();});
+  fs.rmSync(dir,{recursive:true,force:true});
+ });await launch();
  async function call(url,body,headers={}){const res=await fetch(base+url,{method:body?'POST':'GET',headers:{'content-type':'application/json',...headers},body:body?JSON.stringify(body):undefined});return {status:res.status,body:await res.json()};}
  const created=await call('/api/users',{authCode:'code',password:'123456',user:{identifier:'reader',birthDate:'2016-01-01'}});
  const token=created.body.sessionToken,headers={'x-user-id':'reader',authorization:'Bearer '+token};
