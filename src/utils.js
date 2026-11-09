@@ -219,6 +219,12 @@ function recordCompletesCloudTask(record, task, audioExists) {
   const type = task.mode.type;
   const matchFields = SERVER_TASK_MATCH_FIELDS[type];
   if ((record.type || 'schulte') !== type || !matchFields) return false;
+  if (['reading','reasoning','math-reading'].includes(type)) {
+    const mode=task.mode;
+    return (!mode.learningPhase || (record.learningPhase||'train')===mode.learningPhase)
+      && (!mode.learningLevel || Number(record.learningLevel)===Number(mode.learningLevel))
+      && (!mode.learningSkill || (record.learningSkills||[]).includes(mode.learningSkill));
+  }
   if (type === 'mindfulness') {
     const audioId = String(task.mode.audioId || '');
     return !audioId || ((!audioExists || audioExists(audioId)) && String(record.audioId || '') === audioId);
@@ -239,6 +245,9 @@ function applyCloudTrainingCompletionToTasks(tasks, trainingRecords, audioExists
 
 function cloudTaskText(task, audioNameForId) {
   const mode = task && task.mode || {};
+  if (['reading','reasoning','math-reading'].includes(mode.type||task.module)) {
+    return [trainingLabel({type:mode.type||task.module}),({train:'学习练习',check:'独立检查',review:'复习'})[mode.learningPhase]||'任意方式',mode.learningLevel?('层次'+mode.learningLevel):'',mode.learningSkill||''].filter(Boolean).join(' · ');
+  }
   if ((mode.type || task.module) === 'mindfulness') {
     if (!mode.audioId) return '正念练习 · 任意引导音频';
     return `正念练习 · ${audioNameForId && audioNameForId(mode.audioId) || '音频已删除'}`;
@@ -279,7 +288,10 @@ function normalizeCloudTasks(input) {
         textAnswer: Boolean(mode.textAnswer),
         colorInterference: Boolean(mode.colorInterference),
         cols: mode.cols ? Number(mode.cols) : null,
-        audioId: String(mode.audioId || '').slice(0, 100)
+        audioId: String(mode.audioId || '').slice(0, 100),
+        learningPhase: ['train','check','review'].includes(mode.learningPhase)?mode.learningPhase:'',
+        learningLevel: [1,2].includes(Number(mode.learningLevel))?Number(mode.learningLevel):0,
+        learningSkill: String(mode.learningSkill||'').slice(0,40)
       },
       targetCount: Math.min(50, Math.max(1, Math.round(Number(task && task.targetCount || 1)) || 1)),
       completed: false
