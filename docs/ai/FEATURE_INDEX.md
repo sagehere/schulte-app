@@ -404,15 +404,15 @@ P2：谨慎读取文件
 - `.env.example`
 - `docker-compose.yml`：确认生产环境变量时读取
 
-主要调用链：标题点击 -> 管理登录弹窗 -> `POST /api/admin/verify` -> 成功则加载用户、周任务表、设置和音频；周任务表 -> `GET /api/admin/users/:id` -> 草稿编辑/排序 -> `PUT /api/admin/users/:id/weekly-tasks`；模式导航与音频排序保持原调用链。
+主要调用链：标题点击 -> 管理登录弹窗 -> `POST /api/admin/verify`（仅校验JSON中输入的管理密码，不使用普通用户Bearer）-> 成功则加载用户、周任务表、设置和音频；周任务表 -> `GET /api/admin/users/:id` -> 草稿编辑/排序 -> `PUT /api/admin/users/:id/weekly-tasks`；模式导航与音频排序保持原调用链。
 
 相关状态：`adminPassword`、`adminClickCount`、`settings.timezone`、`settings.training_navigation`、前端 `appSettings.trainingNavigation`。
 
 相关接口：`GET /api/admin/users`、`GET /api/admin/users/:identifier`、`PUT /api/admin/users/:identifier/weekly-tasks`、`POST /api/admin/users/:identifier/password`、`DELETE /api/admin/users/:identifier`、`PUT /api/admin/audio-guides/order`、`GET /api/settings`、`PUT /api/admin/settings`、`POST /api/admin/verify`。
 
-修改注意事项：管理员鉴权当前依赖环境变量 `ADMIN_PASSWORD`；接口受 `/api/admin` rate limit 保护。导航配置必须包含 7 个已知模式、无重复且至少一个可见；隐藏仅影响顶部导航，不影响每日任务配置和跳转。
+修改注意事项：管理员鉴权依赖环境变量 `ADMIN_PASSWORD`；不存入用户数据库。`apiJson` 不向 `/api/admin/` 自动附普通用户令牌，管理操作继续显式使用 `adminAuthHeaders`，验证接口仅比较JSON password（兼容旧客户端携带普通Bearer）。接口仍受 rate limit 保护。导航当前为10项，兼容旧7项；隐藏仅影响顶部导航，不影响任务跳转。`test/admin-auth.test.js` 覆盖登录冲突、错误密码、未配置密码及权限隔离。
 
-最近更新时间：2026-09-01
+最近更新时间：2026-11-09
 
 ---
 

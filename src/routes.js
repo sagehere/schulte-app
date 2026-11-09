@@ -573,8 +573,9 @@ router.delete('/admin/users/:identifier', (req, res) => {
 // Admin: verify password
 router.post('/admin/verify', (req, res) => {
   const body = req.body;
-  if (!body || !body.password) return res.status(400).json({ ok: false, error: '请输入管理密码' });
-  if (!hasAdminAccess(req)) return res.status(403).json({ ok: false, error: '管理密码不正确' });
+  if (!body || typeof body.password !== 'string' || !body.password) return res.status(400).json({ ok: false, error: '请输入管理密码' });
+  // Cached clients may attach an ordinary user bearer. Login verifies the entered password.
+  if (!process.env.ADMIN_PASSWORD || !safeEqual(body.password, process.env.ADMIN_PASSWORD)) return res.status(403).json({ ok: false, error: '管理密码不正确' });
   res.json({ ok: true });
 });
 

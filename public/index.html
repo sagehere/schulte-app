@@ -2759,7 +2759,8 @@
             ...options,
             headers: {
               "content-type": "application/json",
-              ...(cloudUser?.sessionToken ? { Authorization: `Bearer ${cloudUser.sessionToken}` } : {}),
+              // Admin requests use their own credentials, never the ordinary user session.
+              ...(!path.startsWith("/api/admin/") && cloudUser?.sessionToken ? { Authorization: `Bearer ${cloudUser.sessionToken}` } : {}),
               ...(options.headers || {})
             }
           });
