@@ -1,7 +1,7 @@
 const {localDateKey}=require('./utils');
 const {dayAfter,sessionPhase,buildLearningPlan}=require('./learning-progress');
 const MODULES=['reading','reasoning','math-reading'];
-const OBSERVATION_TAGS=['读漏条件','比较方向','计算失误','需要朗读','能口头解释','情绪疲劳','迁移待观察','其他'];
+const OBSERVATION_TAGS=['读漏条件','比较方向','计算失误','需要朗读','能口头解释','情绪疲劳','迁移待观察','题意不清','提示看不懂','答案疑似有误','操作困难','练习太难','练习太易','其他'];
 const CONTEXTS=['网页训练','纸面作业','生活应用'];
 const validDate=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&!Number.isNaN(Date.parse(value+'T12:00:00Z'))&&new Date(value+'T12:00:00Z').toISOString().slice(0,10)===value;
 function reportRange(query={},now=new Date(),timeZone='Asia/Shanghai'){
