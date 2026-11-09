@@ -31,9 +31,50 @@ test('private parent reports, observation revisions, CSV, account rename and del
  const obsCsv=await call('/api/learning/parents/export?kind=observations',null,headers);assert.match(obsCsv.headers.get('content-type'),/text\/csv/);assert.ok(obsCsv.body.includes("'=HYPERLINK"));
  const stepsCsv=(await call('/api/learning/parents/export?kind=steps',null,headers)).body;assert.ok(stepsCsv.includes('parent-session'));assert.ok(!stepsCsv.includes('parent-check-open'));
  const exportJson=(await call('/api/learning/export',null,headers)).body;assert.equal(exportJson.version,3);assert.equal(exportJson.observations.length,1);assert.equal(exportJson.sessions.find(s=>s.id==='parent-check-open').unit,undefined);
+ await t.test('feedback context binds owned visible steps to immutable material versions',async()=>{
+  const url='/api/learning/parents/feedback-context?sessionId=parent-check-open';
+  assert.equal((await call(url,null,other)).status,404);
+  assert.equal((await call(url+'&stepIndex=1',null,headers)).status,400);
+  assert.equal((await call(url+'&stepIndex=',null,headers)).status,400);
+  assert.equal((await call(url+'&stepIndex=-1',null,headers)).status,400);
+  const c=(await call(url+'&stepIndex=0',null,headers)).body.context;
+  assert.equal(c.unitId,check.id);assert.equal(c.version,check.version);assert.equal(c.prompt,check.steps[0].prompt);
+  assert.equal(c.answers,undefined);assert.equal(c.explanation,undefined);assert.equal(c.hints,undefined);
+  assert.equal((await call('/api/learning/parents/observations/future-feedback',{...note,sessionId:'parent-check-open',stepIndex:1,mutationId:'future'},headers,'PUT')).status,400);
+  await call('/api/learning/parent-check-open/action',{index:0,kind:'skip',eventId:'trial-skip'},headers);
+  assert.equal((await call(url+'&stepIndex=0',null,headers)).status,200);
+ });
+ await t.test('trial bundle preserves feedback and completed snapshots but redacts partial checks',async()=>{
+  const feedback={...note,sessionId:'parent-check-open',tags:['题意不清','操作困难'],note:'本步题意有疑问，待复核',mutationId:'feedback'};
+  assert.equal((await call('/api/learning/parents/observations/trial-feedback',feedback,headers,'PUT')).status,200);
+  const response=await call('/api/learning/parents/export?kind=bundle',null,headers),bundle=response.body;
+  assert.match(response.headers.get('content-disposition'),/schulte-trial-.*\.json/);assert.match(response.headers.get('content-type'),/application\/json/);assert.equal(response.headers.get('cache-control'),'no-store');
+  assert.equal(bundle.version,1);assert.equal(bundle.kind,'family-trial');assert.equal(bundle.owner,'parentA');assert.equal(bundle.sessions.length,2);
+  assert.deepEqual(bundle.sessions.find(s=>s.id==='parent-session').unit,bank[0]);
+  const partial=bundle.sessions.find(s=>s.id==='parent-check-open');assert.equal(partial.unit,undefined);assert.equal(partial.index,1);assert.deepEqual(partial.results,[{skill:check.steps[0].skill,submitted:true}]);
+  assert.equal(partial.events,undefined);assert.equal(partial.answers,undefined);assert.equal(partial.wrong,undefined);assert.equal(partial.demonstration,'');assert.deepEqual(partial.hints,[]);
+  const material=bundle.feedback.find(o=>o.id==='trial-feedback').material;assert.equal(material.version,check.version);assert.equal(material.prompt,check.steps[0].prompt);assert.equal(material.answers,undefined);
+  assert.ok(!bundle.report.steps.some(s=>s.sessionId==='parent-check-open'));
+  const isolated=(await call('/api/learning/parents/export?kind=bundle',null,other)).body;assert.equal(isolated.sessions.length,0);assert.equal(isolated.feedback.length,0);
+  assert.equal((await call('/api/learning/parents/observations/trial-feedback',{revision:1},headers,'DELETE')).status,200);
+ });
+ await t.test('trial bundle respects date and module filters and includes linked out-of-period context',async()=>{
+  const old=report.range.previousTo;
+  await call('/api/learning/parents/observations/old-feedback',{...note,date:old,mutationId:'old-feedback'},headers,'PUT');
+  const bundle=(await call(`/api/learning/parents/export?kind=bundle&from=${old}&to=${old}`,null,headers)).body;
+  assert.equal(bundle.report.summary.started,0);assert.equal(bundle.feedback.length,1);assert.deepEqual(bundle.sessions.map(s=>s.id),['parent-session']);
+  const filtered=(await call('/api/learning/parents/export?kind=bundle&module=math-reading',null,headers)).body;assert.equal(filtered.sessions.length,0);assert.equal(filtered.feedback.length,0);
+  assert.equal((await call('/api/learning/parents/export?kind=bundle&to=invalid',null,headers)).status,400);
+  await call('/api/learning/parents/observations/old-feedback',{revision:1},headers,'DELETE');
+ });
  const publicData=JSON.stringify((await call('/api/users/parentA/public')).body);assert.ok(!publicData.includes('HYPERLINK'));
  assert.equal((await call('/api/learning/parents/report',null,{'x-user-id':'parentA',authorization:'Bearer admin'})).body.observations.length,1);
  const edited=await call('/api/learning/parents/observations/observation-one',{...note,revision:1,mutationId:'note-edit',note:'改为能自己解释了'},headers,'PUT');assert.equal(edited.body.observation.revision,2);assert.equal((await call('/api/learning/parents/report',null,headers)).body.summary.independent,report.summary.independent);
+ await t.test('completed check exports release its shuffled snapshot for reproducible review',async()=>{
+  for(let index=1;index<check.steps.length;index++)await call('/api/learning/parent-check-open/action',{index,kind:'skip',eventId:'finish-'+index},headers);
+  const bundle=(await call('/api/learning/parents/export?kind=bundle',null,headers)).body;
+  const completed=bundle.sessions.find(s=>s.id==='parent-check-open');assert.equal(completed.status,'completed');assert.equal(completed.unit.version,check.version);assert.ok(completed.unit.steps.every(q=>q.answers.length&&q.explanation));
+ });
  await call('/api/users/parentA',{sessionToken:a.sessionToken,user:{identifier:'parentRenamed'}},headers,'PUT');headers={...headers,'x-user-id':'parentRenamed'};
  assert.equal((await call('/api/learning/parents/report',null,headers)).body.observations[0].note,'改为能自己解释了');
  assert.equal((await call('/api/learning/parents/observations/observation-one',{revision:1},headers,'DELETE')).status,409);

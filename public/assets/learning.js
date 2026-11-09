@@ -31,6 +31,8 @@
   }
   function render(){
     const checking=session.phase==='check',q=session.step;
+    $('feedbackLink').href='/parents?'+new URLSearchParams({session:session.id,...(q?{step:String(session.index)}:{})});
+    $('feedbackLink').textContent=q?'这一步有疑问':'反馈这份材料';
     $('title').textContent=session.title+' · '+phaseLabel[session.phase||'train'];$('progress').textContent=`已完成 ${session.index}/${session.total} 步`;
     $('passage').replaceChildren(...session.lines.map(t=>node('p',t)));$('demo').hidden=!q||checking;
     $('feedback').textContent=session.feedback;$('hints').textContent=session.hints.join('\n');

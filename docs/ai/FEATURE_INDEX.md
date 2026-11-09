@@ -559,3 +559,15 @@ P2：谨慎读取文件
 - 状态：观察JSON含date/context/module/sessionId/stepIndex/tags/note/revision/lastMutation；同mutation幂等、旧revision冲突409、跨用户读取/修改被拒绝。匿名静态页面不含私有数据，未完成检查不会进入报告作答/CSV或泄露正确性。
 - 验证：内容唯一性与算式一致性、40项Node测试；三套Chromium移动视口脚本，新增browser-parents覆盖观察CRUD、CSV、权限、管理员访问、层次筛选。无新依赖。
 - 注意：报告复用用户或管理员权限；家长标签不覆盖客观判分。原检查库保留18份，没有迁移层检查时不认定迁移掌握。题库尚需实际试用反馈；下一步为家庭试用与修订。
+
+## 家庭试用与题目反馈（第五阶段）
+
+最近更新时间：2026-11-09
+
+- P0：`src/parent-routes.js`（`context`/`visibleStep`、feedback-context、bundle导出）、`src/learning-report.js`（扩展观察标签）、`public/assets/parents.js`（`trialDays`/`renderTrial`/`linkedFeedback`）、`public/parents.html`、`public/assets/parents.css`、`docs/FAMILY_TRIAL.md`。
+- P1：`public/assets/learning.js:render`、`public/learning.html`；从具体步骤打开私有反馈页，session/step参数不含凭据。`src/learning.js:view` 用于未完成检查遮蔽，原路由已传入，无需修改。
+- API：`GET /api/learning/parents/feedback-context?sessionId=...&stepIndex=...`，只允许本人已有会话及已显示步骤；返回ID/版本/层次/问题/选项，不返回答案。观察保存亦校验步骤可见性。
+- `GET /api/learning/parents/export?kind=bundle&from=...&to=...&module=...` 返回JSON v1，kind=family-trial；期间开始或完成的会话及期间观察关联会话（可早于区间），导出时快照；已完成保留完整题目与随机选项，未完成独立检查只经view，无答案/讲解/正确性。报告统计口径不变，原CSV与全量JSON v3不变。
+- 状态：沿用learning_observations及版本冲突保护；新增六个内容/操作问题标签。14天日历仅为参考，起始日使用localStorage键`schulte.trial.start.<owner>`，不写周任务或虚构完成；未来日期不请求报告，进行中截至今天。
+- 验证：`test/parent-api.test.js` 新增4个子测试；`scripts/browser-parents.cjs` 新增弹页反馈、日历闰日/账号隔离、期间报告与JSON下载、移动视口。无新依赖、表或后台服务。
+- 后续：实际家庭试用尚待进行，题目与提示修订须基于真实反馈；不推断两周效果，不改历史快照。

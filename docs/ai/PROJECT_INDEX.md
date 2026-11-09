@@ -101,3 +101,8 @@ rtk npm start
 ## 家长端与90单元（第四阶段）
 
 `/parents` 为私有报告与观察页面；`src/learning-report.js` 生成分期/同条件统计与CSV，`src/parent-routes.js` 沿用学习鉴权。`learning_observations` 自动建表，关联账户迁移/删除。训练库为90单元、三级；检查库18份不变。JSON导出v3包含观察。
+
+
+## 家庭试用与反馈（第五阶段）
+
+家长页提供14天参考日历及期间报告，学习页可关联具体版本/步骤填写反馈；原私有家长导出支持kind=bundle，包含期间真实记录及材料快照，未完成独立检查经view遮蔽。无新增依赖、表或后台服务，使用指南见`docs/FAMILY_TRIAL.md`。实际家庭试用待进行。
