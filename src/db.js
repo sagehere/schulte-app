@@ -75,6 +75,10 @@ function saveDb() {
 }
 
 function initTables() {
+  db.run(`CREATE TABLE IF NOT EXISTS learning_observations (
+    id TEXT PRIMARY KEY, user_id TEXT NOT NULL, data_json TEXT NOT NULL
+  )`);
+  db.run('CREATE INDEX IF NOT EXISTS idx_observations_user ON learning_observations(user_id)');
   db.run(`CREATE TABLE IF NOT EXISTS learning_sessions (
     id TEXT PRIMARY KEY, user_id TEXT NOT NULL, data_json TEXT NOT NULL
   )`);
@@ -254,6 +258,7 @@ function deleteUser(identifier) {
     db.run('DELETE FROM records WHERE user_id = ?', [identifier]);
     db.run('DELETE FROM task_templates WHERE user_id = ?', [identifier]);
     db.run('DELETE FROM learning_sessions WHERE user_id = ?', [identifier]);
+    db.run('DELETE FROM learning_observations WHERE user_id = ?', [identifier]);
     db.run('COMMIT');
   } catch (e) {
     db.run('ROLLBACK');
@@ -284,6 +289,7 @@ function renameUserIdentifier(oldId, newId) {
     db.run('UPDATE records SET user_id = ? WHERE user_id = ?', [newId, oldId]);
     db.run('UPDATE task_templates SET user_id = ? WHERE user_id = ?', [newId, oldId]);
     db.run('UPDATE learning_sessions SET user_id = ? WHERE user_id = ?', [newId, oldId]);
+    db.run('UPDATE learning_observations SET user_id = ? WHERE user_id = ?', [newId, oldId]);
     db.run('COMMIT');
   } catch (e) {
     db.run('ROLLBACK');
@@ -438,7 +444,19 @@ function saveLearningSession(userId, session) {
   db.run('INSERT OR REPLACE INTO learning_sessions (id,user_id,data_json) VALUES (?,?,?)', [session.id,userId,JSON.stringify(session)]);
   saveDb();
 }
+function learningObservations(userId) {
+  const stmt=db.prepare('SELECT data_json FROM learning_observations WHERE user_id=?');stmt.bind([userId]);const rows=[];
+  while(stmt.step())rows.push(JSON.parse(stmt.get()[0]));stmt.free();return rows;
+}
+function observationOwner(id) {
+  const stmt=db.prepare('SELECT user_id FROM learning_observations WHERE id=?');stmt.bind([id]);const value=stmt.step()?stmt.get()[0]:null;stmt.free();return value;
+}
+function saveObservation(userId,record) {
+  db.run('INSERT OR REPLACE INTO learning_observations(id,user_id,data_json) VALUES(?,?,?)',[record.id,userId,JSON.stringify(record)]);saveDb();
+}
+function deleteObservation(userId,id) { db.run('DELETE FROM learning_observations WHERE user_id=? AND id=?',[userId,id]);saveDb(); }
 module.exports = {
+  learningObservations, observationOwner, saveObservation, deleteObservation,
   learningSessions, saveLearningSession,
   initDb,
   getDb,

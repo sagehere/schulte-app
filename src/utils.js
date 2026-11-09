@@ -290,7 +290,7 @@ function normalizeCloudTasks(input) {
         cols: mode.cols ? Number(mode.cols) : null,
         audioId: String(mode.audioId || '').slice(0, 100),
         learningPhase: ['train','check','review'].includes(mode.learningPhase)?mode.learningPhase:'',
-        learningLevel: [1,2].includes(Number(mode.learningLevel))?Number(mode.learningLevel):0,
+        learningLevel: [1,2,3].includes(Number(mode.learningLevel))?Number(mode.learningLevel):0,
         learningSkill: String(mode.learningSkill||'').slice(0,40)
       },
       targetCount: Math.min(50, Math.max(1, Math.round(Number(task && task.targetCount || 1)) || 1)),

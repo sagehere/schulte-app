@@ -96,3 +96,8 @@ rtk npm start
 ## 教学闭环（第三阶段）
 
 `src/learning-progress.js` 依据私有会话生成按技能/层次的证据、到期复习和下一步建议；`src/content/checks.json` 为独立检查库。学习API响应兼容旧字段，新增 phase/fresh 和 plan，周任务支持方式/层次/技能筛选。沿用原数据库JSON会话，无新增依赖。
+
+
+## 家长端与90单元（第四阶段）
+
+`/parents` 为私有报告与观察页面；`src/learning-report.js` 生成分期/同条件统计与CSV，`src/parent-routes.js` 沿用学习鉴权。`learning_observations` 自动建表，关联账户迁移/删除。训练库为90单元、三级；检查库18份不变。JSON导出v3包含观察。

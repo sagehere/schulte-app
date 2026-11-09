@@ -1,6 +1,7 @@
 (() => {
   const $=id=>document.getElementById(id), phaseLabel={train:'学习练习',check:'独立检查',review:'复习'};
   let user;try{user=JSON.parse(localStorage.getItem('schulte.cloudUser.v1')||'null');}catch{}
+  const levelLabel=level=>({1:'基础',2:'连接',3:'迁移'})[level]||'未分层';
   const params=new URLSearchParams(location.search);
   let manualReview=false,catalog,session,busy=false,selected=params.get('module')||'reading',phase=params.get('phase')||'train',pending=null,activeMs=0,tick=performance.now();
   if(!phaseLabel[phase])phase='train';
@@ -72,7 +73,7 @@
       const card=node('article','');card.className='card';card.append(node('strong',row.skill));
       for(const level of row.levels){
         const rate=level.rate===null?'暂无新题记录':`${level.correct}/${level.samples}（${Math.round(level.rate*100)}%）`;
-        card.append(node('p',`${level.level===1?'基础':'连接'}：${rate} · ${level.days}个日期 · 独立检查${level.checks}题${level.checkRate===null?'':'（'+Math.round(level.checkRate*100)+'%）'} · ${level.level===2&&level.state==='ready'?'保持并练习迁移':stateLabel[level.state]}`));
+        card.append(node('p',`${levelLabel(level.level)}：${rate} · ${level.days}个日期 · 独立检查${level.checks}题${level.checkRate===null?'':'（'+Math.round(level.checkRate*100)+'%）'} · ${level.level===3&&level.state==='ready'?'保持并练习迁移':stateLabel[level.state]}`));
       }
       card.append(node('p',row.dueDate?`下次复习：${row.dueDate}${row.due?'（已到期）':''}`:'完成练习后安排复习'));return card;
     }));
@@ -85,7 +86,7 @@
     $('unitListTitle').textContent=phase==='check'?'选择一份独立检查':phase==='review'?'到期复习':'选择一个小练习';
     $('modeHint').textContent=phase==='check'?'每份检查材料只使用一次，提交全部步骤后统一查看讲解。遇到不会的步骤可以先提交。':phase==='review'?'按到期技能复习，优先换一份材料；重复材料会标明已见，不增加新题证据。':'先学方法，再在新材料中试一试。基础与连接层次可自由选择。';
     const rec=catalog.plan?.recommendations.find(r=>r.module===selected),box=$('recommendation');box.replaceChildren();
-    if(rec){box.append(node('strong','下一步建议：'+rec.title),node('p',phaseLabel[rec.phase]+' · '+(rec.level===1?'基础':'连接')+' · '+rec.focusSkill),node('p',rec.reason+(rec.seen?'（已见材料，用于巩固。）':'')),button('按建议开始',()=>{const unfinished=catalog.sessions.find(s=>s.unitId===rec.unitId&&s.status==='unfinished'&&(s.phase||'train')===rec.phase);unfinished?showSession(unfinished):start(allUnits().find(u=>u.id===rec.unitId),rec.phase,rec.focusSkill);}));}
+    if(rec){box.append(node('strong','下一步建议：'+rec.title),node('p',phaseLabel[rec.phase]+' · '+(levelLabel(rec.level))+' · '+rec.focusSkill),node('p',rec.reason+(rec.seen?'（已见材料，用于巩固。）':'')),button('按建议开始',()=>{const unfinished=catalog.sessions.find(s=>s.unitId===rec.unitId&&s.status==='unfinished'&&(s.phase||'train')===rec.phase);unfinished?showSession(unfinished):start(allUnits().find(u=>u.id===rec.unitId),rec.phase,rec.focusSkill);}));}
     box.hidden=!rec;progress();
     const level=$('levelFilter').value,skill=$('skillFilter').value;
     const matches=u=>u.module===selected&&(!level||u.level===Number(level))&&(!skill||u.skills.includes(skill));
@@ -95,7 +96,7 @@
         const card=node('article','');card.className='card';card.append(node('h3',review.skill),node('p',`到期：${review.dueDate} · ${review.seen?'已见材料巩固':'换一份材料'}`),node('p',review.title),button('开始复习',()=>start(allUnits().find(u=>u.id===review.unitId),'review',review.skill)));return card;
       });
     }else cards=(phase==='check'?catalog.checks:catalog.units).filter(matches).map(u=>{
-      const card=node('article','');card.className='card';card.append(node('h3',u.title),node('p',`${u.level===1?'基础':'连接'} · ${u.seen?'练习过':'新材料'}`));
+      const card=node('article','');card.className='card';card.append(node('h3',u.title),node('p',`${levelLabel(u.level)} · ${u.seen?'练习过':'新材料'}`));
       const unfinished=catalog.sessions.find(s=>s.unitId===u.id&&s.status==='unfinished'&&(s.phase||'train')===phase);
       const completed=catalog.sessions.find(s=>s.unitId===u.id&&s.status==='completed');
       card.append(button(unfinished?'继续上次练习':phase==='check'&&completed?'回看检查结果':phase==='check'?'开始检查':phase==='review'?'开始复习':'开始练习',()=>unfinished?showSession(unfinished):phase==='check'&&completed?showSession(completed):start(u)));return card;
@@ -107,7 +108,7 @@
       n.append(button('查看 / 继续',()=>showSession(s)));return n;
     }));
   }
-  $('levelFilter').value=['1','2'].includes(params.get('level'))?params.get('level'):'';
+  $('levelFilter').value=['1','2','3'].includes(params.get('level'))?params.get('level'):'';
   $('manualReview').onclick=()=>{manualReview=!manualReview;list();};
   $('levelFilter').onchange=list;$('skillFilter').onchange=list;
   document.querySelectorAll('[data-phase]').forEach(b=>b.onclick=()=>{if(!busy){phase=b.dataset.phase;list();}});

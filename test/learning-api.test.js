@@ -6,9 +6,10 @@ const bank=require('../src/content/learning.json');
 const {validateBank}=require('../src/learning');
 const {applyCloudTrainingCompletionToTasks}=require('../src/utils');
 
-test('learning bank preserves original units and adds a missing-condition bridge',()=>{
- validateBank(bank);assert.equal(bank.length,19);
- for(const module of ['reading','reasoning','math-reading'])assert.equal(bank.filter(u=>u.module===module).length,module==='math-reading'?7:6);
+test('learning bank has 90 original units with balanced modules and levels',()=>{
+ validateBank(bank);assert.equal(bank.length,90);
+ for(const module of ['reading','reasoning','math-reading'])assert.equal(bank.filter(u=>u.module===module).length,30);
+ for(const module of ['reading','reasoning','math-reading'])for(const level of [1,2,3])assert.equal(bank.filter(u=>u.module===module&&u.level===level).length,10);
  assert.throws(()=>validateBank([bank[0],bank[0]]));
 });
 test('private learning, retries, hints, continuation, completed summaries and exports',async(t)=>{
