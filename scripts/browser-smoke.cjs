@@ -1,3 +1,4 @@
+const fixtureBirthDate=require('./age-fixture.cjs')(12);
 // Optional acceptance runner: set PLAYWRIGHT_MODULE and CHROMIUM_EXECUTABLE_PATH.
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const {spawn}=require('node:child_process');
@@ -10,8 +11,8 @@ const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),asse
  const request=async(url,body,headers={})=>{const res=await fetch(base+url,{method:body?'POST':'GET',headers:{'content-type':'application/json',...headers},body:body?JSON.stringify(body):undefined});assert.ok(res.ok,`${url}: ${res.status}`);return res.json();};
  try{
   for(let i=0;i<100;i++){try{if((await fetch(base+'/health')).ok)break;}catch{}await new Promise(r=>setTimeout(r,40));}
-  const a=await request('/api/users',{authCode:'acceptance',password:'123456',user:{identifier:'reader'}});
-  await request('/api/users',{authCode:'acceptance',password:'123456',user:{identifier:'other'}});
+  const a=await request('/api/users',{authCode:'acceptance',password:'123456',user:{identifier:'reader',birthDate:fixtureBirthDate}});
+  await request('/api/users',{authCode:'acceptance',password:'123456',user:{identifier:'other',birthDate:fixtureBirthDate}});
   browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_EXECUTABLE_PATH,args:['--no-sandbox','--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader','--disable-gpu','--single-process']});
   const page=await browser.newPage({viewport:{width:390,height:844}}),errors=[];
   page.on('pageerror',e=>errors.push(e.message));await page.goto(base+'/health');

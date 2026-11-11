@@ -1,3 +1,4 @@
+const fixtureBirthDate=require('../scripts/age-fixture.cjs')(12);
 const test=require('node:test'),assert=require('node:assert/strict');
 const {spawn}=require('node:child_process');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
@@ -18,7 +19,7 @@ test('checks withhold correctness and solutions until completion, block assistan
  t.after(async()=>{await new Promise(resolve=>{if(child.exitCode!==null)return resolve();child.once('exit',resolve);child.kill();});fs.rmSync(dir,{recursive:true,force:true});});
  for(let i=0;i<100;i++){try{if((await fetch(base+'/health')).ok)break;}catch{}await new Promise(r=>setTimeout(r,30));}
  async function call(url,body,headers={}){const res=await fetch(base+url,{method:body?'POST':'GET',headers:{'content-type':'application/json',...headers},body:body?JSON.stringify(body):undefined});return {status:res.status,body:await res.json()};}
- const created=await call('/api/users',{authCode:'code',password:'123456',user:{identifier:'checkuser'}}),headers={'x-user-id':'checkuser',authorization:'Bearer '+created.body.sessionToken};
+ const created=await call('/api/users',{authCode:'code',password:'123456',user:{identifier:'checkuser',birthDate:fixtureBirthDate}}),headers={'x-user-id':'checkuser',authorization:'Bearer '+created.body.sessionToken};
  const catalog=(await call('/api/learning/catalog',null,headers)).body;
  assert.equal(catalog.checks.length,18);assert.equal(catalog.plan.skills.length>0,true);assert.ok(!JSON.stringify(catalog).includes('answers'));
  let current,id;

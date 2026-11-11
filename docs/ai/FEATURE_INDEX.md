@@ -571,3 +571,16 @@ P2：谨慎读取文件
 - 状态：沿用learning_observations及版本冲突保护；新增六个内容/操作问题标签。14天日历仅为参考，起始日使用localStorage键`schulte.trial.start.<owner>`，不写周任务或虚构完成；未来日期不请求报告，进行中截至今天。
 - 验证：`test/parent-api.test.js` 新增4个子测试；`scripts/browser-parents.cjs` 新增弹页反馈、日历闰日/账号隔离、期间报告与JSON下载、移动视口。无新依赖、表或后台服务。
 - 后续：实际家庭试用尚待进行，题目与提示修订须基于真实反馈；不推断两周效果，不改历史快照。
+
+## 统一样式与适龄AI生成
+
+最近更新时间：2026-11-11
+
+- P0：`public/assets/app.css`（原首页样式原样提取）、`public/assets/learning.css`/`parents.css`、`public/index.html`/`learning.html`/`parents.html`（共用CSS）、`public/assets/learning.js`（profile/生成/稳定ID重试）、`src/learning-age.js`（按管理员时区算年龄、备用内容资格）、`src/learning-ai.js`（配置/有界JSON读取/结构及算式校验/两次API调用）、`src/learning.js`（catalog/generate/start/snapshot）。
+- P1：`src/db.js:getUser`提供私有生日、原会话持久化；`src/learning-report.js`与`src/parent-routes.js`按来源/适龄段分别统计，建议仅从当前适龄材料中选择；`docker-compose.yml`/`.env.example`新增可选AI环境变量，密码配置不变。跨功能读取理由为年龄、复用报告及部署配置接入。
+- API：`POST /api/learning/generate`使用原owner/session/admin鉴权，参数id/module/phase/level/focusSkill；不接收客户端年龄、接口或密钥。同owner同ID并发共用Promise，已保存ID直接返回；其他并发429，跨用户ID冲突409；未配置503，缺少生日/年龄不适用422，生成失败502、超时504。
+- 年龄：6—8/9—10/11—12/13—15/16+段的语言、篇幅及数字范围约束。固定材料7—12岁可用且限制层次；缺失生日不能新开材料，原会话仍可恢复。个人生日/识别码/原始作答不送供应商。
+- AI：服务器env配置兼容Chat Completions的JSON模式，地址/模型/密钥必填；每次编写+复核共2次调用，默认每调用6000 tokens、总超时90秒。三步以上选择题，数学结果经非eval四则解析器检查。source/ageProfile/model/fingerprint保存在原unit快照，段落指纹稳定，重复检查拒绝；未完成检查仍用原view遮蔽。
+- 额度：每账号每分钟3次新尝试（进程内），同一时间1份；默认每日20个AI会话（原数据库、管理员时区），失败尝试不落会话但供应商仍可能计费。无新增依赖或数据库表。
+- 验证：54项Node测试，含模拟供应商完整链路、年龄与权限、防泄露/失败/并发/额度/报告来源分组。浏览器以10岁UI夹具核对三模块样式。未接真实付费服务，未完成本轮实体手机测试。
+- 使用与运维：`docs/AGE_AI_LEARNING.md`。AI内容仍可能错误，复核不是标准化审定；正式题目质量需家庭反馈及持续修订。

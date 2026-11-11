@@ -1,8 +1,9 @@
-<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>理解练习 · 一步一步想明白</title><link rel="stylesheet" href="/assets/learning.css"><body><main>
-<header><a href="/">← 返回训练首页</a><a href="/parents">家长报告与观察</a><span id="identity"></span></header>
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>理解练习 · 一步一步想明白</title><link rel="stylesheet" href="/assets/app.css"><link rel="stylesheet" href="/assets/learning.css"><body class="learning-page"><main class="app">
+<header class="topbar"><a href="/">← 返回训练首页</a><a href="/parents">家长报告与观察</a><span id="identity"></span></header>
 <h1>一步一步想明白</h1><p>读一读，找依据，说清关系。原文可以随时回看。</p>
 <nav id="modules" aria-label="训练模块"></nav><p id="notice" role="status"></p>
-<section id="catalog">
+<section id="catalog" hidden><p id="profileNotice" role="status"></p>
+<section id="aiPanel" class="panel"><h2>为我准备新材料</h2><p id="aiStatus"></p><p class="muted">根据当前账号年龄与所选层次生成，内容通过格式、算式校验和模型复核后开始。若有疑问可由家长反馈。</p><button type="button" id="generate" class="tool-button primary" disabled>生成适合我的练习</button><p id="generationNotice" role="status"></p></section>
 <div class="toolbar" id="learningModes" aria-label="练习方式">
 <button type="button" data-phase="train">学习练习</button><button type="button" data-phase="check">独立检查</button><button type="button" data-phase="review">到期复习</button>
 </div><p id="modeHint"></p>

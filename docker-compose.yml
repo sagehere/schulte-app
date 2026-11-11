@@ -14,6 +14,12 @@ services:
       - ADMIN_PASSWORD=这里改成你的管理密码
       - USER_CREATE_CODE=这里改成你的授权码
       - DB_PATH=/app/data/schulte.db
+      - LEARNING_AI_BASE_URL=${LEARNING_AI_BASE_URL:-}
+      - LEARNING_AI_API_KEY=${LEARNING_AI_API_KEY:-}
+      - LEARNING_AI_MODEL=${LEARNING_AI_MODEL:-}
+      - LEARNING_AI_MAX_TOKENS=${LEARNING_AI_MAX_TOKENS:-6000}
+      - LEARNING_AI_TOKEN_PARAMETER=${LEARNING_AI_TOKEN_PARAMETER:-max_tokens}
+      - LEARNING_AI_DAILY_LIMIT=${LEARNING_AI_DAILY_LIMIT:-20}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"]

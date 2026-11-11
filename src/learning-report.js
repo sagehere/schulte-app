@@ -35,7 +35,7 @@ function buildReport(sessions,observations,units,range,now=new Date()){
   const groups=new Map();
   s.results.forEach((result,index)=>{
    const q=s.unit.steps[index];if(!q)return;
-   const phase=sessionPhase(s),key=JSON.stringify([s.unit.module,result.skill,s.unit.level,phase]);
+   const phase=sessionPhase(s),key=JSON.stringify([s.unit.module,result.skill,s.unit.level,phase,s.unit.source||'fixed',s.unit.ageProfile?.band||'fixed']);
    const group=groups.get(key)||[];group.push(result);groups.set(key,group);
    if(!current)return;
    totalSteps++;if(result.independent)independent++;
@@ -47,7 +47,7 @@ function buildReport(sessions,observations,units,range,now=new Date()){
   });
   if(fresh)for(const [key,values] of groups){
    let row=evidenceRows.get(key);
-   if(!row){const [module,skill,level,phase]=JSON.parse(key);row={module,skill,level,phase,current:{n:0,correct:0,dates:new Set()},previous:{n:0,correct:0,dates:new Set()},seen:new Set()};evidenceRows.set(key,row);}
+   if(!row){const [module,skill,level,phase,source,ageBand]=JSON.parse(key);row={module,skill,level,phase,source,ageBand,current:{n:0,correct:0,dates:new Set()},previous:{n:0,correct:0,dates:new Set()},seen:new Set()};evidenceRows.set(key,row);}
    // One material contributes at most once per skill, level and phase.
    if(row.seen.has(s.unit.id))continue;row.seen.add(s.unit.id);
    const period=current?row.current:row.previous;period.n++;period.dates.add(day);if(values.every(r=>r.independent))period.correct++;
@@ -57,7 +57,7 @@ function buildReport(sessions,observations,units,range,now=new Date()){
   const period=p=>({n:p.n,correct:p.correct,days:p.dates.size,rate:p.n?p.correct/p.n:null});
   const current=period(row.current),previous=period(row.previous);
   const comparable=current.n>=3&&previous.n>=3&&current.days>=2&&previous.days>=2;
-  return {module:row.module,skill:row.skill,level:row.level,phase:row.phase,current,previous,comparable,delta:comparable?current.rate-previous.rate:null};
+  return {module:row.module,skill:row.skill,level:row.level,phase:row.phase,source:row.source,ageBand:row.ageBand,current,previous,comparable,delta:comparable?current.rate-previous.rate:null};
  }).sort((a,b)=>a.module.localeCompare(b.module)||a.level-b.level||a.skill.localeCompare(b.skill)||a.phase.localeCompare(b.phase));
  const modules=MODULES.filter(m=>!range.module||m===range.module).map(module=>{
   const started=cohort.filter(s=>s.unit.module===module),done=started.filter(cohortDone);

@@ -1,3 +1,4 @@
+const fixtureBirthDate=require('../scripts/age-fixture.cjs')(12);
 const test=require('node:test');
 const assert=require('node:assert/strict');
 const {spawn}=require('node:child_process');
@@ -23,10 +24,10 @@ test('private learning, retries, hints, continuation, completed summaries and ex
   fs.rmSync(dir,{recursive:true,force:true});
  });await launch();
  async function call(url,body,headers={}){const res=await fetch(base+url,{method:body?'POST':'GET',headers:{'content-type':'application/json',...headers},body:body?JSON.stringify(body):undefined});return {status:res.status,body:await res.json()};}
- const created=await call('/api/users',{authCode:'code',password:'123456',user:{identifier:'reader',birthDate:'2016-01-01'}});
+ const created=await call('/api/users',{authCode:'code',password:'123456',user:{identifier:'reader',birthDate:fixtureBirthDate}});
  const token=created.body.sessionToken,headers={'x-user-id':'reader',authorization:'Bearer '+token};
  assert.equal((await call('/api/users/reader')).body.user.birthDate,undefined);
- assert.equal((await call('/api/users/reader',null,headers)).body.user.birthDate,'2016-01-01');
+ assert.equal((await call('/api/users/reader',null,headers)).body.user.birthDate,fixtureBirthDate);
  assert.equal((await call('/api/learning/catalog')).status,403);
  const catalog=(await call('/api/learning/catalog',null,headers)).body;
  assert.equal(catalog.units.length,bank.length);assert.ok(!JSON.stringify(catalog).includes('answers'));
