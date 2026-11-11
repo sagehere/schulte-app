@@ -2,10 +2,10 @@ const express=require('express');
 const db=require('./db');
 const {localDateKey}=require('./utils');
 const {OBSERVATION_TAGS,CONTEXTS,validDate,reportRange,buildReport,toCsv}=require('./learning-report');
-module.exports=({units,view})=>{
+module.exports=({units,view,available})=>{
  const router=express.Router();
  const timezone=()=>db.getSetting('timezone')||'Asia/Shanghai';
- function report(req){const range=reportRange(req.query,new Date(),timezone());return buildReport(db.learningSessions(req.owner),db.learningObservations(req.owner),units,range);}
+ function report(req){const range=reportRange(req.query,new Date(),timezone());return buildReport(db.learningSessions(req.owner),db.learningObservations(req.owner),available?available(req.owner):units,range);}
  function context(session,stepIndex=null){
   const q=stepIndex===null?null:session.unit.steps[stepIndex];
   return {sessionId:session.id,unitId:session.unit.id,version:session.unit.version,title:session.unit.title,module:session.unit.module,phase:session.phase||'train',level:session.unit.level,stepIndex,...(q?{skill:q.skill,prompt:q.prompt,options:q.options}:{})};
@@ -57,7 +57,7 @@ module.exports=({units,view})=>{
    }else if(kind==='observations'){
     columns=[['date','观察日期'],['module','模块'],['context','场景'],['tags','家长标签'],['note','观察说明'],['sessionId','关联会话'],['stepIndex','步骤索引'],['revision','版本']];rows=result.observations.map(o=>({...o,tags:o.tags.join('；')}));
    }else if(kind==='skills'){
-    columns=[['module','模块'],['skill','技能'],['level','层次'],['phase','方式'],['n','本期新材料数'],['correct','本期独立正确数'],['previousN','上期新材料数'],['previousCorrect','上期独立正确数'],['delta','可比较时变化百分点']];rows=result.skills.map(r=>({...r,n:r.current.n,correct:r.current.correct,previousN:r.previous.n,previousCorrect:r.previous.correct,delta:r.delta===null?'样本不足':Math.round(r.delta*100)}));
+    columns=[['module','模块'],['skill','技能'],['level','层次'],['phase','方式'],['source','材料来源'],['ageBand','适龄段'],['n','本期新材料数'],['correct','本期独立正确数'],['previousN','上期新材料数'],['previousCorrect','上期独立正确数'],['delta','可比较时变化百分点']];rows=result.skills.map(r=>({...r,n:r.current.n,correct:r.current.correct,previousN:r.previous.n,previousCorrect:r.previous.correct,delta:r.delta===null?'样本不足':Math.round(r.delta*100)}));
    }else return res.status(400).json({ok:false,error:'不支持的导出类型'});
    res.set('cache-control','no-store').set('content-type','text/csv; charset=utf-8').set('content-disposition',`attachment; filename="schulte-${kind}-${result.range.from}-${result.range.to}.csv"`).send(toCsv(columns,rows));
   }catch(e){res.status(400).json({ok:false,error:e.message});}

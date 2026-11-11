@@ -106,3 +106,7 @@ rtk npm start
 ## 家庭试用与反馈（第五阶段）
 
 家长页提供14天参考日历及期间报告，学习页可关联具体版本/步骤填写反馈；原私有家长导出支持kind=bundle，包含期间真实记录及材料快照，未完成独立检查经view遮蔽。无新增依赖、表或后台服务，使用指南见`docs/FAMILY_TRIAL.md`。实际家庭试用待进行。
+
+## 适龄AI与统一界面（2026-11-11）
+
+首页及理解训练/家长页共用`public/assets/app.css`。`src/learning-age.js`从私有生日计算年龄与备用资格，`src/learning-ai.js`通过服务端兼容API编写/复核，原学习路由新增`POST /generate`并持久化版本快照，复用报告/复习/导出。AI使用可选环境变量，无新依赖或表；部署见`docs/AGE_AI_LEARNING.md`。

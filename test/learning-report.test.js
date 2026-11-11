@@ -30,3 +30,10 @@ test('CSV preserves Unicode, quotes and newlines while neutralizing spreadsheet 
  const csv=toCsv([['text','说明'],['number','数量']],[{text:'=HYPERLINK("x")',number:-3},{text:'  +SUM(1,2)',number:2},{text:'中文,"两行"\n记录',number:0}]);
  assert.ok(csv.startsWith('\uFEFF'));assert.ok(csv.includes('"\'=HYPERLINK(""x"")"'));assert.ok(csv.includes('"\'  +SUM'));assert.ok(csv.includes('中文,""两行""\n记录'));assert.ok(csv.includes(',-3\r\n'));
 });
+
+test('AI ages and sources never pool into the same comparison row',()=>{
+ const a=session('ai9','2026-11-04'),b=session('ai11','2026-11-05'),fixed=session('fixed','2026-11-06');
+ a.unit={...a.unit,source:'ai',ageProfile:{band:'9-10'}};b.unit={...b.unit,source:'ai',ageProfile:{band:'11-12'}};
+ const rows=buildReport([a,b,fixed],[],bank,range()).skills.filter(r=>r.skill==='信息定位');
+ assert.equal(rows.length,3);assert.deepEqual(new Set(rows.map(r=>r.ageBand)),new Set(['9-10','11-12','fixed']));assert.ok(rows.every(r=>r.current.n===1&&!r.comparable));
+});

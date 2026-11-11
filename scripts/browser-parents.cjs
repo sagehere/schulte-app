@@ -1,3 +1,4 @@
+const fixtureBirthDate=require('./age-fixture.cjs')(12);
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const {spawn}=require('node:child_process');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),assert=require('node:assert/strict');
@@ -7,7 +8,7 @@ const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),asse
  try{
   for(let i=0;i<100;i++){try{if((await fetch(base+'/health')).ok)break;}catch{}await new Promise(r=>setTimeout(r,30));}
   async function call(url,body,headers={}){const r=await fetch(base+url,{method:body?'POST':'GET',headers:{'content-type':'application/json',...headers},body:body?JSON.stringify(body):undefined});assert.ok(r.ok);return r.json();}
-  const a=await call('/api/users',{authCode:'code',password:'123456',user:{identifier:'family'}}),b=await call('/api/users',{authCode:'code',password:'123456',user:{identifier:'otherchild'}});
+  const a=await call('/api/users',{authCode:'code',password:'123456',user:{identifier:'family',birthDate:fixtureBirthDate}}),b=await call('/api/users',{authCode:'code',password:'123456',user:{identifier:'otherchild',birthDate:fixtureBirthDate}});
   const headers={'x-user-id':'family',authorization:'Bearer '+a.sessionToken},unit=require('../src/content/learning.json')[0];
   let s=(await call('/api/learning/start',{unitId:unit.id,id:'parent-ui-session'},headers)).session;
   await call('/api/learning/'+s.id+'/action',{index:0,kind:'answer',answer:'0',eventId:'wrong'},headers);

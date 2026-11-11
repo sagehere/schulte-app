@@ -1,3 +1,4 @@
+const fixtureBirthDate=require('../scripts/age-fixture.cjs')(12);
 const test=require('node:test'),assert=require('node:assert/strict');
 const {spawn}=require('node:child_process');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
@@ -10,8 +11,8 @@ test('private parent reports, observation revisions, CSV, account rename and del
  async function call(url,body,headers={},method=body?'POST':'GET'){
   const response=await fetch(base+url,{method,headers:{'content-type':'application/json',...headers},body:body?JSON.stringify(body):undefined});const raw=await response.text();let value;try{value=JSON.parse(raw);}catch{value=raw;}return {status:response.status,body:value,headers:response.headers};
  }
- const a=(await call('/api/users',{authCode:'code',password:'123456',user:{identifier:'parentA'}})).body;
- const b=(await call('/api/users',{authCode:'code',password:'123456',user:{identifier:'parentB'}})).body;
+ const a=(await call('/api/users',{authCode:'code',password:'123456',user:{identifier:'parentA',birthDate:fixtureBirthDate}})).body;
+ const b=(await call('/api/users',{authCode:'code',password:'123456',user:{identifier:'parentB',birthDate:fixtureBirthDate}})).body;
  let headers={'x-user-id':'parentA',authorization:'Bearer '+a.sessionToken};const other={'x-user-id':'parentB',authorization:'Bearer '+b.sessionToken};
  assert.equal((await call('/api/learning/parents/report')).status,403);
  assert.equal((await call('/api/learning/parents/report',null,{'x-user-id':'parentB',authorization:'Bearer '+a.sessionToken})).status,403);
@@ -75,14 +76,14 @@ test('private parent reports, observation revisions, CSV, account rename and del
   const bundle=(await call('/api/learning/parents/export?kind=bundle',null,headers)).body;
   const completed=bundle.sessions.find(s=>s.id==='parent-check-open');assert.equal(completed.status,'completed');assert.equal(completed.unit.version,check.version);assert.ok(completed.unit.steps.every(q=>q.answers.length&&q.explanation));
  });
- await call('/api/users/parentA',{sessionToken:a.sessionToken,user:{identifier:'parentRenamed'}},headers,'PUT');headers={...headers,'x-user-id':'parentRenamed'};
+ await call('/api/users/parentA',{sessionToken:a.sessionToken,user:{identifier:'parentRenamed',birthDate:fixtureBirthDate}},headers,'PUT');headers={...headers,'x-user-id':'parentRenamed'};
  assert.equal((await call('/api/learning/parents/report',null,headers)).body.observations[0].note,'改为能自己解释了');
  assert.equal((await call('/api/learning/parents/observations/observation-one',{revision:1},headers,'DELETE')).status,409);
  assert.equal((await call('/api/learning/parents/observations/observation-one',{revision:2},headers,'DELETE')).status,200);
  assert.equal((await call('/api/learning/parents/report',null,headers)).body.observations.length,0);
  await call('/api/learning/parents/observations/observation-two',{...note,mutationId:'new-note'},headers,'PUT');
  assert.equal((await call('/api/users/parentRenamed',{sessionToken:a.sessionToken,password:'123456'},headers,'DELETE')).status,200);
- const recreated=(await call('/api/users',{authCode:'code',password:'123456',user:{identifier:'parentRenamed'}})).body;
+ const recreated=(await call('/api/users',{authCode:'code',password:'123456',user:{identifier:'parentRenamed',birthDate:fixtureBirthDate}})).body;
  const clean=(await call('/api/learning/parents/report',null,{'x-user-id':'parentRenamed',authorization:'Bearer '+recreated.sessionToken})).body;assert.equal(clean.observations.length,0);assert.equal(clean.summary.started,0);
  assert.equal((await fetch(base+'/parents')).status,200);assert.equal((await fetch(base+'/assets/parents.js')).status,200);
 });

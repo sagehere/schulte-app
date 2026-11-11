@@ -1,3 +1,4 @@
+const fixtureBirthDate=require('./age-fixture.cjs')(12);
 // Optional end-to-end learning-cycle acceptance with a private temporary database.
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const {spawn}=require('node:child_process');
@@ -6,7 +7,7 @@ const bank=require('../src/content/learning.json'),checks=require('../src/conten
 (async()=>{
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'learning-cycle-'));process.env.DB_PATH=path.join(dir,'db');
  const db=require('../src/db'),{makePasswordRecord}=require('../src/utils');
- await db.initDb();db.createUser('cycleuser',{...await makePasswordRecord('123456')});
+ await db.initDb();db.createUser('cycleuser',{birthDate:fixtureBirthDate,...await makePasswordRecord('123456')});
  const old=new Date(Date.now()-2*86400000).toISOString(),unit=bank[0];
  const seeded={id:'seeded-practice',phase:'train',fresh:true,status:'completed',startedAt:old,endedAt:old,elapsedMs:1000,unit,results:unit.steps.map((q,i)=>({skill:q.skill,independent:i!==0,correct:i!==0,wrong:i===0?1:0,hints:0,answers:[],explanation:q.explanation})),events:[],hints:[]};
  db.saveLearningSession('cycleuser',seeded);db.flushDbSync();
